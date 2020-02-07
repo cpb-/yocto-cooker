@@ -3,14 +3,14 @@
 		{ "url": "git://git.yoctoproject.org/poky", "refspec": "yocto-3.0.1" },
 		{ "url": "git://git.yoctoproject.org/meta-openembedded", "refspec": "e855ecc6" },
 		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "refspec": "d17588fe" },
-		{ "url": "https://www.blaess.fr/christophe/yocto-lab/files/hello-autotools-1.0.tar.bz2"},
+		{ "url": "https://www.blaess.fr/christophe/yocto-lab/files/hello-autotools-1.0.tar.bz2"}
 	],
 
 	"layers" : [
 		"poky/meta",
 		"poky/meta-poky",
 		"poky/meta-yocto-bsp",
-		"meta-openembedded/meta-oe",
+		"meta-openembedded/meta-oe"
 	],
 
 	"targets" : {
@@ -26,7 +26,7 @@
 				"CMDLINE_append": "quiet"
 			},
 
-			"image" : "core-image-base",
+			"image" : "core-image-base"
 		}
 	}
 }
