@@ -1,0 +1,42 @@
+{
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "refspec": "yocto-3.0.1" },
+		{ "url": "git://git.yoctoproject.org/meta-openembedded", "refspec": "sdfdsfqsdfq" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "refspec": "sdfdsfqsdfq" },
+		{ "url": "https://www.my-project.org/meta-my-layer.tar.bz2"},
+		{ "url": "file:///home/user/project/meta-custom-code"},
+	],
+
+	"layers" : [
+		"poky/meta",
+		"meta-openembedded/meta-oe",
+	],
+
+	"targets" : {
+
+		"my-pi3":  {
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": {
+				"MACHINE": "raspberrypi-3",
+				"ENABLE_UART": "1",
+			},
+
+			"image" : "pimage",
+		},
+
+		"my-phytec" : {
+			"layers" : [
+					"meta-phytec"
+			],
+
+			"local.conf": {
+				"MACHINE": "phycore",
+			},
+
+			"image" : "phymage",
+		}
+	}
+}
