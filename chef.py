@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import getopt
 import json
+import os
 import sys
 
 
@@ -70,7 +71,28 @@ def load_menu(filename):
 
 
 def populate_directory(menu):
-	return 0
+	for source in menu["sources"]:
+		download_source(source)
+	for target in menu["targets"]:
+		prepare_build_directory("build-" + target, target["layers"], target["local.conf"])
+
+
+def download_source(source):
+	if "url" in source:
+		url = source["url"]
+		dir = url[url.rfind("/") + 1:]
+		if not os.path.isdir(dir):
+			if url.startswith("git"):
+				os.system("git clone " + url + " " + dir)
+				if "refspec" in source:
+					os.system("cd " + dir + "; git checkout " + source["refspec"])
+
+def prepare_build_directory(dir, layers, local_conf):
+	print("Building")
+	if not os.path.isdir(dir):
+		print("preparing " + dir)
+
+
 
 
 
