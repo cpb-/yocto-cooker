@@ -2,8 +2,7 @@
 	"sources" : [
 		{ "url": "git://git.yoctoproject.org/poky", "refspec": "yocto-3.0.1" },
 		{ "url": "git://git.openembedded.org/meta-openembedded", "refspec": "e855ecc6" },
-		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "refspec": "d17588fe" },
-		{ "url": "https://www.blaess.fr/christophe/yocto-lab/files/hello-autotools-1.0.tar.bz2"}
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "refspec": "d17588fe" }
 	],
 
 	"layers" : [
@@ -24,9 +23,7 @@
 				"MACHINE": "raspberrypi3",
 				"ENABLE_UART": "1",
 				"CMDLINE_append": "quiet"
-			},
-
-			"image" : "core-image-base"
+			}
 		}
 	}
 }
