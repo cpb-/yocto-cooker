@@ -32,15 +32,18 @@ def main():
 
 
 def clear_directory(args):
-    print('clear dir')
+    if args.debug:
+        print('clear dir', args)
     return 0
 
 
 def prepare_menu(args):
     try:
-        print('Loading menu...')
+        if args.debug: 
+            print('Loading menu...', args.menu[0].name)
         menu = load_menu(args.menu[0])
-        print('loaded')
+        if args.debug:
+            print('Populating directory...')
         populate_directory(menu)
     except:
         raise
@@ -83,14 +86,27 @@ def populate_directory(menu):
 
 
 def download_source(source):
-    if "url" in source:
+    if 'url' in source:
         try:
             url = urlparse(source['url'])
         except:
             print('url-parse-error')
             raise
 
+        # Use the same method names than Yocto Project.
+        # See https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-SRC_URI
+
+        # Try to find the method from the URL prefix.
+        if url.scheme == 'file':
+             method = 'file'
         if url.scheme == 'git':
+             method = 'git'
+
+        # The 'method' field can override the URL prefix.
+        if 'method' in source:
+            method = source['method']
+
+        if method == 'git':
             dir = url.path[1:]
             if not os.path.isdir(dir):
                 os.system('git clone {} {}'.format(url.geturl(), dir))
