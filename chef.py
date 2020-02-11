@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
+""" chef.py: meta build tool for Yocto Project based Linux embedded systems."""
+
+__author__ = "Christophe BLAESS, Patrick BOETTCHER"
+__license__ = "GPL"
 
 import json
 import os
 import sys
 import argparse
 from urllib.parse import urlparse
+
 
 def main():
     parser = argparse.ArgumentParser(prog='Chef')
@@ -20,7 +25,12 @@ def main():
     # prepare command
     prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
     prepare_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
-    prepare_parser.set_defaults(func=prepare_menu)
+    prepare_parser.set_defaults(func=prepare_directory)
+
+    # build command
+    build_parser = subparsers.add_parser('build', help='build the targets from the menu')
+    build_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    build_parser.set_defaults(func=build_targets)
 
     args = parser.parse_args()
     try:
@@ -31,25 +41,44 @@ def main():
     sys.exit(0)
 
 
+
 def clear_directory(args):
     if args.debug:
-        print('clear dir', args)
+        print('Clearing directory', args)
+        print('@@@ TODO @@@')
     return 0
 
 
-def prepare_menu(args):
+
+def prepare_directory(args):
+    if args.debug: 
+        print('Preparing directory using {}'.format(args.menu[0].name))
     try:
-        if args.debug: 
-            print('Loading menu...', args.menu[0].name)
-        menu = load_menu(args.menu[0])
-        if args.debug:
-            print('Populating directory...')
-        populate_directory(menu)
+        menu = load_menu(args.menu[0], args.debug)
+        populate_directory(menu, args.debug)
     except:
         raise
 
 
-def load_menu(menu):
+def build_targets(args):
+
+    if args.debug: 
+         print('Building targets from {}'.format(args.menu[0].name))
+
+    try:
+        menu = load_menu(args.menu[0], args.debug)
+        populate_directory(menu, args.debug)
+
+        for target in menu['targets']:
+            build_target(target, menu['targets'][target], args.debug)
+    except:
+        raise
+
+
+
+def load_menu(menu, debug = False):
+    if (debug):
+        print('  Loading menu "{}"'.format(menu.name))
     try:
         return json.load(menu)
     except json.decoder.JSONDecodeError as e:
@@ -57,36 +86,52 @@ def load_menu(menu):
         raise
 
 
-def populate_directory(menu):
 
-    for source in menu["sources"]:
-        download_source(source)
+def populate_directory(menu, debug=False):
 
-    for target in menu["targets"]:
-        content = menu["targets"][target]
-        layers = content["layers"]
-        local_conf = content["local.conf"]
+    if debug:
+        print('  Populating directory')
 
-        if "image" in content:
-            image = content["image"]
+    for source in menu['sources']:
+        download_source(source, debug)
+
+    for target in menu['targets']:
+        content = menu['targets'][target]
+        layers = content['layers']
+        local_conf = content['local.conf']
+        directory = 'build-' + target
+        prepare_build_directory(directory, menu['layers'], layers, local_conf, debug)
+
+
+
+def build_target(target_name, target, debug=False):
+    try:
+        if debug:
+            print('  Building target({})'.format(target_name))
+
+        directory = "build-" + target_name
+        if 'image' in target:
+            image = target['image']
         else:
-            image = "core-image-base"
+            image = 'core-image-base'
 
-        if "init-script" in content:
-            init_script = content["init-script"]
+        if "init-script" in target:
+            init_script = target['init-script']
         else:
-            init_script = "poky/oe-init-build-env"
+            init_script = 'poky/oe-init-build-env'
+        command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, image)
+        if debug:
+            print('    Executing : "{}"'.format(command_line))
+        os.system(command_line)
+    except:
+        raise
 
-        directory = "build-" + target
-        print("Preparing directory",directory,"...", end='')
-        prepare_build_directory(directory, menu["layers"], layers, local_conf)
-        print("ready")
-        display_instructions_for_build(init_script, directory, image)
 
 
-
-def download_source(source):
+def download_source(source, debug=False):
     if 'url' in source:
+        if debug:
+            print('    Downloading source from {}'.format(source['url']))
         try:
             url = urlparse(source['url'])
         except:
@@ -118,7 +163,11 @@ def download_source(source):
                     os.system('cd ' + dir + '; git checkout ' + source['commit'])
 
 
-def prepare_build_directory(dir, global_layers, layers, local_conf):
+
+def prepare_build_directory(dir, global_layers, layers, local_conf, debug=False):
+
+    if debug:
+        print('    Preparing directory "build-{}"'.format(dir))
 
     cwd = os.path.abspath(os.getcwd())
     if not os.path.isdir(dir):
@@ -168,13 +217,6 @@ BBFILES ?= ""
 
     os.chdir("..")
 
-
-def display_instructions_for_build(init_script, directory, image):
-
-    print("\n")
-    print("You can run:")
-    print("   $ source " + init_script + "  " + directory)
-    print("   $ bitbake " + image)
 
 
 if __name__ == '__main__':
