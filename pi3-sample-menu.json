@@ -1,8 +1,8 @@
 {
 	"sources" : [
-		{ "url": "git://git.yoctoproject.org/poky", "refspec": "yocto-3.0.1" },
-		{ "url": "git://git.openembedded.org/meta-openembedded", "refspec": "e855ecc6" },
-		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "refspec": "d17588fe" }
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "zeus", "commit": "yocto-3.0.1" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "zeus", "commit": "e855ecc6" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "commit": "d17588fe" }
 	],
 
 	"layers" : [
@@ -14,7 +14,7 @@
 
 	"targets" : {
 
-		"pi3":  {
+		"pi3": {
 			"layers" : [
 					"meta-raspberrypi"
 			],

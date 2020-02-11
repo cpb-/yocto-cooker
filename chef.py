@@ -107,11 +107,15 @@ def download_source(source):
             method = source['method']
 
         if method == 'git':
+            if 'branch' in source:
+                branch = '-b ' + source['branch']
+            else:
+                branch = ''
             dir = url.path[1:]
             if not os.path.isdir(dir):
-                os.system('git clone {} {}'.format(url.geturl(), dir))
-                if 'refspec' in source:
-                    os.system('cd ' + dir + '; git checkout ' + source['refspec'])
+                os.system('git clone {} {} {}'.format(branch, url.geturl(), dir))
+                if 'commit' in source:
+                    os.system('cd ' + dir + '; git checkout ' + source['commit'])
 
 
 def prepare_build_directory(dir, global_layers, layers, local_conf):
