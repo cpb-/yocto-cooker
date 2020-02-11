@@ -108,27 +108,28 @@ def prepare_build_directory(dir, global_layers, layers, local_conf):
             file.write(' = "')
             file.write(local_conf[line])
             file.write('"\n')
-        file.write('DL_DIR ?= "${TOPDIR}/../downloads"\n')
-        file.write('SSTATE_DIR ?= "${TOPDIR}/../sstate-cache\n')
 
-        file.write('DISTRO ?= "poky"\n')
-        file.write('PACKAGE_CLASSES ?= "package_rpm"\n')
-        file.write('BB_DISKMON_DIRS ??= "\\\n')
-        file.write('\tSTOPTASKS,${TMPDIR},1G,100K \\\n')
-        file.write('\tSTOPTASKS,${DL_DIR},1G,100K \\\n')
-        file.write('\tSTOPTASKS,${SSTATE_DIR},1G,100K \\\n')
-        file.write('\tSTOPTASKS,/tmp,100M,100K \\\n')
-        file.write('\tABORT,${TMPDIR},100M,1K \\\n')
-        file.write('\tABORT,${DL_DIR},100M,1K \\\n')
-        file.write('\tABORT,${SSTATE_DIR},100M,1K \\\n')
-        file.write('\tABORT,/tmp,10M,1K"\n')
-        file.write('CONF_VERSION = "1"\n')
+        file.write('''DL_DIR ?= "${TOPDIR}/../downloads"
+SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
+DISTRO ?= "poky"
+PACKAGE_CLASSES ?= "package_rpm"
+BB_DISKMON_DIRS ??= "\\
+\tSTOPTASKS,${TMPDIR},1G,100K \\
+\tSTOPTASKS,${DL_DIR},1G,100K \\
+\tSTOPTASKS,${SSTATE_DIR},1G,100K \\
+\tSTOPTASKS,/tmp,100M,100K \\
+\tABORT,${TMPDIR},100M,1K \\
+\tABORT,${DL_DIR},100M,1K \\
+\tABORT,${SSTATE_DIR},100M,1K \\
+\tABORT,/tmp,10M,1K"
+CONF_VERSION = "1"
+''')
 
     with open('conf/bblayers.conf', 'w') as file:
-
-        file.write('POKY_BBLAYERS_CONF_VERSION = "2"\n')
-        file.write('BBPATH = "${TOPDIR}"\n')
-        file.write('BBFILES ?= ""\n')
+        file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
+BBPATH = "${TOPDIR}"
+BBFILES ?= ""
+''')
 
         file.write('BBLAYERS ?= " \\\n')
         for layer in global_layers:
