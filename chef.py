@@ -3,69 +3,54 @@
 import json
 import os
 import sys
+import argparse
 
+def main():
+    parser = argparse.ArgumentParser(prog='Chef')
+    parser.add_argument('--debug', action='store_true', help='activate debug printing')
 
-def main(argv):
+    # parsing subcommand's arguments
+    subparsers = parser.add_subparsers(help='subcommands of Chef')
 
-    if len(argv) < 1:
-        display_usage()
-        sys.exit(0)
+    # clear command
+    clear_parser = subparsers.add_parser('clear', help='clear the current directory')
+    clear_parser.set_defaults(func=clear_directory)
 
+    # prepare command
+    prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
+    prepare_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    prepare_parser.set_defaults(func=prepare_menu)
+
+    args = parser.parse_args()
     try:
-        if argv[0] == 'clear':
-            clear_directory()
-
-        elif argv[0] == 'prepare':
-            prepare_menu(argv[1:])
-
-        else:
-            print("Error: bad command name")
-            raise
+        args.func(args) # call function of selected command
     except:
         sys.exit(1)
 
     sys.exit(0)
 
 
-
-def display_usage():
-    print("usage:", sys.argv[0], "[options...] command [argument]")
-    print("  commands:")
-    print("    clear                   clear the current directory.")
-    print("    prepare <menu-file>     create the content of the menu.")
-
-
-
-def clear_directory():
+def clear_directory(args):
+    print('clear dir')
     return 0
 
 
-
-def prepare_menu(argv):
-
-    if len(argv) < 1:
-        print("Error: missing menu name")
-        raise
+def prepare_menu(args):
     try:
-        print("Loading menu...", end='')
-        menu = load_menu(argv[0])
-        print("loaded")
+        print('Loading menu...')
+        menu = load_menu(args.menu[0])
+        print('loaded')
         populate_directory(menu)
-
     except:
         raise
 
 
-
-def load_menu(filename):
+def load_menu(menu):
     try:
-        with open(filename) as file:
-            data = json.load(file)
-    except:
-        print("Error reading", filename)
-
-    return data
-
+        return json.load(menu)
+    except json.decoder.JSONDecodeError as e:
+        print('menu load error at', e)
+        raise
 
 
 def populate_directory(menu):
@@ -167,4 +152,4 @@ def display_instructions_for_build(init_script, directory, image):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
