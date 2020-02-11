@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import argparse
+from urllib.parse import urlparse
 
 def main():
     parser = argparse.ArgumentParser(prog='Chef')
@@ -83,14 +84,18 @@ def populate_directory(menu):
 
 def download_source(source):
     if "url" in source:
-        url = source["url"]
-        dir = url[url.rfind("/") + 1:]
-        if not os.path.isdir(dir):
-            if url.startswith("git"):
-                os.system("git clone " + url + " " + dir)
-                if "refspec" in source:
-                    os.system("cd " + dir + "; git checkout " + source["refspec"])
+        try:
+            url = urlparse(source['url'])
+        except:
+            print('url-parse-error')
+            raise
 
+        if url.scheme == 'git':
+            dir = url.path[1:]
+            if not os.path.isdir(dir):
+                os.system('git clone {} {}'.format(url.geturl(), dir))
+                if 'refspec' in source:
+                    os.system('cd ' + dir + '; git checkout ' + source['refspec'])
 
 
 def prepare_build_directory(dir, global_layers, layers, local_conf):
