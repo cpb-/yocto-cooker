@@ -13,6 +13,15 @@ It also describes the specific lines to be written into the `local.conf` file an
 
 ## How to call `chef`
 
+- `chef clear` (not implemented yet) will remove all downloaded layers and build sub-directory from the current directory.
+
+- `chef prepare {menu file}` downloads the needed layers, and fills the configuration files into the build subdirectory.
+
+- `chef build {menu file}` starts as `chef prepare {menu file}` then run `bitbake` to produce the wanted image file.
+
+## Directory map
+
+
 ## Menu content
 
 ### Sources
