@@ -6,6 +6,7 @@ __license__ = "GPL"
 
 import json
 import os
+import shutil
 import sys
 import argparse
 from urllib.parse import urlparse
@@ -20,6 +21,7 @@ def main():
 
     # clear command
     clear_parser = subparsers.add_parser('clear', help='clear the current directory')
+    clear_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
     clear_parser.set_defaults(func=clear_directory)
 
     # prepare command
@@ -43,9 +45,20 @@ def main():
 
 
 def clear_directory(args):
-    if args.debug:
-        print('Clearing directory', args)
-        print('@@@ TODO @@@')
+    if args.debug: 
+        print('Clearing directory using {}'.format(args.menu[0].name))
+
+    try:
+        menu = load_menu(args.menu[0], args.debug)
+
+        for source in menu['sources']:
+            remove_source(source, args.debug)
+
+        for target in menu['targets']:
+            directory = 'build-' + target
+            remove_directory(directory, args.debug)
+    except:
+        raise
     return 0
 
 
@@ -58,6 +71,7 @@ def prepare_directory(args):
         populate_directory(menu, args.debug)
     except:
         raise
+
 
 
 def build_targets(args):
@@ -84,6 +98,25 @@ def load_menu(menu, debug = False):
     except json.decoder.JSONDecodeError as e:
         print('menu load error at', e)
         raise
+
+
+
+def remove_directory(directory, debug=False):
+	if (debug):
+		print('  Removing directory "{}"'.format(directory))
+
+	if os.path.isdir(directory):
+		shutil.rmtree(directory, ignore_errors=True)
+
+
+
+def remove_source(source, debug=False):
+    if 'url' in source:
+        try:
+            url = urlparse(source['url'])
+            remove_directory(url.path[1:], debug)
+        except:
+            raise
 
 
 
