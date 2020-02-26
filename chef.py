@@ -185,6 +185,8 @@ def download_source(source, debug=False):
             method = source['method']
 
         if method == 'git':
+            if not 'commit' in source:
+                print('WARNING: source "{}" has no "commit" field, the build will not be reproducible!'.format(source['url']))
             if 'branch' in source:
                 branch = '-b ' + source['branch']
             else:
@@ -194,6 +196,9 @@ def download_source(source, debug=False):
                 os.system('git clone {} {} {}'.format(branch, url.geturl(), dir))
                 if 'commit' in source:
                     os.system('cd ' + dir + '; git checkout ' + source['commit'])
+            else:
+                if not 'commit' in source:
+                    os.system('git pull')
 
 
 
