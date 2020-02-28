@@ -11,10 +11,13 @@ import sys
 import argparse
 from urllib.parse import urlparse
 
+Command_line_args = ()
 
 def main():
     parser = argparse.ArgumentParser(prog='Chef')
     parser.add_argument('--debug', action='store_true', help='activate debug printing')
+
+    parser.add_argument('-v', '--verbose', action='store_true', help='activate debug printing')
 
     # parsing subcommand's arguments
     subparsers = parser.add_subparsers(help='subcommands of Chef')
@@ -32,11 +35,13 @@ def main():
     # build command
     build_parser = subparsers.add_parser('build', help='build the targets from the menu')
     build_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    build_parser.add_argument('target', help='target to build', nargs='*')
     build_parser.set_defaults(func=build_targets)
 
-    args = parser.parse_args()
+    global Command_line_args
+    Command_line_args = parser.parse_args()
     try:
-        args.func(args) # call function of selected command
+        Command_line_args.func() # call function of selected command
     except:
         sys.exit(1)
 
@@ -44,54 +49,54 @@ def main():
 
 
 
-def clear_directory(args):
-    if args.debug: 
-        print('Clearing directory using {}'.format(args.menu[0].name))
+def clear_directory():
+    if Command_line_args.debug:
+        print('Clearing directory using {}'.format(Command_line_args.menu[0].name))
 
     try:
-        menu = load_menu(args.menu[0], args.debug)
+        menu = load_menu(Command_line_args.menu[0])
 
         for source in menu['sources']:
-            remove_source(source, args.debug)
+            remove_source(source)
 
         for target in menu['targets']:
             directory = 'build-' + target
-            remove_directory(directory, args.debug)
+            remove_directory(directory)
     except:
         raise
     return 0
 
 
 
-def prepare_directory(args):
-    if args.debug: 
-        print('Preparing directory using {}'.format(args.menu[0].name))
+def prepare_directory():
+    if Command_line_args.debug:
+        print('Preparing directory using {}'.format(Command_line_args.menu[0].name))
     try:
-        menu = load_menu(args.menu[0], args.debug)
-        populate_directory(menu, args.debug)
+        menu = load_menu(Command_line_args.menu[0])
+        populate_directory(menu)
     except:
         raise
 
 
 
-def build_targets(args):
-
-    if args.debug: 
-         print('Building targets from {}'.format(args.menu[0].name))
+def build_targets():
+    if Command_line_args.debug:
+         print('Building targets from {}'.format(Command_line_args.menu[0].name))
 
     try:
-        menu = load_menu(args.menu[0], args.debug)
-        populate_directory(menu, args.debug)
+        menu = load_menu(Command_line_args.menu[0])
+        populate_directory(menu)
 
         for target in menu['targets']:
-            build_target(target, menu['targets'][target], args.debug)
+            if len(Command_line_args.target) == 0 or target in Command_line_args.target:
+                build_target(target, menu['targets'][target])
     except:
         raise
 
 
 
-def load_menu(menu, debug = False):
-    if (debug):
+def load_menu(menu):
+    if (Command_line_args.debug):
         print('  Loading menu "{}"'.format(menu.name))
     try:
         return json.load(menu)
@@ -101,8 +106,8 @@ def load_menu(menu, debug = False):
 
 
 
-def remove_directory(directory, debug=False):
-	if (debug):
+def remove_directory(directory):
+	if (Command_line_args.debug):
 		print('  Removing directory "{}"'.format(directory))
 
 	if os.path.isdir(directory):
@@ -110,36 +115,36 @@ def remove_directory(directory, debug=False):
 
 
 
-def remove_source(source, debug=False):
+def remove_source(source):
     if 'url' in source:
         try:
             url = urlparse(source['url'])
-            remove_directory(url.path[1:], debug)
+            remove_directory(url.path[1:])
         except:
             raise
 
 
 
-def populate_directory(menu, debug=False):
+def populate_directory(menu):
 
-    if debug:
+    if Command_line_args.debug:
         print('  Populating directory')
 
     for source in menu['sources']:
-        download_source(source, debug)
+        download_source(source)
 
     for target in menu['targets']:
         content = menu['targets'][target]
         layers = content['layers']
         local_conf = content['local.conf']
         directory = 'build-' + target
-        prepare_build_directory(directory, menu['layers'], layers, local_conf, debug)
+        prepare_build_directory(directory, menu['layers'], layers, local_conf)
 
 
 
-def build_target(target_name, target, debug=False):
+def build_target(target_name, target):
     try:
-        if debug:
+        if Command_line_args.debug:
             print('  Building target({})'.format(target_name))
 
         directory = "build-" + target_name
@@ -153,7 +158,7 @@ def build_target(target_name, target, debug=False):
         else:
             init_script = 'poky/oe-init-build-env'
         command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, image)
-        if debug:
+        if Command_line_args.debug:
             print('    Executing : "{}"'.format(command_line))
         os.system(command_line)
     except:
@@ -161,9 +166,9 @@ def build_target(target_name, target, debug=False):
 
 
 
-def download_source(source, debug=False):
+def download_source(source):
     if 'url' in source:
-        if debug:
+        if Command_line_args.debug:
             print('    Downloading source from {}'.format(source['url']))
         try:
             url = urlparse(source['url'])
@@ -174,37 +179,57 @@ def download_source(source, debug=False):
         # Use the same method names than Yocto Project.
         # See https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-SRC_URI
 
-        # Try to find the method from the URL prefix.
         if url.scheme == 'file':
              method = 'file'
         if url.scheme == 'git':
              method = 'git'
+        # to be continued...
 
-        # The 'method' field can override the URL prefix.
+        if Command_line_args.verbose:
+            redirect = ''
+        else:
+            redirect = ' >/dev/null 2>&1'
+
         if 'method' in source:
             method = source['method']
 
         if method == 'git':
-            if not 'commit' in source:
-                print('WARNING: source "{}" has no "commit" field, the build will not be reproducible!'.format(source['url']))
             if 'branch' in source:
                 branch = '-b ' + source['branch']
             else:
                 branch = ''
-            dir = url.path[1:]
-            if not os.path.isdir(dir):
-                os.system('git clone {} {} {}'.format(branch, url.geturl(), dir))
-                if 'commit' in source:
-                    os.system('cd ' + dir + '; git checkout ' + source['commit'])
+            if 'dir' in source:
+                dir = source['dir']
             else:
-                if not 'commit' in source:
-                    os.system('git pull')
+                dir = url.path[1:]
+
+            if not os.path.isdir(dir):
+                print('Downloading source {}... '.format(url.geturl()))
+                if os.system('git clone {} {} {} {}'.format(branch, url.geturl(), dir, redirect)) != 0:
+                    fatal_error('Unable to clone {}'.format(url.geturl()))
+
+            if 'commit' in source:
+                print('Updating source {}... '.format(url.geturl()))
+                if os.system('cd ' + dir + '; git checkout ' + source['commit'] + redirect) != 0:
+                    fatal_error('Unable to checkout commit {} for {}'.format(source['commit'], url.geturl()))
+            elif 'branch' in source:
+                print('Warning: source "{}" has no "commit" field, the build will not be reproducible!'.format(source['url']))
+                print('Updating source {}... '.format(url.geturl()))
+                if os.system('cd ' + dir + '; git checkout ' + source['branch'] + redirect) != 0:
+                    fatal_error('Unable to checkout branch {} for {}'.format(source['branch'], url.geturl()))
+                if os.system('cd ' + dir + '; git pull' + redirect) != 0:
+                    fatal_error('Unable to pull updates for {}'.format(url.geturl()))
+            else:
+                print('BE CAREFUL: source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(source['url']))
+                print('Trying to update source {}... '.format(url.geturl()))
+                if os.system('cd ' + dir + '; git pull' + redirect) != 0:
+                    fatal_error('Unable to pull updates for {}'.format(url.geturl()))
 
 
 
-def prepare_build_directory(dir, global_layers, layers, local_conf, debug=False):
+def prepare_build_directory(dir, global_layers, layers, local_conf):
 
-    if debug:
+    if Command_line_args.debug:
         print('    Preparing directory "build-{}"'.format(dir))
 
     cwd = os.path.abspath(os.getcwd())
@@ -255,6 +280,10 @@ BBFILES ?= ""
 
     os.chdir("..")
 
+
+def fatal_error(string):
+    print(string)
+    sys.exit(1)
 
 
 if __name__ == '__main__':
