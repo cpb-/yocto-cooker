@@ -1,4 +1,8 @@
+<p><img width="64px" src="https://github.com/cpb-/chef/blob/master/doc/chef-logo-small-size.png"></p>
+
 # chef
+
+
 
 Meta buildtool for Yocto Project based Linux embedded systems
 
