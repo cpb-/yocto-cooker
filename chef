@@ -240,6 +240,7 @@ def prepare_build_directory(dir, global_layers, layers, local_conf):
         os.mkdir("conf")
 
     with open('conf/local.conf', 'w') as file:
+        file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
         for line in local_conf:
             file.write(line)
             file.write(' = "')
@@ -263,6 +264,7 @@ CONF_VERSION = "1"
 ''')
 
     with open('conf/bblayers.conf', 'w') as file:
+        file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
         file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
