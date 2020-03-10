@@ -167,63 +167,87 @@ def build_target(target_name, target):
 
 
 def download_source(source):
+
+    method = ''
+    remote_dir = ''
+    local_dir  = ''
+
+    if 'method' in source:
+        method = source['method']
+
+    if 'dir' in source:
+        local_dir = source['dir']
+
     if 'url' in source:
-        if Command_line_args.debug:
-            print('    Downloading source from {}'.format(source['url']))
         try:
             url = urlparse(source['url'])
         except:
             print('url-parse-error')
             raise
+        remote_dir = url.geturl();
+        if method == '':
+            method = url.scheme
+        if local_dir == '':
+            local_dir = url.path[1:]
 
-        # Use the same method names than Yocto Project.
-        # See https://www.yoctoproject.org/docs/3.0/mega-manual/mega-manual.html#var-SRC_URI
+    if not os.path.isdir(local_dir):
+        download_directory(method, remote_dir, local_dir)
 
-        if url.scheme == 'file':
-             method = 'file'
-        if url.scheme == 'git':
-             method = 'git'
-        # to be continued...
+    branch = ''
+    if 'branch' in source:
+        branch = source['branch']
 
-        if Command_line_args.verbose:
-            redirect = ''
+    commit = ''
+    if 'commit' in source:
+        commit = source['commit']
+
+    if os.path.isdir(local_dir):
+        update_directory(method, local_dir, branch, commit)
+
+
+
+def download_directory(method, remote_dir, local_dir):
+    print('Downloading source from {}... '.remote_dir)
+
+    if Command_line_args.verbose:
+        redirect = ''
+    else:
+        redirect = ' >/dev/null 2>&1'
+
+    if method == 'git':
+        if os.system('git clone {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+            fatal_error('Unable to clone {}'.format(remote_dir))
+
+
+
+def update_directory(method, local_dir, branch, commit):
+
+    if Command_line_args.verbose:
+        redirect = ''
+    else:
+        redirect = ' >/dev/null 2>&1'
+
+    if method == 'git':
+
+        if commit == '':
+
+            if 'branch' == '':
+                print('BE CAREFUL: source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
+                print('Trying to update source {}... '.format(local_dir))
+                if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                    fatal_error('Unable to pull updates for {}'.format(local_dir))
+            else:
+                print('Warning: source "{}" has no "commit" field, the build will not be reproducible!'.format(local_dir))
+                print('Updating source {}... '.format(local_dir))
+                if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
+                    fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
+                if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                    fatal_error('Unable to pull updates for {}'.format(local_dir))
+
         else:
-            redirect = ' >/dev/null 2>&1'
-
-        if 'method' in source:
-            method = source['method']
-
-        if method == 'git':
-            if 'branch' in source:
-                branch = '-b ' + source['branch']
-            else:
-                branch = ''
-            if 'dir' in source:
-                dir = source['dir']
-            else:
-                dir = url.path[1:]
-
-            if not os.path.isdir(dir):
-                print('Downloading source {}... '.format(url.geturl()))
-                if os.system('git clone {} {} {} {}'.format(branch, url.geturl(), dir, redirect)) != 0:
-                    fatal_error('Unable to clone {}'.format(url.geturl()))
-
-            if 'commit' in source:
-                print('Updating source {}... '.format(url.geturl()))
-                if os.system('cd ' + dir + '; git checkout ' + source['commit'] + redirect) != 0:
-                    fatal_error('Unable to checkout commit {} for {}'.format(source['commit'], url.geturl()))
-            elif 'branch' in source:
-                print('Warning: source "{}" has no "commit" field, the build will not be reproducible!'.format(source['url']))
-                print('Updating source {}... '.format(url.geturl()))
-                if os.system('cd ' + dir + '; git checkout ' + source['branch'] + redirect) != 0:
-                    fatal_error('Unable to checkout branch {} for {}'.format(source['branch'], url.geturl()))
-                if os.system('cd ' + dir + '; git pull' + redirect) != 0:
-                    fatal_error('Unable to pull updates for {}'.format(url.geturl()))
-            else:
-                print('BE CAREFUL: source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(source['url']))
-                print('Trying to update source {}... '.format(url.geturl()))
-                if os.system('cd ' + dir + '; git pull' + redirect) != 0:
-                    fatal_error('Unable to pull updates for {}'.format(url.geturl()))
+            print('Updating source {}... '.format(local_dir))
+            if os.system('cd ' + local_dir + '; git checkout ' + commit + redirect) != 0:
+                fatal_error('Unable to checkout commit {} for {}'.format(commit, local_dir))
 
 
 
