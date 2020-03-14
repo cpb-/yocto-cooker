@@ -207,7 +207,7 @@ def download_source(source):
 
 
 def download_directory(method, remote_dir, local_dir):
-    print('Downloading source from {}... '.remote_dir)
+    print('Downloading source from {}... ' + remote_dir)
 
     if Command_line_args.verbose:
         redirect = ''
