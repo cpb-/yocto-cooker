@@ -19,11 +19,11 @@
 					"meta-raspberrypi"
 			],
 
-			"local.conf": {
-				"MACHINE": "raspberrypi3",
-				"ENABLE_UART": "1",
-				"CMDLINE_append": "quiet"
-			}
+			"local.conf": [
+				[ "MACHINE",     "=",  "raspberrypi3" ],
+				[ "ENABLE_UART", "1"],
+				[ "CMDLINE",     "+=", "quiet" ]
+			]
 		}
 	}
 }
