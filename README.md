@@ -25,10 +25,36 @@ It also describes the specific lines to be written into the `local.conf` file an
 
 ## Directory map
 
+`chef` downloads the needed sources in the current working directory and create a build subdirectory. For example, after running `chef prepare {menu file}`, the working directory could contains:
+
+```
+./---+--- poky/
+     +--- meta-openembedded/
+     +--- meta-raspberrypi/
+     +--- meta-custom-layer/
+     +--- build-raspberrypi4/
+     +--- build-imx6qdl/
+```
+
 
 ## Menu content
 
+The menu file contains three main sections: 
+
+- `sources`: which describes how to download the correct version of the layers,
+- `layers`: (optional) the list of the layers used by every targets,
+- `targets`: a collection of the targets to build.
+
 ### Sources
+
+The `sources` section is an array of methods to get the layers. Each object of the array describes one layer.
+
+`chef` is currently developped mainly for `git`.
+
+The following attributes can be used:
+
+- `url`: the main URL to download the layer. If missing, `chef` will consider that the layer is already present.
+
 
 ### Common layers
 
