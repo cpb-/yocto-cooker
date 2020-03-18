@@ -202,7 +202,7 @@ def download_source(source):
         commit = source['commit']
 
     if os.path.isdir(local_dir):
-        update_directory(method, local_dir, branch, commit)
+        update_directory(method, local_dir, remote_dir != '', branch, commit)
 
 
 
@@ -220,7 +220,7 @@ def download_directory(method, remote_dir, local_dir):
 
 
 
-def update_directory(method, local_dir, branch, commit):
+def update_directory(method, local_dir, has_remote, branch, commit):
 
     if Command_line_args.verbose:
         redirect = ''
@@ -234,15 +234,17 @@ def update_directory(method, local_dir, branch, commit):
             if 'branch' == '':
                 print('BE CAREFUL: source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
                 print('Trying to update source {}... '.format(local_dir))
-                if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
-                    fatal_error('Unable to pull updates for {}'.format(local_dir))
+                if has_remote:
+                    if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        fatal_error('Unable to pull updates for {}'.format(local_dir))
             else:
                 print('Warning: source "{}" has no "commit" field, the build will not be reproducible!'.format(local_dir))
                 print('Updating source {}... '.format(local_dir))
                 if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
                     fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
-                if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
-                    fatal_error('Unable to pull updates for {}'.format(local_dir))
+                if has_remote:
+                    if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        fatal_error('Unable to pull updates for {}'.format(local_dir))
 
         else:
             print('Updating source {}... '.format(local_dir))
