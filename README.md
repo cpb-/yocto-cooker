@@ -21,7 +21,7 @@ It also describes the specific lines to be written into the `local.conf` file an
 
 - `chef prepare {menu file}` downloads the needed layers, and fills the configuration files into the build subdirectory.
 
-- `chef build {menu file} [targets...]` starts as `chef prepare {menu file}` then run `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file.
+- `chef build {menu file} [targets...]` starts as `chef prepare {menu file}` then run `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file. With the `--sdk` option on the command line, `chef` will also build the cross-compiler toolchain and headers.
 
 ## Directory map
 

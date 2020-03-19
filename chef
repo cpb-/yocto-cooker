@@ -34,6 +34,7 @@ def main():
 
     # build command
     build_parser = subparsers.add_parser('build', help='build the targets from the menu')
+    build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
     build_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
     build_parser.add_argument('target', help='target to build', nargs='*')
     build_parser.set_defaults(func=build_targets)
@@ -145,7 +146,7 @@ def populate_directory(menu):
 def build_target(target_name, target):
     try:
         if Command_line_args.debug:
-            print('  Building target({})'.format(target_name))
+            print('  Building target {}'.format(target_name))
 
         directory = "build-" + target_name
         if 'image' in target:
@@ -161,6 +162,11 @@ def build_target(target_name, target):
         if Command_line_args.debug:
             print('    Executing : "{}"'.format(command_line))
         os.system(command_line)
+        if Command_line_args.sdk:
+            command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, image)
+            if Command_line_args.debug:
+                print('    Executing : "{}"'.format(command_line))
+            os.system(command_line)
     except:
         raise
 
@@ -207,7 +213,7 @@ def download_source(source):
 
 
 def download_directory(method, remote_dir, local_dir):
-    print('Downloading source from {}... ' + remote_dir)
+    print('Downloading source from {}... '.format(remote_dir))
 
     if Command_line_args.verbose:
         redirect = ''
