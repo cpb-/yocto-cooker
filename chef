@@ -184,7 +184,7 @@ def build_target(target_name, target):
 
 def download_source(source):
 
-    method = ''
+    method = 'git'
     remote_dir = ''
     local_dir  = ''
 
@@ -201,8 +201,6 @@ def download_source(source):
             print('url-parse-error')
             raise
         remote_dir = url.geturl();
-        if method == '':
-            method = url.scheme
         if local_dir == '':
             local_dir = url.path[1:]
 
