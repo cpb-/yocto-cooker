@@ -4,14 +4,17 @@
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __license__ = "GPL"
 
+import argparse
+import jsonschema
 import json
 import os
 import shutil
 import sys
-import argparse
+
 from urllib.parse import urlparse
 
 Command_line_args = ()
+Menu = None
 
 def main():
     parser = argparse.ArgumentParser(prog='Chef')
@@ -41,6 +44,28 @@ def main():
 
     global Command_line_args
     Command_line_args = parser.parse_args()
+
+    if Command_line_args.__getattribute__('menu'):
+
+        global Menu
+        if (Command_line_args.debug):
+            print('Using menu "{}"'.format(Command_line_args.menu[0].name))
+        try:
+            Menu = json.load(Command_line_args.menu[0])
+        except json.decoder.JSONDecodeError as e:
+            print('menu load error at', e)
+            sys.exit(1)
+
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+            schema = json.load(schema_file)
+
+            try:
+                jsonschema.validate(Menu, schema)
+            except jsonschema.exceptions.ValidationError as e:
+                print('menu validation failed:', e)
+                sys.exit(1)
+
     try:
         Command_line_args.func() # call function of selected command
     except:
@@ -52,15 +77,13 @@ def main():
 
 def clear_directory():
     if Command_line_args.debug:
-        print('Clearing directory using {}'.format(Command_line_args.menu[0].name))
+        print('Clearing directory')
 
     try:
-        menu = load_menu(Command_line_args.menu[0])
-
-        for source in menu['sources']:
+        for source in Menu['sources']:
             remove_source(source)
 
-        for target in menu['targets']:
+        for target in Menu['targets']:
             directory = 'build-' + target
             remove_directory(directory)
     except:
@@ -71,10 +94,9 @@ def clear_directory():
 
 def prepare_directory():
     if Command_line_args.debug:
-        print('Preparing directory using {}'.format(Command_line_args.menu[0].name))
+        print('Preparing directory')
     try:
-        menu = load_menu(Command_line_args.menu[0])
-        populate_directory(menu)
+        populate_directory()
     except:
         raise
 
@@ -82,37 +104,25 @@ def prepare_directory():
 
 def build_targets():
     if Command_line_args.debug:
-         print('Building targets from {}'.format(Command_line_args.menu[0].name))
+         print('Building targets')
 
     try:
-        menu = load_menu(Command_line_args.menu[0])
-        populate_directory(menu)
+        populate_directory()
 
-        for target in menu['targets']:
+        for target in Menu['targets']:
             if len(Command_line_args.target) == 0 or target in Command_line_args.target:
-                build_target(target, menu['targets'][target])
+                build_target(target, Menu['targets'][target])
     except:
         raise
 
 
 
-def load_menu(menu):
-    if (Command_line_args.debug):
-        print('  Loading menu "{}"'.format(menu.name))
-    try:
-        return json.load(menu)
-    except json.decoder.JSONDecodeError as e:
-        print('menu load error at', e)
-        raise
-
-
-
 def remove_directory(directory):
-	if (Command_line_args.debug):
-		print('  Removing directory "{}"'.format(directory))
+	if Command_line_args.debug:
+            print('  Removing directory "{}"'.format(directory))
 
 	if os.path.isdir(directory):
-		shutil.rmtree(directory, ignore_errors=True)
+            shutil.rmtree(directory, ignore_errors=True)
 
 
 
@@ -126,20 +136,20 @@ def remove_source(source):
 
 
 
-def populate_directory(menu):
+def populate_directory():
 
     if Command_line_args.debug:
         print('  Populating directory')
 
-    for source in menu['sources']:
+    for source in Menu['sources']:
         download_source(source)
 
-    for target in menu['targets']:
-        content = menu['targets'][target]
+    for target in Menu['targets']:
+        content = Menu['targets'][target]
         layers = content['layers']
         local_conf = content['local.conf']
         directory = 'build-' + target
-        prepare_build_directory(directory, menu['layers'], layers, local_conf)
+        prepare_build_directory(directory, Menu['layers'], layers, local_conf)
 
 
 

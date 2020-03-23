@@ -1,0 +1,84 @@
+{
+    "schema": "http://json-schema.org/draft-07/schema#",
+
+    "definitions": {
+        "layers": {
+            "type":"array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
+        }
+    },
+
+    "properties": {
+        "sources": {
+            "type": "array",
+            "items": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "pattern": "^(https?|ssh|git)://.*$"
+                    },
+
+                    "branch": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "commit": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": ["url"],
+                "additionalProperties": false
+            }
+        },
+
+        "layers": {
+            "$ref": "#/definitions/layers"
+        },
+
+        "targets": {
+            "patternProperties": {
+                ".+": {
+                    "properties": {
+                        "layers": {
+                            "$ref": "#/definitions/layers"
+                        },
+
+                        "local.conf": {
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "array",
+                                        "items": [
+                                            {"type": "string", "minLength": 1},
+                                            {"enum": ["=", "+=", "?="]},
+                                            {"type": "string", "minLength": 1}
+                                        ],
+                                        "additionalItems": false
+                                    },
+                                    {
+                                        "type": "array",
+                                        "items": [
+                                            {"type": "string", "minLength": 1},
+                                            {"type": "string", "minLength": 1}
+                                        ],
+                                        "additionalItems": false
+                                    }
+                                ]
+                            }
+                        }
+                    },
+
+                    "required": ["local.conf", "layers"],
+                    "additionalProperties": false
+                }
+            }
+        }
+    },
+    "required": ["sources", "layers", "targets"],
+    "additionalProperties": false
+}

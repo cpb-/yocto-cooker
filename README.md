@@ -36,7 +36,8 @@ First, install the `chef` script into a directory included in your `PATH` enviro
 ```
 $ git  clone  https://github.com/cpb-/chef
 $ cd  chef/
-$ cp  chef ~/bin
+$ pip3 install -r requirements.txt
+$ ln -sf chef ~/bin
 $ PATH=$PATH:~/bin
 ```
 
@@ -79,8 +80,8 @@ DISTRO               = "poky"
 DISTRO_VERSION       = "3.0.1"
 TUNE_FEATURES        = "arm vfp cortexa7 neon vfpv4 thumb callconvention-hard"
 TARGET_FPU           = "hard"
-meta                 
-meta-poky            
+meta
+meta-poky
 meta-yocto-bsp       = "HEAD:12a4c177bb541b3187c7a54d5804f30c35f22d8c"
 meta-oe              = "HEAD:e855ecc6d35677e79780adc57b2552213c995731"
 meta-raspberrypi     = "HEAD:d17588fe8673b794b589335a753f4c1c90e12f88"
@@ -118,7 +119,7 @@ For example, after running `chef prepare {menu file}`, the working directory cou
 
 ## Menu content
 
-The menu file follows the JSON syntax and contains three main parts: 
+The menu file follows the JSON syntax and contains three main parts:
 
 - `sources`: which describes how to download the correct versions of the layers,
 - `layers`: (optional) the list of the layers used by every targets,
@@ -136,7 +137,7 @@ The following attributes can be used:
 - `dir`: the path of the layer relative to the directory where you run `chef`. If `url` is present, this is the place to store the downloaded layer. If `url` is absent the layer must already be there and in that case `dir` is mandatory.
 - `method`: the way to handle the versionning of the layer. `chef`is currently developped mainly for `git`. Other methods will be available in the future.
 - `branch`: the `git` branch to use. Especially usefull when no `commit` is given.
-- `commit`: the `git` index of the revision desired. 
+- `commit`: the `git` index of the revision desired.
 
 `chef` aims to build reproducible systems.
 Using a specific `commit` number for each layer is the best way to do this.
@@ -149,7 +150,7 @@ But this is not as reproducible as giving a fixed `commit` number.
 
 This section contains an array of layers common to all targets.
 
-Most of the targets uses 
+Most of the targets uses
 
 - `poky/meta`
 - `poky/meta-poky`
