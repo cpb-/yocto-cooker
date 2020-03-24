@@ -50,8 +50,14 @@
             "patternProperties": {
                 ".+": {
                     "properties": {
+
                         "layers": {
                             "$ref": "#/definitions/layers"
+                        },
+
+                        "image": {
+                            "type": "string",
+                            "minLength": 1
                         },
 
                         "local.conf": {
