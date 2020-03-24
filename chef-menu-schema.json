@@ -28,9 +28,16 @@
                     "commit": {
                         "type": "string",
                         "minLength": 1
+                    },
+                    "method": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "dir": {
+                        "type": "string",
+                        "minLength": 1
                     }
                 },
-                "required": ["url"],
                 "additionalProperties": false
             }
         },
