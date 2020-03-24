@@ -189,3 +189,7 @@ Basically, each target will contain at least a `MACHINE` specification with the 
 
 You can use simple quotes to surround variable value.
 
+### Comments
+
+You can add a `notes` section (array of free strings ignored by chef) to insert your own comments into the menu as the same level as `sources` or `target` or into the `target` section.
+

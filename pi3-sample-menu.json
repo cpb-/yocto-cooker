@@ -1,4 +1,8 @@
 {
+	"notes" : [
+		"This is a standard menu for Raspberry Pi 3.",
+		"Please refer to the README file for instruction on how to build the image"
+	],
 	"sources" : [
 		{ "url": "git://git.yoctoproject.org/poky", "branch": "zeus", "commit": "yocto-3.0.1" },
 		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "zeus", "commit": "e855ecc6" },
@@ -15,6 +19,11 @@
 	"targets" : {
 
 		"pi3": {
+
+			"notes" : [
+				"The default `core-image-base` image is used for bitbake."
+			],
+
 			"layers" : [
 					"meta-raspberrypi"
 			],

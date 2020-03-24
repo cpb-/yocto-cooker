@@ -3,7 +3,14 @@
 
     "definitions": {
         "layers": {
-            "type":"array",
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
+        },
+        "notes": {
+            "type": "array",
             "items": {
                 "type": "string",
                 "minLength": 1
@@ -61,18 +68,24 @@
                         },
 
                         "local.conf": {
-                            "type":"array",
-                                "items": {
-                                    "type": "string",
-                                    "minLength": 1
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "minLength": 1
                             }
+                        },
+                        "notes": {
+                            "$ref": "#/definitions/notes"
                         }
                     },
-
                     "required": ["local.conf", "layers"],
                     "additionalProperties": false
                 }
             }
+        },
+
+        "notes": {
+            "$ref": "#/definitions/notes"
         }
     },
     "required": ["sources", "layers", "targets"],
