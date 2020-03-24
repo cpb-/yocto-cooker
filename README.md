@@ -37,7 +37,7 @@ First, install the `chef` script into a directory included in your `PATH` enviro
 $ git  clone  https://github.com/cpb-/chef
 $ cd  chef/
 $ pip3 install -r requirements.txt
-$ ln -sf chef ~/bin
+$ ln  -sf  $(realpath  chef)  ~/bin
 $ PATH=$PATH:~/bin
 ```
 
