@@ -15,56 +15,68 @@ from urllib.parse import urlparse
 
 Command_line_args = ()
 Menu = None
+Config = {}
+
 
 def main():
-    parser = argparse.ArgumentParser(prog='Chef')
-    parser.add_argument('--debug', action='store_true', help='activate debug printing')
 
+    parser = argparse.ArgumentParser(prog='Chef')
+
+    parser.add_argument('--debug', action='store_true', help='activate debug printing')
     parser.add_argument('-v', '--verbose', action='store_true', help='activate debug printing')
 
     # parsing subcommand's arguments
     subparsers = parser.add_subparsers(help='subcommands of Chef')
 
+    # init command
+    init_parser = subparsers.add_parser('init', help='initialize the configuration')
+    init_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
+    init_parser.set_defaults(func=save_config_file)
+
     # clear command
     clear_parser = subparsers.add_parser('clear', help='clear the current directory')
-    clear_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    clear_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
     clear_parser.set_defaults(func=clear_directory)
 
     # prepare command
     prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
-    prepare_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    prepare_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
     prepare_parser.set_defaults(func=prepare_directory)
 
     # build command
     build_parser = subparsers.add_parser('build', help='build the targets from the menu')
     build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-    build_parser.add_argument('menu', help='JSON filename of the menu', type=argparse.FileType('r'), nargs=1)
+    build_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
     build_parser.add_argument('target', help='target to build', nargs='*')
     build_parser.set_defaults(func=build_targets)
 
     global Command_line_args
     Command_line_args = parser.parse_args()
 
-    if Command_line_args.__getattribute__('menu'):
+    load_config_file('.')
 
-        global Menu
-        if (Command_line_args.debug):
-            print('Using menu "{}"'.format(Command_line_args.menu[0].name))
+    menu_name = get_menu_name()
+    if (Command_line_args.debug):
+        print('Using menu "{}"'.format(menu_name))
+
+    global Menu
+    try:
+        with open(menu_name) as json_file:
+            Menu = json.load(json_file)
+    except json.decoder.JSONDecodeError as e:
+        print('*** Error: menu load error ***')
+        print(e)
+        sys.exit(1)
+
+    script_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+        schema = json.load(schema_file)
         try:
-            Menu = json.load(Command_line_args.menu[0])
-        except json.decoder.JSONDecodeError as e:
-            print('menu load error at', e)
+            jsonschema.validate(Menu, schema)
+        except jsonschema.exceptions.ValidationError as e:
+            print('*** Error: menu validation failed ***')
+            print(e)
             sys.exit(1)
-
-        script_path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
-            schema = json.load(schema_file)
-
-            try:
-                jsonschema.validate(Menu, schema)
-            except jsonschema.exceptions.ValidationError as e:
-                print('menu validation failed:', e)
-                sys.exit(1)
 
     try:
         Command_line_args.func() # call function of selected command
@@ -72,6 +84,65 @@ def main():
         sys.exit(1)
 
     sys.exit(0)
+
+
+
+def load_config_file(path):
+
+    filename = path + '/.chef'
+
+    if Command_line_args.debug:
+        print('Looking for ', filename)
+
+    if not os.path.isfile(filename):
+        if has_parent_directory(path):
+            load_config_file(parent_directory(path))
+        return
+
+    if Command_line_args.debug:
+        print('Trying to load ', filename)
+    try:
+        with open(filename) as json_file:
+            global Config
+            Config = json.load(json_file)
+    except json.decoder.JSONDecodeError as e:
+        print('*** Error: configuration file error ***')
+        print(e)
+        sys.exit(1)
+
+
+
+def save_config_file():
+    if Command_line_args.debug:
+        print('Saving configuration file')
+    try:
+        with open('.chef', 'w') as json_file:
+            json.dump(Config, json_file)
+    except:
+        raise
+
+
+
+def has_parent_directory(directory):
+    return os.path.abspath(directory) != os.path.abspath(directory + '/..')
+
+
+
+def parent_directory(directory):
+    return directory + '/..'
+
+
+
+def get_menu_name():
+
+    if Command_line_args.menu is not None:
+        Config['menu'] = Command_line_args.menu
+
+    if 'menu' in Config:
+        return Config['menu']
+
+    print('*** Error: missing menu file name ***')
+    sys.exit(1)
 
 
 
