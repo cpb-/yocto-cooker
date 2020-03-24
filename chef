@@ -272,7 +272,6 @@ def prepare_build_directory(dir, global_layers, layers, local_conf):
     if Command_line_args.debug:
         print('    Preparing directory "build-{}"'.format(dir))
 
-    cwd = os.path.abspath(os.getcwd())
     if not os.path.isdir(dir):
         os.mkdir(dir)
     os.chdir(dir)
@@ -312,9 +311,9 @@ BBFILES ?= ""
 
         file.write('BBLAYERS ?= " \\\n')
         for layer in global_layers:
-            file.write(cwd + '/' + layer + '  \\\n')
+            file.write('${TOPDIR}/../' + layer + '  \\\n')
         for layer in layers:
-            file.write(cwd + '/' + layer + '  \\\n')
+            file.write('${TOPDIR}/../' + layer + '  \\\n')
         file.write('"\n')
 
     with open('conf/templateconf.cfg', 'w') as file:
