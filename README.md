@@ -184,11 +184,8 @@ The `local.conf` attribute is an array of lines to add into the target configura
 Basically, each target will contain at least a `MACHINE` specification with the form:
 
 ```
-[ "MACHINE",  "=",  "raspberrypi3" ]
+  "MACHINE = 'raspberrypi3' "
 ```
 
-Note that the line is composed with three strings (surrounded by double-quotes):
+You can use simple quotes to surround variable value.
 
-- The first string is the environment variable to fill. In this case, the `MACHINE` variable.
-- The second string is the operator to use. Classic ones will be `"="`, `"+="`, and `"?="` but there are other possibilities. Pleaser, refer to the `bitbake` documentation for the meaning of each operator.
-- The third string is the content of the variable. Here `raspberrypi3` is the name of the target platform.

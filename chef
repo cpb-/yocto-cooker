@@ -282,10 +282,7 @@ def prepare_build_directory(dir, global_layers, layers, local_conf):
     with open('conf/local.conf', 'w') as file:
         file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
         for line in local_conf:
-            if len(line) == 3:
-                file.write('{} {} "{}"\n'.format(line[0], line[1], line[2]))
-            if len(line) == 2:
-                file.write('{} = "{}"\n'.format(line[0], line[1]))
+            file.write(line + '\n')
 
         file.write('''DL_DIR ?= "${TOPDIR}/../downloads"
 SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"

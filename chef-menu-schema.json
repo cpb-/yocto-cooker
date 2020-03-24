@@ -61,27 +61,10 @@
                         },
 
                         "local.conf": {
-                            "type": "array",
-                            "items": {
-                                "oneOf": [
-                                    {
-                                        "type": "array",
-                                        "items": [
-                                            {"type": "string", "minLength": 1},
-                                            {"enum": ["=", "+=", "?="]},
-                                            {"type": "string", "minLength": 1}
-                                        ],
-                                        "additionalItems": false
-                                    },
-                                    {
-                                        "type": "array",
-                                        "items": [
-                                            {"type": "string", "minLength": 1},
-                                            {"type": "string", "minLength": 1}
-                                        ],
-                                        "additionalItems": false
-                                    }
-                                ]
+                            "type":"array",
+                                "items": {
+                                    "type": "string",
+                                    "minLength": 1
                             }
                         }
                     },

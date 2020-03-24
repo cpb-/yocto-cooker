@@ -20,9 +20,9 @@
 			],
 
 			"local.conf": [
-				[ "MACHINE",     "=",  "raspberrypi3" ],
-				[ "ENABLE_UART", "=",  "1"            ],
-				[ "CMDLINE",     "+=", "quiet"        ]
+				"MACHINE = 'raspberrypi3' ",
+				"ENABLE_UART = '1' ",
+				"CMDLINE += 'quiet' "
 			]
 		}
 	}
