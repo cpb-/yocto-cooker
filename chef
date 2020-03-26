@@ -13,350 +13,333 @@ import sys
 
 from urllib.parse import urlparse
 
-Command_line_args = ()
-Menu = None
-Config = {}
+def debug(*args):
+    if ChefCall.DEBUG:
+        print(*args)
 
+def info(*args):
+    print(*args)
 
-def main():
+def warn(*args):
+    if ChefCall.WARNING:
+        print('WARN:', *args)
 
-    parser = argparse.ArgumentParser(prog='Chef')
-
-    parser.add_argument('--debug', action='store_true', help='activate debug printing')
-    parser.add_argument('-v', '--verbose', action='store_true', help='activate debug printing')
-
-    # parsing subcommand's arguments
-    subparsers = parser.add_subparsers(help='subcommands of Chef')
-
-    # init command
-    init_parser = subparsers.add_parser('init', help='initialize the configuration')
-    init_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
-    init_parser.set_defaults(func=save_config_file)
-
-    # clear command
-    clear_parser = subparsers.add_parser('clear', help='clear the current directory')
-    clear_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
-    clear_parser.set_defaults(func=clear_directory)
-
-    # prepare command
-    prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
-    prepare_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
-    prepare_parser.set_defaults(func=prepare_directory)
-
-    # build command
-    build_parser = subparsers.add_parser('build', help='build the targets from the menu')
-    build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-    build_parser.add_argument('menu', help='filename of the JSON menu', nargs='?')
-    build_parser.add_argument('target', help='target to build', nargs='*')
-    build_parser.set_defaults(func=build_targets)
-
-    global Command_line_args
-    Command_line_args = parser.parse_args()
-
-    load_config_file('.')
-
-    menu_name = get_menu_name()
-    if (Command_line_args.debug):
-        print('Using menu "{}"'.format(menu_name))
-
-    global Menu
-    try:
-        with open(menu_name) as json_file:
-            Menu = json.load(json_file)
-    except json.decoder.JSONDecodeError as e:
-        print('*** Error: menu load error ***')
-        print(e)
-        sys.exit(1)
-
-    script_path = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
-        schema = json.load(schema_file)
-        try:
-            jsonschema.validate(Menu, schema)
-        except jsonschema.exceptions.ValidationError as e:
-            print('*** Error: menu validation failed ***')
-            print(e)
-            sys.exit(1)
-
-    try:
-        Command_line_args.func() # call function of selected command
-    except:
-        sys.exit(1)
-
-    sys.exit(0)
-
-
-
-def load_config_file(path):
-
-    filename = path + '/.chef'
-
-    if Command_line_args.debug:
-        print('Looking for ', filename)
-
-    if not os.path.isfile(filename):
-        if has_parent_directory(path):
-            load_config_file(parent_directory(path))
-        return
-
-    if Command_line_args.debug:
-        print('Trying to load ', filename)
-    try:
-        with open(filename) as json_file:
-            global Config
-            Config = json.load(json_file)
-    except json.decoder.JSONDecodeError as e:
-        print('*** Error: configuration file error ***')
-        print(e)
-        sys.exit(1)
-
-
-
-def save_config_file():
-    if Command_line_args.debug:
-        print('Saving configuration file')
-    try:
-        with open('.chef', 'w') as json_file:
-            json.dump(Config, json_file)
-    except:
-        raise
-
-
-
-def has_parent_directory(directory):
-    return os.path.abspath(directory) != os.path.abspath(directory + '/..')
-
-
-
-def parent_directory(directory):
-    return directory + '/..'
-
-
-
-def get_menu_name():
-
-    if Command_line_args.menu is not None:
-        Config['menu'] = Command_line_args.menu
-
-    if 'menu' in Config:
-        return Config['menu']
-
-    print('*** Error: missing menu file name ***')
+def fatal_error(*args):
+    print('FATAL:', *args)
     sys.exit(1)
 
 
+class Config:
+    DEFAULT_FILENAME = '.chefconfig'
 
-def clear_directory():
-    if Command_line_args.debug:
-        print('Clearing directory')
+    def __init__(self):
+        debug('Looking for', Config.DEFAULT_FILENAME)
 
-    try:
-        for source in Menu['sources']:
-            remove_source(source)
+        path = os.getcwd().split(os.sep)
+        while path:
+            filename = '/' + os.path.join(*path, self.DEFAULT_FILENAME)
 
-        for target in Menu['targets']:
-            directory = 'build-' + target
-            remove_directory(directory)
-    except:
-        raise
-    return 0
+            debug(' Trying', filename)
 
+            if os.path.isfile(filename):
+                debug('  Found')
 
+                self.filename = filename
 
-def prepare_directory():
-    if Command_line_args.debug:
-        print('Preparing directory')
-    try:
-        populate_directory()
-    except:
-        raise
+                try:
+                    with open(self.filename) as json_file:
+                        self.cfg = json.load(json_file)
+                    return
+                except Exception as e:
+                    fatal_error('configuration load error', e)
 
+                break
 
+            path.pop() # cd ..
 
-def build_targets():
-    if Command_line_args.debug:
-         print('Building targets')
+        self.filename = os.path.join(os.getcwd(), self.DEFAULT_FILENAME)
+        self.cfg = {}
 
-    try:
-        populate_directory()
+        debug('No config-file found - using default file', self.filename)
 
-        for target in Menu['targets']:
-            if len(Command_line_args.target) == 0 or target in Command_line_args.target:
-                build_target(target, Menu['targets'][target])
-    except:
-        raise
+    def project_root(self):
+        return os.path.dirname(self.filename)
 
 
+    def init(self, menu_file, layer_dir, build_dir):
+        self.cfg['menu'] = os.path.realpath(menu_file)
 
-def remove_directory(directory):
-	if Command_line_args.debug:
-            print('  Removing directory "{}"'.format(directory))
+        if not os.path.isabs(layer_dir):
+            layer_dir = os.path.relpath(os.path.join(self.project_root(), layer_dir), self.project_root())
+        self.cfg['layer-dir'] = layer_dir
 
-	if os.path.isdir(directory):
-            shutil.rmtree(directory, ignore_errors=True)
-
-
-
-def remove_source(source):
-    if 'url' in source:
-        try:
-            url = urlparse(source['url'])
-            remove_directory(url.path[1:])
-        except:
-            raise
+        if not os.path.isabs(build_dir):
+            build_dir = os.path.relpath(os.path.join(self.project_root(), build_dir), self.project_root())
+        self.cfg['build-dir'] = build_dir
 
 
-
-def populate_directory():
-
-    if Command_line_args.debug:
-        print('  Populating directory')
-
-    for source in Menu['sources']:
-        download_source(source)
-
-    for target in Menu['targets']:
-        content = Menu['targets'][target]
-        layers = content['layers']
-        local_conf = content['local.conf']
-        directory = 'build-' + target
-        prepare_build_directory(directory, Menu['layers'], layers, local_conf)
+    def build_dir(self, name = ''):
+        return os.path.join(self.project_root(), self.cfg['build-dir'], name)
 
 
+    def layer_dir(self, name = ''):
+        return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
 
-def build_target(target_name, target):
-    try:
-        if Command_line_args.debug:
-            print('  Building target {}'.format(target_name))
 
-        directory = "build-" + target_name
-        if 'image' in target:
-            image = target['image']
+    def menu(self):
+        return self.cfg['menu']
+
+
+    def save(self):
+        debug('Saving configuration file')
+        with open(self.filename, 'w') as json_file:
+            json.dump(self.cfg, json_file, indent=4)
+
+    def empty(self):
+        return 'menu' not in self.cfg
+
+
+class ChefCall:
+    DEBUG = False
+    WARNING = True
+
+    def __init__(self):
+        parser = argparse.ArgumentParser(prog='Chef')
+
+        parser.add_argument('--debug', action='store_true', help='activate debug printing')
+        parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
+
+        # parsing subcommand's arguments
+        subparsers = parser.add_subparsers(help='subcommands of Chef')
+
+        # init command
+        init_parser = subparsers.add_parser('init', help='initialize the project-dir')
+        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned', default='.')
+        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed', default='.')
+        init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        init_parser.set_defaults(func=self.init)
+
+        update_parser = subparsers.add_parser('update', help='update source layers')
+        update_parser.set_defaults(func=self.update)
+
+        generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
+        generate_parser.set_defaults(func=self.generate)
+
+        # prepare command (init + update + generate)
+        prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
+        prepare_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        prepare_parser.set_defaults(func=self.prepare)
+
+        # clear command
+        #clear_parser = subparsers.add_parser('clear', help='clear the current directory')
+        #clear_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs='?')
+        #clear_parser.set_defaults(func=clear_directory)
+
+        # build command
+        build_parser = subparsers.add_parser('build', help='build the targets from the menu')
+        build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
+        build_parser.add_argument('targets', help='target to build', nargs='*')
+        build_parser.set_defaults(func=self.build_targets)
+
+        self.clargs = parser.parse_args()
+
+        ChefCall.DEBUG = self.clargs.debug
+
+        # find and initialize config
+        self.config = Config()
+
+        debug('Project root', self.config.project_root())
+
+        if self.config.empty():
+            debug('empty config')
         else:
-            image = 'core-image-base'
+            debug('config present')
 
-        if "init-script" in target:
-            init_script = target['init-script']
+        # figure out which menu-file to use
+        menu_file = None
+        if 'menu' in self.clargs and self.clargs.menu is not None: # menu-file from the cmdline has priority
+            menu_file = self.clargs.menu[0]
+        elif not self.config.empty(): # or the one from the config-file
+            try:
+                menu_file = open(self.config.menu())
+            except Exception as e:
+                fatal_error('menu load error', e)
+
+        self.menu = None
+        if menu_file:
+            try:
+                self.menu = json.load(menu_file)
+            except Exception as e:
+                fatal_error('menu load error:', e)
+
+            script_path = os.path.dirname(os.path.realpath(__file__))
+            with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+                schema = json.load(schema_file)
+                try:
+                    jsonschema.validate(self.menu, schema)
+                except Exception as e:
+                    fatal_error('menu file validation failed:', e)
+
+                debug('menu file validation passed')
+
+        if 'func' in self.clargs:
+            self.clargs.func() # call function of selected command
         else:
-            init_script = 'poky/oe-init-build-env'
-        command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, image)
-        if Command_line_args.debug:
-            print('    Executing : "{}"'.format(command_line))
-        os.system(command_line)
-        if Command_line_args.sdk:
-            command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, image)
-            if Command_line_args.debug:
-                print('    Executing : "{}"'.format(command_line))
-            os.system(command_line)
-    except:
-        raise
+            debug('no function selected, did nothing')
+
+        sys.exit(0)
 
 
+    def init(self):
+        if not self.config.empty():
+            fatal_error('Project in', self.config.project_root(), 'has already been initalized')
 
-def download_source(source):
-
-    method = 'git'
-    remote_dir = ''
-    local_dir  = ''
-
-    if 'method' in source:
-        method = source['method']
-
-    if 'dir' in source:
-        local_dir = source['dir']
-
-    if 'url' in source:
-        try:
-            url = urlparse(source['url'])
-        except:
-            print('url-parse-error')
-            raise
-        remote_dir = url.geturl();
-        if local_dir == '':
-            local_dir = url.path[1:]
-
-    if not os.path.isdir(local_dir):
-        download_directory(method, remote_dir, local_dir)
-
-    branch = ''
-    if 'branch' in source:
-        branch = source['branch']
-
-    commit = ''
-    if 'commit' in source:
-        commit = source['commit']
-
-    if os.path.isdir(local_dir):
-        update_directory(method, local_dir, remote_dir != '', branch, commit)
+        self.config.init(self.clargs.menu[0].name,
+                    self.clargs.layer_dir,
+                    self.clargs.build_dir)
+        self.config.save()
 
 
+    def generate(self):
+        if self.menu is None:
+            fatal_error('command generate needs a menu')
 
-def download_directory(method, remote_dir, local_dir):
-    print('Downloading source from {}... '.format(remote_dir))
+        info('Generating build dirs for target in project directory')
 
-    if Command_line_args.verbose:
-        redirect = ''
-    else:
-        redirect = ' >/dev/null 2>&1'
-
-    if method == 'git':
-        if os.system('git clone {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
-            fatal_error('Unable to clone {}'.format(remote_dir))
+        for target, content in self.menu['targets'].items():
+            directory = self.config.build_dir('build-' + target)
+            self.prepare_build_directory(directory, content)
 
 
+    def update(self):
+        if self.menu is None:
+            fatal_error('update generate needs a menu')
 
-def update_directory(method, local_dir, has_remote, branch, commit):
+        info('Update layers in project directory')
 
-    if Command_line_args.verbose:
-        redirect = ''
-    else:
-        redirect = ' >/dev/null 2>&1'
+        for source in self.menu['sources']:
+            self.download_source(source)
 
-    if method == 'git':
 
-        if commit == '':
+    def prepare(self):
+        # TODO force removal of config-file?
+        self.init()
+        self.update()
+        self.generate()
 
-            if 'branch' == '':
-                print('BE CAREFUL: source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
-                print('Trying to update source {}... '.format(local_dir))
-                if has_remote:
-                    if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
-                        fatal_error('Unable to pull updates for {}'.format(local_dir))
+
+    def download_source(self, source):
+        method = 'git'
+        remote_dir = ''
+        local_dir  = ''
+
+        if 'method' in source:
+            method = source['method']
+
+        if method == 'ignore':
+            return
+
+        if 'dir' in source:
+            local_dir = source['dir']
+
+        if 'url' in source:
+            try:
+                url = urlparse(source['url'])
+            except Exception as e:
+                fatal_error('url-parse-error', source['url'], e)
+
+            remote_dir = url.geturl();
+            if local_dir == '':
+                local_dir = url.path[1:]
+
+        # TODO check if local dir breaks out of project-dir
+        local_dir = os.path.realpath(self.config.layer_dir(local_dir))
+
+        if not os.path.isdir(local_dir):
+            self.download_directory(method, remote_dir, local_dir)
+
+        branch = ''
+        if 'branch' in source:
+            branch = source['branch']
+
+        commit = ''
+        if 'commit' in source:
+            commit = source['commit']
+
+        if os.path.isdir(local_dir):
+            self.update_directory(method, local_dir, remote_dir != '', branch, commit)
+
+
+    def download_directory(self, method, remote_dir, local_dir):
+        info('Downloading source from ', remote_dir)
+
+        if self.clargs.verbose:
+            redirect = ''
+        else:
+            redirect = ' >/dev/null 2>&1'
+
+        if method == 'git':
+            if os.system('git clone {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+                fatal_error('Unable to clone', remote_dir)
+
+
+    def update_directory(self, method, local_dir, has_remote, branch, commit):
+        if self.clargs.verbose:
+            redirect = ''
+        else:
+            redirect = ' >/dev/null 2>&1'
+
+        if method == 'git':
+
+            if commit == '':
+
+                if 'branch' == '':
+                    warn('ATTENTION! source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
+                    info('Trying to update source {}... '.format(local_dir))
+                    if has_remote:
+                        if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                            fatal_error('Unable to pull updates for {}'.format(local_dir))
+                else:
+                    warn('source "{}" has no "commit" field, the build will not be reproducible!'.format(local_dir))
+                    info('Updating source {}... '.format(local_dir))
+                    if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
+                        fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
+                    if has_remote:
+                        if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                            fatal_error('Unable to pull updates for {}'.format(local_dir))
+
             else:
-                print('Warning: source "{}" has no "commit" field, the build will not be reproducible!'.format(local_dir))
-                print('Updating source {}... '.format(local_dir))
-                if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
-                    fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
-                if has_remote:
-                    if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
-                        fatal_error('Unable to pull updates for {}'.format(local_dir))
-
-        else:
-            print('Updating source {}... '.format(local_dir))
-            if os.system('cd ' + local_dir + '; git checkout ' + commit + redirect) != 0:
-                fatal_error('Unable to checkout commit {} for {}'.format(commit, local_dir))
+                info('Updating source {}... '.format(local_dir))
+                if os.system('cd ' + local_dir + '; git checkout ' + commit + redirect) != 0:
+                    fatal_error('Unable to checkout commit {} for {}'.format(commit, local_dir))
 
 
+    def prepare_build_directory(self, path, target):
+        debug('Preparing directory:', path)
 
-def prepare_build_directory(dir, global_layers, layers, local_conf):
+        if not os.path.isdir(path):
+            os.makedirs(path, exist_ok=True)
 
-    if Command_line_args.debug:
-        print('    Preparing directory "build-{}"'.format(dir))
+        os.chdir(path)
 
-    if not os.path.isdir(dir):
-        os.mkdir(dir)
-    os.chdir(dir)
-    if not os.path.isdir("conf"):
-        os.mkdir("conf")
+        if not os.path.isdir("conf"):
+            os.mkdir("conf")
 
-    with open('conf/local.conf', 'w') as file:
-        file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        for line in local_conf:
-            file.write(line + '\n')
+        dl_dir = os.path.join(self.config.project_root(), 'downloads')
+        dl_dir = '${TOPDIR}/' + os.path.relpath(dl_dir, path)
 
-        file.write('''DL_DIR ?= "${TOPDIR}/../downloads"
-SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
-DISTRO ?= "poky"
+        sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
+        sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, path)
+
+        with open('conf/local.conf', 'w') as file:
+            file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+            for line in target['local.conf']:
+                file.write(line + '\n')
+
+            file.write('DL_DIR ?= "{}"\n'.format(dl_dir))
+            file.write('SSTATE_DIR ?= "{}"\n'.format(sstate_dir))
+
+            file.write('''DISTRO ?= "poky"
 PACKAGE_CLASSES ?= "package_rpm"
 BB_DISKMON_DIRS ??= "\\
 \tSTOPTASKS,${TMPDIR},1G,100K \\
@@ -370,30 +353,105 @@ BB_DISKMON_DIRS ??= "\\
 CONF_VERSION = "1"
 ''')
 
-    with open('conf/bblayers.conf', 'w') as file:
-        file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
+        with open('conf/bblayers.conf', 'w') as file:
+            file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+            file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 ''')
+            file.write('BBLAYERS ?= " \\\n')
+            for layer in self.menu['layers'] + target['layers']:
+                layer_path = os.path.relpath(self.config.layer_dir(layer), path)
+                file.write('${{TOPDIR}}/{} \\\n'.format(layer_path))
+            file.write('"\n')
 
-        file.write('BBLAYERS ?= " \\\n')
-        for layer in global_layers:
-            file.write('${TOPDIR}/../' + layer + '  \\\n')
-        for layer in layers:
-            file.write('${TOPDIR}/../' + layer + '  \\\n')
-        file.write('"\n')
-
-    with open('conf/templateconf.cfg', 'w') as file:
-        file.write("meta-poky/conf\n")
-
-    os.chdir("..")
+        with open('conf/templateconf.cfg', 'w') as file:
+            file.write("meta-poky/conf\n")
 
 
-def fatal_error(string):
-    print(string)
-    sys.exit(1)
+    def build_targets(self):
+        debug('Building targets')
+
+        # populate_directory() TODO, generate only? update can be long, rewrite menu.
+
+        targets = {}
+
+        if self.clargs.targets: # filter out unwanted targets
+            for target in self.clargs.targets:
+                if not target in self.menu['targets']:
+                    fatal_error('target', target, 'not defined in menu')
+                targets[target] = self.menu['targets'][target]
+        else: # use all targets
+            targets = self.menu['targets']
+
+        for name, target in targets.items():
+            self.build_target(name, target)
+
+
+    def build_target(self, target_name, target):
+        try:
+            info('Building target', target_name)
+
+            directory = self.config.build_dir('build-' + target_name)
+
+            if 'image' in target:
+                image = target['image']
+            else:
+                image = 'core-image-base'
+
+            if "init-script" in target:
+                init_script = target['init-script']
+            else:
+                init_script = 'poky/oe-init-build-env'
+
+            init_script = self.config.layer_dir(init_script)
+
+            if not os.path.isfile(init_script):
+                fatal_error('init-script', init_script, 'not found')
+
+            command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, image)
+
+            debug('    Executing : "{}"'.format(command_line))
+            os.system(command_line)
+            if self.clargs.sdk:
+                command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, image)
+                debug('    Executing : "{}"'.format(command_line))
+                os.system(command_line)
+        except Exception as e:
+            fatal_error('build for', target_name, 'failed', e)
 
 
 if __name__ == '__main__':
-    main()
+    ChefCall()
+
+
+#def clear_directory():
+#    debug('Clearing directory')
+#
+#    try:
+#        for source in Menu['sources']:
+#            remove_source(source)
+#
+#        for target in Menu['targets']:
+#            directory = 'build-' + target
+#            remove_directory(directory)
+#    except:
+#        raise
+#    return 0
+#
+#
+#def remove_directory(directory):
+#    debug('  Removing directory "{}"'.format(directory))
+#
+#    if os.path.isdir(directory):
+#        shutil.rmtree(directory, ignore_errors=True)
+#
+#
+#def remove_source(source):
+#    if 'url' in source:
+#        try:
+#            url = urlparse(source['url'])
+#            remove_directory(url.path[1:])
+#        except:
+#            raise
+#
