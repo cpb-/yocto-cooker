@@ -116,6 +116,12 @@ class ChefCall:
         # parsing subcommand's arguments
         subparsers = parser.add_subparsers(help='subcommands of Chef')
 
+	# cook command
+        cook_parser = subparsers.add_parser('cook', help='prepare the directories and build the targets of the menu')
+        cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        cook_parser.add_argument('targets', help='target to build', nargs='*')
+        cook_parser.set_defaults(func=self.cook)
+
         # init command
         init_parser = subparsers.add_parser('init', help='initialize the project-dir')
         init_parser.add_argument('-f', '--force', help='re-init an existing project',
@@ -206,6 +212,12 @@ class ChefCall:
                     self.clargs.layer_dir,
                     self.clargs.build_dir)
         self.config.save()
+
+
+    def cook(self):
+        self.prepare()
+        self.build_targets()
+
 
     def generate(self):
         if self.menu is None:

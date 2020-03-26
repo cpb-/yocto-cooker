@@ -46,7 +46,15 @@ $ mkdir  ~/build-dir
 $ cd  ~/build-dir
 ```
 
-Ask `chef` to `prepare` the needed files and directories to build the content of the `pi3-sample-menu.json` file:
+You can call `chef` with a single command to build the whole content of a menu file:
+
+```
+$ chef  cook  ~/chef/pi3-sample-menu.json
+```
+
+Or you can proceed in two steps:
+
+First, ask `chef` to `prepare` the needed files and directories to build the `pi3-sample-menu.json` menu file:
 
 ```
 $ chef  prepare  ~/chef/pi3-sample-menu.json
