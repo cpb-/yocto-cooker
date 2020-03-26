@@ -222,8 +222,9 @@ class ChefCall:
 
 
     def prepare(self):
-        # TODO force removal of config-file?
-        self.init()
+        self.config.set_menu(self.clargs.menu[0].name)
+        self.config.save()
+
         self.update()
         self.generate()
 
