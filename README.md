@@ -18,15 +18,13 @@ It also describes the specific lines to be written into the `local.conf` file an
 ## Maintainers
 
 - [Christophe Blaess](https://github.com/cpb-/)
-- [Patrick Boetcher](https://github.com/pboettch)
+- [Patrick Boettcher](https://github.com/pboettch)
 
 ## `chef` command line arguments
 
-- `chef clear` will remove from the current directory all downloaded layers and the build sub-directory.
-
 - `chef prepare {menu file}` downloads the needed layers, and fills the configuration files into the build sub-directory.
 
-- `chef build {menu file} [targets...]` starts as `chef prepare {menu file}` then run `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file. With the `--sdk` option on the command line, `chef` will also build the cross-compiler toolchain and headers.
+- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file. With the `--sdk` option on the command line, `chef` will also build the cross-compiler toolchain and headers.
 
 
 ## How to build a standard image for Raspberry Pi 3?
@@ -64,7 +62,7 @@ build-pi3  meta-openembedded  meta-raspberrypi  poky
 Then you can run a full build with:
 
 ```
-$ chef  build  ~/chef/pi3-sample-menu.json
+$ chef  build
 ```
 
 You will see the classic Yocto Project progress messages, and after a while the build will complete with:
