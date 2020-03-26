@@ -118,8 +118,12 @@ class ChefCall:
 
         # init command
         init_parser = subparsers.add_parser('init', help='initialize the project-dir')
-        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned', default='.')
-        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed', default='.')
+        init_parser.add_argument('-f', '--force', help='re-init an existing project',
+                                 default=False, action='store_true')
+        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned',
+                                 default='.')
+        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed',
+                                 default='.')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
@@ -195,14 +199,13 @@ class ChefCall:
 
 
     def init(self):
-        if not self.config.empty():
+        if not self.clargs.force and not self.config.empty():
             fatal_error('Project in', self.config.project_root(), 'has already been initalized')
 
         self.config.init(self.clargs.menu[0].name,
                     self.clargs.layer_dir,
                     self.clargs.build_dir)
         self.config.save()
-
 
     def generate(self):
         if self.menu is None:
