@@ -66,6 +66,10 @@ class Config:
         return os.path.dirname(self.filename)
 
 
+    def set_menu(self, menu_file):
+        self.cfg['menu'] = os.path.realpath(menu_file)
+
+
     def init(self, menu_file, layer_dir, build_dir):
         self.cfg['menu'] = os.path.realpath(menu_file)
 
