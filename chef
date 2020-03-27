@@ -107,6 +107,8 @@ class ChefCall:
     DEBUG = False
     WARNING = True
 
+    DEFAULT_INIT_BUILD_SCRIPT = 'poky/oe-init-build-env'
+
     def __init__(self):
         parser = argparse.ArgumentParser(prog='Chef')
 
@@ -138,6 +140,9 @@ class ChefCall:
 
         generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
         generate_parser.set_defaults(func=self.generate)
+
+        target_info = subparsers.add_parser('target-info', help='target information')
+        target_info.set_defaults(func=self.target_info)
 
         # prepare command (init + update + generate)
         prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
@@ -389,10 +394,22 @@ BBFILES ?= ""
             file.write("meta-poky/conf\n")
 
 
+    def target_info(self):
+        if self.menu is None:
+            fatal_error('target-info needs a menu')
+
+        for target in self.menu['targets']:
+            path = self.config.build_dir('build-' + target)
+
+            info('target', target, 'build-dir can be initialized by calling')
+            info('  .',
+                 os.path.relpath(self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT),
+                                                       os.getcwd()),
+                 os.path.relpath(path, os.getcwd()))
+
+
     def build_targets(self):
         debug('Building targets')
-
-        # populate_directory() TODO, generate only? update can be long, rewrite menu.
 
         targets = {}
 
@@ -419,13 +436,7 @@ BBFILES ?= ""
             else:
                 image = 'core-image-base'
 
-            if "init-script" in target:
-                init_script = target['init-script']
-            else:
-                init_script = 'poky/oe-init-build-env'
-
-            init_script = self.config.layer_dir(init_script)
-
+            init_script = self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT)
             if not os.path.isfile(init_script):
                 fatal_error('init-script', init_script, 'not found')
 
