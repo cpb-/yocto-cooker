@@ -22,10 +22,34 @@ It also describes the specific lines to be written into the `local.conf` file an
 
 ## `chef` command line arguments
 
+The `chef` command accepts some arguments to know what to do. The first argument is the sub-command name (`cook`, `prepare`, `build`...) sometimes followed by options, menu filename or targets names.
+
+The top-level sub-command proposed by `chef` is:
+
+- `chef cook {menu file} [targets...]`: does the whole production job from the initial configuration up to the final image(s). 
+
+In fact, `chef cook` is equivalent to the two medium-level commands:
+
 - `chef prepare {menu file}` downloads the needed layers, and fills the configuration files into the build sub-directory.
 
 - `chef build [--sdk] [targets...]` runs `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file. With the `--sdk` option on the command line, `chef` will also build the cross-compiler toolchain and headers.
 
+Some finer-grained sub-commands are also available:
+
+- `chef init {menu file}`: store the current menu filename into the `.chefconfig` configuration file. The content of the configuration will be explained later.
+
+- `chef update`: pull the version of each layer indicated in the current menu file.
+
+- `chef generate`: prepare the configuration files (`local.conf`, `bblayers.conf`, `template.conf`) needed by Yocto Project.
+
+In fact `chef prepare menu-file` is equivalent to `chef init menu-file; chef update; chef generate`.
+
+Each time you do some changes in the menu file, you may need to call:
+
+- `chef update`: if you have modified a commit number or you want to pull the latest version of a branch
+- `chef generate`: if you have modified a `local.conf` attribute
+
+Then `chef build` to restart the compilations.
 
 ## How to build a standard image for Raspberry Pi 3?
 
@@ -34,7 +58,7 @@ First, install the `chef` script into a directory included in your `PATH` enviro
 ```
 $ git  clone  https://github.com/cpb-/chef
 $ cd  chef/
-$ pip3 install -r requirements.txt
+$ pip3  install  -r requirements.txt
 $ ln  -sf  $(realpath  chef)  ~/bin
 $ PATH=$PATH:~/bin
 ```
