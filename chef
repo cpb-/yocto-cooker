@@ -347,13 +347,10 @@ class ChefCall:
     def prepare_build_directory(self, path, target):
         debug('Preparing directory:', path)
 
-        if not os.path.isdir(path):
-            os.makedirs(path, exist_ok=True)
+        os.makedirs(path, exist_ok=True)
 
-        os.chdir(path)
-
-        if not os.path.isdir("conf"):
-            os.mkdir("conf")
+        conf_path = os.path.join(path, 'conf')
+        os.makedirs(conf_path, exist_ok=True)
 
         dl_dir = os.path.join(self.config.project_root(), 'downloads')
         dl_dir = '${TOPDIR}/' + os.path.relpath(dl_dir, path)
@@ -361,7 +358,7 @@ class ChefCall:
         sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, path)
 
-        with open('conf/local.conf', 'w') as file:
+        with open(os.path.join(conf_path, 'local.conf'), 'w') as file:
             file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
             for line in target['local.conf']:
                 file.write(line + '\n')
@@ -383,7 +380,7 @@ BB_DISKMON_DIRS ??= "\\
 CONF_VERSION = "1"
 ''')
 
-        with open('conf/bblayers.conf', 'w') as file:
+        with open(os.path.join(conf_path, 'bblayers.conf'), 'w') as file:
             file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
             file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
 BBPATH = "${TOPDIR}"
