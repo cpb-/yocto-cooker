@@ -74,7 +74,7 @@ class Config:
         self.cfg['menu'] = os.path.realpath(menu_file)
 
 
-    def init(self, menu_file, layer_dir, build_dir):
+    def init(self, menu_file, layer_dir, build_dir, dl_dir):
         self.cfg['menu'] = os.path.realpath(menu_file)
 
         if not os.path.isabs(layer_dir):
@@ -85,6 +85,11 @@ class Config:
             build_dir = os.path.relpath(os.path.join(self.project_root(), build_dir), self.project_root())
         self.cfg['build-dir'] = build_dir
 
+        if dl_dir:
+            if not os.path.isabs(dl_dir):
+                fatal_error('dl_dir path should be an absolute path')
+            self.cfg['dl-dir'] = dl_dir
+
 
     def build_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['build-dir'], name)
@@ -92,6 +97,13 @@ class Config:
 
     def layer_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
+
+
+    def dl_dir(self):
+        if 'dl-dir' in self.cfg:
+            return self.cfg['dl-dir']
+        else:
+            return None
 
 
     def menu(self):
@@ -137,6 +149,8 @@ class ChefCall:
                                  default='./sources')
         init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed',
                                  default='.')
+        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved',
+                                 default='')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
@@ -220,7 +234,8 @@ class ChefCall:
 
         self.config.init(self.clargs.menu[0].name,
                          self.clargs.layer_dir,
-                         self.clargs.build_dir)
+                         self.clargs.build_dir,
+                         self.clargs.dl_dir)
         self.config.save()
 
 
@@ -362,6 +377,9 @@ class ChefCall:
             file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
             for line in target['local.conf']:
                 file.write(line + '\n')
+
+            if self.config.dl_dir():
+                file.write('DL_DIR = "{}"\n'.format(self.config.dl_dir()))
 
             file.write('DL_DIR ?= "{}"\n'.format(dl_dir))
             file.write('SSTATE_DIR ?= "{}"\n'.format(sstate_dir))
