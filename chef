@@ -134,7 +134,7 @@ class ChefCall:
         init_parser.add_argument('-f', '--force', help='re-init an existing project',
                                  default=False, action='store_true')
         init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned',
-                                 default='.')
+                                 default='./sources')
         init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed',
                                  default='.')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
