@@ -86,11 +86,11 @@ class Config:
         self.cfg['build-dir'] = build_dir
 
 
-    def build_dir(self, name = ''):
+    def build_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['build-dir'], name)
 
 
-    def layer_dir(self, name = ''):
+    def layer_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
 
 
@@ -219,8 +219,8 @@ class ChefCall:
             fatal_error('Project in', self.config.project_root(), 'has already been initalized')
 
         self.config.init(self.clargs.menu[0].name,
-                    self.clargs.layer_dir,
-                    self.clargs.build_dir)
+                         self.clargs.layer_dir,
+                         self.clargs.build_dir)
         self.config.save()
 
 
@@ -261,7 +261,7 @@ class ChefCall:
     def download_source(self, source):
         method = 'git'
         remote_dir = ''
-        local_dir  = ''
+        local_dir = ''
 
         if 'method' in source:
             method = source['method']
@@ -278,7 +278,7 @@ class ChefCall:
             except Exception as e:
                 fatal_error('url-parse-error', source['url'], e)
 
-            remote_dir = url.geturl();
+            remote_dir = url.geturl()
             if local_dir == '':
                 local_dir = url.path[1:]
 
@@ -405,8 +405,7 @@ BBFILES ?= ""
 
             info('target', target, 'build-dir can be initialized by calling')
             info('  .',
-                 os.path.relpath(self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT),
-                                                       os.getcwd()),
+                 os.path.relpath(self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
                  os.path.relpath(path, os.getcwd()))
 
 
