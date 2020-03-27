@@ -17,12 +17,15 @@ def debug(*args):
     if ChefCall.DEBUG:
         print(*args)
 
+
 def info(*args):
     print(*args)
+
 
 def warn(*args):
     if ChefCall.WARNING:
         print('WARN:', *args)
+
 
 def fatal_error(*args):
     print('FATAL:', *args)
@@ -30,14 +33,14 @@ def fatal_error(*args):
 
 
 class Config:
-    DEFAULT_FILENAME = '.chefconfig'
+    DEFAULT_CONFIG_FILENAME = '.chefconfig'
 
     def __init__(self):
-        debug('Looking for', Config.DEFAULT_FILENAME)
+        debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
 
         path = os.getcwd().split(os.sep)
         while path:
-            filename = '/' + os.path.join(*path, self.DEFAULT_FILENAME)
+            filename = '/' + os.path.join(*path, self.DEFAULT_CONFIG_FILENAME)
 
             debug(' Trying', filename)
 
@@ -57,10 +60,11 @@ class Config:
 
             path.pop() # cd ..
 
-        self.filename = os.path.join(os.getcwd(), self.DEFAULT_FILENAME)
+        self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
         self.cfg = {}
 
         debug('No config-file found - using default file', self.filename)
+
 
     def project_root(self):
         return os.path.dirname(self.filename)
@@ -98,6 +102,7 @@ class Config:
         debug('Saving configuration file')
         with open(self.filename, 'w') as json_file:
             json.dump(self.cfg, json_file, indent=4)
+
 
     def empty(self):
         return 'menu' not in self.cfg
@@ -226,7 +231,7 @@ class ChefCall:
 
     def generate(self):
         if self.menu is None:
-            fatal_error('command generate needs a menu')
+            fatal_error('generate needs a menu')
 
         info('Generating build dirs for target in project directory')
 
