@@ -77,18 +77,10 @@ class Config:
     def init(self, menu_file, layer_dir, build_dir, dl_dir):
         self.cfg['menu'] = os.path.realpath(menu_file)
 
-        if not os.path.isabs(layer_dir):
-            layer_dir = os.path.relpath(os.path.join(self.project_root(), layer_dir), self.project_root())
-        self.cfg['layer-dir'] = layer_dir
-
-        if not os.path.isabs(build_dir):
-            build_dir = os.path.relpath(os.path.join(self.project_root(), build_dir), self.project_root())
-        self.cfg['build-dir'] = build_dir
-
-        if dl_dir:
-            if not os.path.isabs(dl_dir):
-                fatal_error('dl_dir path should be an absolute path')
-            self.cfg['dl-dir'] = dl_dir
+        # paths in the config-file are relative to the project-dir
+        self.cfg['layer-dir'] = os.path.relpath(layer_dir, self.project_root())
+        self.cfg['build-dir'] = os.path.relpath(build_dir, self.project_root())
+        self.cfg['dl-dir'] = os.path.relpath(dl_dir, self.project_root())
 
 
     def build_dir(self, name=''):
@@ -100,10 +92,7 @@ class Config:
 
 
     def dl_dir(self):
-        if 'dl-dir' in self.cfg:
-            return self.cfg['dl-dir']
-        else:
-            return None
+        return os.path.join(self.project_root(), self.cfg['dl-dir'])
 
 
     def menu(self):
@@ -146,11 +135,11 @@ class ChefCall:
         init_parser.add_argument('-f', '--force', help='re-init an existing project',
                                  default=False, action='store_true')
         init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned',
-                                 default='./sources')
+                                 default='sources')
         init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed',
                                  default='.')
         init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved',
-                                 default='')
+                                 default='downloads')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
@@ -367,8 +356,7 @@ class ChefCall:
         conf_path = os.path.join(path, 'conf')
         os.makedirs(conf_path, exist_ok=True)
 
-        dl_dir = os.path.join(self.config.project_root(), 'downloads')
-        dl_dir = '${TOPDIR}/' + os.path.relpath(dl_dir, path)
+        dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), path)
 
         sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, path)
@@ -378,10 +366,7 @@ class ChefCall:
             for line in target['local.conf']:
                 file.write(line + '\n')
 
-            if self.config.dl_dir():
-                file.write('DL_DIR = "{}"\n'.format(self.config.dl_dir()))
-
-            file.write('DL_DIR ?= "{}"\n'.format(dl_dir))
+            file.write('DL_DIR = "{}"\n'.format(dl_dir))
             file.write('SSTATE_DIR ?= "{}"\n'.format(sstate_dir))
 
             file.write('''DISTRO ?= "poky"
