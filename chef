@@ -5,13 +5,12 @@ __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __license__ = "GPL"
 
 import argparse
-import jsonschema
 import json
-import os
-import shutil
 import sys
-
+import os
 from urllib.parse import urlparse
+import jsonschema
+
 
 def debug(*args):
     if ChefCall.DEBUG:
@@ -286,7 +285,6 @@ class ChefCall:
             if local_dir == '':
                 local_dir = url.path[1:]
 
-        # TODO check if local dir breaks out of project-dir
         local_dir = os.path.realpath(self.config.layer_dir(local_dir))
 
         if not os.path.isdir(local_dir):
