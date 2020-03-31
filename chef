@@ -229,6 +229,7 @@ class ChefCall:
 
     def cook(self):
         self.prepare()
+        self.clargs.sdk = True
         self.build_targets()
 
 
