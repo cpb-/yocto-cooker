@@ -38,6 +38,10 @@ class Config:
     def __init__(self):
         debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
 
+        self.cfg = {}
+        self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
+        self.defaults()
+
         path = os.getcwd().split(os.sep)
         while path:
             filename = '/' + os.path.join(*path, self.DEFAULT_CONFIG_FILENAME)
@@ -60,10 +64,8 @@ class Config:
 
             path.pop() # cd ..
 
-        self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
-        self.cfg = {}
 
-        debug('No config-file found - using default file', self.filename)
+        debug('No config-file found. Will save to', self.filename)
 
 
     def project_root(self):
@@ -76,11 +78,14 @@ class Config:
 
     def init(self, menu_file, layer_dir, build_dir, dl_dir):
         self.cfg['menu'] = os.path.realpath(menu_file)
-
         # paths in the config-file are relative to the project-dir
         self.cfg['layer-dir'] = os.path.relpath(layer_dir, self.project_root())
         self.cfg['build-dir'] = os.path.relpath(build_dir, self.project_root())
         self.cfg['dl-dir'] = os.path.relpath(dl_dir, self.project_root())
+
+
+    def defaults(self):
+        self.init('', 'sources', 'builds', 'download')
 
 
     def build_dir(self, name=''):
@@ -124,45 +129,39 @@ class ChefCall:
         # parsing subcommand's arguments
         subparsers = parser.add_subparsers(help='subcommands of Chef')
 
-	# cook command
+        # `cook` command (`prepare` + `build`)
         cook_parser = subparsers.add_parser('cook', help='prepare the directories and build the targets of the menu')
         cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         cook_parser.add_argument('targets', help='target to build', nargs='*')
         cook_parser.set_defaults(func=self.cook)
 
-        # init command
+        # `prepare` command (`init` + `update` + `generate`)
+        prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
+        prepare_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        prepare_parser.set_defaults(func=self.prepare)
+
+        # `init` command
         init_parser = subparsers.add_parser('init', help='initialize the project-dir')
         init_parser.add_argument('-f', '--force', help='re-init an existing project',
                                  default=False, action='store_true')
-        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned',
-                                 default='sources')
-        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed',
-                                 default='.')
-        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved',
-                                 default='downloads')
+        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned')
+        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
+        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
+        # `update` command
         update_parser = subparsers.add_parser('update', help='update source layers')
         update_parser.set_defaults(func=self.update)
 
+        # `generate` command
         generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
         generate_parser.set_defaults(func=self.generate)
 
         target_info = subparsers.add_parser('target-info', help='target information')
         target_info.set_defaults(func=self.target_info)
 
-        # prepare command (init + update + generate)
-        prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
-        prepare_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
-        prepare_parser.set_defaults(func=self.prepare)
-
-        # clear command
-        #clear_parser = subparsers.add_parser('clear', help='clear the current directory')
-        #clear_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs='?')
-        #clear_parser.set_defaults(func=clear_directory)
-
-        # build command
+        # `build` command
         build_parser = subparsers.add_parser('build', help='build the targets from the menu')
         build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         build_parser.add_argument('targets', help='target to build', nargs='*')
