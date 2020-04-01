@@ -311,7 +311,7 @@ class ChefCall:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            if os.system('git clone {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+            if os.system('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
                 fatal_error('Unable to clone', remote_dir)
 
 
@@ -344,6 +344,10 @@ class ChefCall:
                 info('Updating source {}... '.format(local_dir))
                 if os.system('cd ' + local_dir + '; git checkout ' + commit + redirect) != 0:
                     fatal_error('Unable to checkout commit {} for {}'.format(commit, local_dir))
+
+            if os.system('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
+                fatal_error('Unable to update submodules in ' + local_dir)
+
 
 
     def prepare_build_directory(self, path, target):
