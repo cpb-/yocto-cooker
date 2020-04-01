@@ -447,11 +447,15 @@ BBFILES ?= ""
             command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, image)
 
             debug('    Executing : "{}"'.format(command_line))
-            os.system(command_line)
+            if os.system(command_line) != 0:
+                fatal_error('execution of "{}" failed'.format(command_line))
+
             if self.clargs.sdk:
                 command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, image)
                 debug('    Executing : "{}"'.format(command_line))
-                os.system(command_line)
+                if os.system(command_line) != 0:
+                    fatal_error('execution of "{}" failed'.format(command_line))
+
         except Exception as e:
             fatal_error('build for', target_name, 'failed', e)
 
