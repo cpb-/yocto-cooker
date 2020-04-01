@@ -132,18 +132,22 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 ## Directory map
 
-`chef` downloads the needed sources in the current working directory and create a build sub-directory.
-For example, after running `chef prepare {menu file}`, the working directory could contains:
+`chef` downloads the needed layers in the `sources` directory and create the target sub-directories into the `builds` directory. For example, after running `chef prepare {menu file}`, the working directory could contains:
 
 ```
-./---+--- poky/
-     +--- meta-openembedded/
-     +--- meta-raspberrypi/
-     +--- meta-sunxi/
-     +--- meta-custom-layer/
-     +--- build-bananapi/
-     +--- build-pi3/
-     +--- build-pi4/
+./---+---sources-+--- poky/
+     |           +--- meta-openembedded/
+     |           +--- meta-raspberrypi/
+     |           +--- meta-sunxi/
+     |           +--- meta-custom-layer/
+     |
+     +---builds--+--- build-bananapi/
+     |           +--- build-pi3/
+     |           +--- build-pi4/
+     |
+     +-download--+- (packages dowloaded by bitbake)
+     |
+     +-sstate-cache--...
 ```
 
 
