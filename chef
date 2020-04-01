@@ -361,11 +361,15 @@ class ChefCall:
 
         with open(os.path.join(conf_path, 'local.conf'), 'w') as file:
             file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+
+            layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), path))
+
+            file.write('CHEF_LAYER_DIR = "{}"\n'.format(layer_dir))
+            file.write('DL_DIR = "{}"\n'.format(dl_dir))
+            file.write('SSTATE_DIR = "{}"\n'.format(sstate_dir))
+
             for line in target['local.conf']:
                 file.write(line + '\n')
-
-            file.write('DL_DIR = "{}"\n'.format(dl_dir))
-            file.write('SSTATE_DIR ?= "{}"\n'.format(sstate_dir))
 
             file.write('''DISTRO ?= "poky"
 PACKAGE_CLASSES ?= "package_rpm"
