@@ -5,12 +5,22 @@
 
 Meta buildtool for Yocto Project based Linux embedded systems
 
-The aim of this project is to prepare the needed directories and configuration files before running a Yocto Project build.
+The aim of this project is to prepare the needed directories and configuration
+files before running a Yocto Project build.
 
-The tool is called `chef` to follow the culinary metaphore specific to the Yocto Project.
+The tool is called `chef` to follow the culinary metaphore specific to the
+Yocto Project.
 
-`chef` uses a configuration file called a _menu_ :-) which describes which sources (git repositories for example) have to be downloaded and which commits have to be extracted.
-It also describes the specific lines to be written into the `local.conf` file and which layers have to be selected.
+`chef` uses a project file called a _menu_ :-).
+
+A menu describes which sources (layers) (git repositories for example)
+have to be downloaded and which revision has to be checked out.
+
+It also contains custom lines to be written into the `local.conf` file and
+which layers have to be included.
+
+With the help of a _menu_ a reproducible build can achieved. Menu-files are
+files written in JSON and cna thus be stored anywhere.
 
 `chef` can also call directly `bitbake` to run the build.
 
@@ -22,31 +32,44 @@ It also describes the specific lines to be written into the `local.conf` file an
 
 ## `chef` command line arguments
 
-The `chef` command accepts some arguments to know what to do. The first argument is the sub-command name (`cook`, `prepare`, `build`...) sometimes followed by options, menu filename or targets names.
+The `chef` command accepts some arguments to know what to do. `The first
+argument is the sub-command name (`cook`, `prepare`, `build`...) sometimes
+followed by options, menu filename or targets names.
 
 The top-level sub-command proposed by `chef` is:
 
-- `chef cook {menu file} [targets...]`: does the whole production job from the initial configuration up to the final image(s). 
+- `chef cook {menu file} [targets...]`: does the whole production job from the
+  initial configuration up to the final image(s).
 
 In fact, `chef cook` is equivalent to the two medium-level commands:
 
-- `chef prepare {menu file}` downloads the needed layers, and fills the configuration files into the build sub-directory.
+- `chef prepare {menu file}` downloads the needed layers, and fills the
+  configuration files into the build sub-directory.
 
-- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given targets. If no target are indicated on the command line, `chef` builds all the targets of the menu file. With the `--sdk` option on the command line, `chef` will also build the cross-compiler toolchain and headers.
+- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given
+  targets. If no target are indicated on the command line, `chef` builds all
+  the targets of the menu file. With the `--sdk` option on the command line,
+  `chef` will also build the cross-compiler toolchain and headers.
 
-Some finer-grained sub-commands are also available:
+The higher level commands are based on the following low-level sub-commands:
 
-- `chef init {menu file}`: store the current menu filename into the `.chefconfig` configuration file. The content of the configuration will be explained later.
+- `chef init {menu file}`: store the current menu filename into the
+  `.chefconfig` configuration file. The content of the configuration will be
+  explained later.
 
-- `chef update`: pull the version of each layer indicated in the current menu file.
+- `chef update`: fetch and checkout the version of each layer indicated in the
+  current menu file.
 
-- `chef generate`: prepare the configuration files (`local.conf`, `bblayers.conf`, `template.conf`) needed by Yocto Project.
+- `chef generate`: prepare the build-dir and configuration files (`local.conf`,
+  `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-In fact `chef prepare menu-file` is equivalent to `chef init menu-file; chef update; chef generate`.
+In fact `chef prepare menu-file` is equivalent to `chef init menu-file; chef
+update; chef generate`.
 
 Each time you do some changes in the menu file, you may need to call:
 
-- `chef update`: if you have modified a commit number or you want to pull the latest version of a branch
+- `chef update`: if you have modified a commit number or you want to pull the
+  latest version of a branch
 - `chef generate`: if you have modified a `local.conf` attribute
 
 Then `chef build` to restart the compilations.
