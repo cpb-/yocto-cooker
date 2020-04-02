@@ -30,6 +30,20 @@ files written in JSON and cna thus be stored anywhere.
 - [Christophe Blaess](https://github.com/cpb-/)
 - [Patrick Boettcher](https://github.com/pboettch)
 
+## Installing `chef`
+
+Install the `chef` script as follows:
+
+```
+$ git  clone  https://github.com/cpb-/chef
+$ cd  chef/
+$ pip3  install  -r requirements.txt
+$ ln  -sf  $(realpath  chef)  ~/bin
+```
+
+Ensure the `~/bin` directory is in your `PATH` environment variable.
+Otherwise invoke `PATH=$PATH:~/bin` before starting to work with `chef`.
+
 ## `chef` command line arguments
 
 The `chef` command accepts some arguments to know what to do. The first
@@ -76,17 +90,7 @@ Then `chef build` to restart the compilations.
 
 ## How to build a standard image for Raspberry Pi 3?
 
-First, install the `chef` script into a directory included in your `PATH` environment variable:
-
-```
-$ git  clone  https://github.com/cpb-/chef
-$ cd  chef/
-$ pip3  install  -r requirements.txt
-$ ln  -sf  $(realpath  chef)  ~/bin
-$ PATH=$PATH:~/bin
-```
-
-Then enter a work directory where the build will take place:
+Enter a work directory where the build will take place:
 
 ```
 $ mkdir  ~/build-dir
