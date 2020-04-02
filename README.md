@@ -32,7 +32,7 @@ files written in JSON and cna thus be stored anywhere.
 
 ## `chef` command line arguments
 
-The `chef` command accepts some arguments to know what to do. `The first
+The `chef` command accepts some arguments to know what to do. The first
 argument is the sub-command name (`cook`, `prepare`, `build`...) sometimes
 followed by options, menu filename or targets names.
 
