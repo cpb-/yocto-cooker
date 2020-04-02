@@ -37,9 +37,13 @@ class Config:
     def __init__(self):
         debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
 
-        self.cfg = {}
+        self.cfg = {
+            'menu': '',
+            'layer-dir': 'layers',
+            'build-dir': 'builds',
+            'dl-dir': 'downloads',
+        }
         self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
-        self.defaults()
 
         path = os.getcwd().split(os.sep)
         while path:
@@ -63,8 +67,7 @@ class Config:
 
             path.pop() # cd ..
 
-
-        debug('No config-file found. Will save to', self.filename)
+        debug('No config-file found. Will be using', self.filename)
 
 
     def project_root(self):
@@ -75,24 +78,25 @@ class Config:
         self.cfg['menu'] = os.path.realpath(menu_file)
 
 
-    def init(self, menu_file, layer_dir, build_dir, dl_dir):
-        self.cfg['menu'] = os.path.realpath(menu_file)
+    def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
-        self.cfg['layer-dir'] = os.path.relpath(layer_dir, self.project_root())
-        self.cfg['build-dir'] = os.path.relpath(build_dir, self.project_root())
-        self.cfg['dl-dir'] = os.path.relpath(dl_dir, self.project_root())
+        self.cfg['layer-dir'] = os.path.relpath(path, self.project_root())
 
 
-    def defaults(self):
-        self.init('', 'sources', 'builds', 'download')
+    def layer_dir(self, name=''):
+        return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
+
+
+    def set_build_dir(self, path):
+        self.cfg['build-dir'] = os.path.relpath(path, self.project_root())
 
 
     def build_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['build-dir'], name)
 
 
-    def layer_dir(self, name=''):
-        return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
+    def set_dl_dir(self, path):
+        self.cfg['dl-dir'] = os.path.relpath(path, self.project_root())
 
 
     def dl_dir(self):
@@ -110,158 +114,43 @@ class Config:
 
 
     def empty(self):
-        return 'menu' not in self.cfg
+        return not self.cfg['menu']
 
 
-class ChefCall:
-    DEBUG = False
-    WARNING = True
+class ChefCommands:
+    """ The class aggregates all functions representing a low-lever chef-command """
 
     DEFAULT_INIT_BUILD_SCRIPT = 'poky/oe-init-build-env'
 
-    def __init__(self):
-        parser = argparse.ArgumentParser(prog='Chef')
-
-        parser.add_argument('--debug', action='store_true', help='activate debug printing')
-        parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
-
-        # parsing subcommand's arguments
-        subparsers = parser.add_subparsers(help='subcommands of Chef')
-
-        # `cook` command (`prepare` + `build`)
-        cook_parser = subparsers.add_parser('cook', help='prepare the directories and build the targets of the menu')
-        cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
-        cook_parser.add_argument('targets', help='target to build', nargs='*')
-        cook_parser.set_defaults(func=self.cook)
-
-        # `prepare` command (`init` + `update` + `generate`)
-        prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
-        prepare_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
-        prepare_parser.set_defaults(func=self.prepare)
-
-        # `init` command
-        init_parser = subparsers.add_parser('init', help='initialize the project-dir')
-        init_parser.add_argument('-f', '--force', help='re-init an existing project',
-                                 default=False, action='store_true')
-        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned')
-        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
-        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
-        init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
-        init_parser.set_defaults(func=self.init)
-
-        # `update` command
-        update_parser = subparsers.add_parser('update', help='update source layers')
-        update_parser.set_defaults(func=self.update)
-
-        # `generate` command
-        generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
-        generate_parser.set_defaults(func=self.generate)
-
-        target_info = subparsers.add_parser('target-info', help='target information')
-        target_info.set_defaults(func=self.target_info)
-
-        # `build` command
-        build_parser = subparsers.add_parser('build', help='build the targets from the menu')
-        build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-        build_parser.add_argument('targets', help='target to build', nargs='*')
-        build_parser.set_defaults(func=self.build_targets)
-
-        self.clargs = parser.parse_args()
-
-        ChefCall.DEBUG = self.clargs.debug
-
-        # find and initialize config
-        self.config = Config()
-
-        debug('Project root', self.config.project_root())
-
-        if self.config.empty():
-            debug('empty config')
-        else:
-            debug('config present')
-
-        # figure out which menu-file to use
-        menu_file = None
-        if 'menu' in self.clargs and self.clargs.menu is not None: # menu-file from the cmdline has priority
-            menu_file = self.clargs.menu[0]
-        elif not self.config.empty(): # or the one from the config-file
-            try:
-                menu_file = open(self.config.menu())
-            except Exception as e:
-                fatal_error('menu load error', e)
-
-        self.menu = None
-        if menu_file:
-            try:
-                self.menu = json.load(menu_file)
-            except Exception as e:
-                fatal_error('menu load error:', e)
-
-            script_path = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
-                schema = json.load(schema_file)
-                try:
-                    jsonschema.validate(self.menu, schema)
-                except Exception as e:
-                    fatal_error('menu file validation failed:', e)
-
-                debug('menu file validation passed')
-
-        if 'func' in self.clargs:
-            self.clargs.func() # call function of selected command
-        else:
-            debug('no function selected, did nothing')
-
-        sys.exit(0)
+    def __init__(self, config, menu):
+        self.config = config
+        self.menu = menu
 
 
-    def init(self):
-        if not self.clargs.force and not self.config.empty():
-            fatal_error('Project in', self.config.project_root(), 'has already been initalized')
+    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
+        """ chef-command 'init': (re)set the configuration file """
+        self.config.set_menu(menu_name)
 
-        self.config.init(self.clargs.menu[0].name,
-                         self.clargs.layer_dir,
-                         self.clargs.build_dir,
-                         self.clargs.dl_dir)
+        if layer_dir:
+            self.config.set_layer_dir(layer_dir)
+
+        if build_dir:
+            self.config.set_build_dir(build_dir)
+
+        if dl_dir:
+            self.config.set_dl_dir(dl_dir)
+
         self.config.save()
-
-
-    def cook(self):
-        self.prepare()
-        self.clargs.sdk = True
-        self.build_targets()
-
-
-    def generate(self):
-        if self.menu is None:
-            fatal_error('generate needs a menu')
-
-        info('Generating build dirs for target in project directory')
-
-        for target, content in self.menu['targets'].items():
-            directory = self.config.build_dir('build-' + target)
-            self.prepare_build_directory(directory, content)
 
 
     def update(self):
-        if self.menu is None:
-            fatal_error('update generate needs a menu')
-
         info('Update layers in project directory')
 
         for source in self.menu['sources']:
-            self.download_source(source)
+            self.update_source(source)
 
 
-    def prepare(self):
-        self.config.set_menu(self.clargs.menu[0].name)
-        self.config.save()
-
-        self.update()
-        self.generate()
-
-
-    def download_source(self, source):
+    def update_source(self, source):
         method = 'git'
         remote_dir = ''
         local_dir = ''
@@ -288,7 +177,7 @@ class ChefCall:
         local_dir = os.path.realpath(self.config.layer_dir(local_dir))
 
         if not os.path.isdir(local_dir):
-            self.download_directory(method, remote_dir, local_dir)
+            self.update_directory_initial(method, remote_dir, local_dir)
 
         branch = ''
         if 'branch' in source:
@@ -302,10 +191,10 @@ class ChefCall:
             self.update_directory(method, local_dir, remote_dir != '', branch, commit)
 
 
-    def download_directory(self, method, remote_dir, local_dir):
+    def update_directory_initial(self, method, remote_dir, local_dir):
         info('Downloading source from ', remote_dir)
 
-        if self.clargs.verbose:
+        if ChefCall.VERBOSE:
             redirect = ''
         else:
             redirect = ' >/dev/null 2>&1'
@@ -316,7 +205,7 @@ class ChefCall:
 
 
     def update_directory(self, method, local_dir, has_remote, branch, commit):
-        if self.clargs.verbose:
+        if ChefCall.VERBOSE:
             redirect = ''
         else:
             redirect = ' >/dev/null 2>&1'
@@ -348,6 +237,13 @@ class ChefCall:
             if os.system('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
                 fatal_error('Unable to update submodules in ' + local_dir)
 
+
+    def generate(self):
+        info('Generating build dirs for target in project directory')
+
+        for target, content in self.menu['targets'].items():
+            directory = self.config.build_dir('build-' + target)
+            self.prepare_build_directory(directory, content)
 
 
     def prepare_build_directory(self, path, target):
@@ -406,36 +302,33 @@ BBFILES ?= ""
 
 
     def target_info(self):
-        if self.menu is None:
-            fatal_error('target-info needs a menu')
-
         for target in self.menu['targets']:
             path = self.config.build_dir('build-' + target)
 
             info('target', target, 'build-dir can be initialized by calling')
             info('  .',
-                 os.path.relpath(self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
+                 os.path.relpath(self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
                  os.path.relpath(path, os.getcwd()))
 
 
-    def build_targets(self):
+    def build(self, targets, sdk):
         debug('Building targets')
 
-        targets = {}
+        filtered_targets = {}
 
-        if self.clargs.targets: # filter out unwanted targets
-            for target in self.clargs.targets:
+        if targets: # filter out unwanted targets
+            for target in targets:
                 if not target in self.menu['targets']:
                     fatal_error('target', target, 'not defined in menu')
-                targets[target] = self.menu['targets'][target]
+                filtered_targets[target] = self.menu['targets'][target]
         else: # use all targets
-            targets = self.menu['targets']
+            filtered_targets = self.menu['targets']
 
-        for name, target in targets.items():
-            self.build_target(name, target)
+        for name, target in filtered_targets.items():
+            self.build_target(name, target, sdk)
 
 
-    def build_target(self, target_name, target):
+    def build_target(self, target_name, target, sdk):
         try:
             info('Building target', target_name)
 
@@ -446,7 +339,7 @@ BBFILES ?= ""
             else:
                 image = 'core-image-base'
 
-            init_script = self.config.layer_dir(ChefCall.DEFAULT_INIT_BUILD_SCRIPT)
+            init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
             if not os.path.isfile(init_script):
                 fatal_error('init-script', init_script, 'not found')
 
@@ -456,7 +349,7 @@ BBFILES ?= ""
             if os.system(command_line) != 0:
                 fatal_error('execution of "{}" failed'.format(command_line))
 
-            if self.clargs.sdk:
+            if sdk:
                 command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, image)
                 debug('    Executing : "{}"'.format(command_line))
                 if os.system(command_line) != 0:
@@ -466,37 +359,165 @@ BBFILES ?= ""
             fatal_error('build for', target_name, 'failed', e)
 
 
+class ChefCall:
+    """
+    ChefCall represents a call of the chef-tool, handled all arguments, opens the config-file,
+    loads the menu, checks the menu and calls the appropriate low-level commands
+    """
+
+    DEBUG = False
+    WARNING = True
+    VERBOSE = False
+
+    def __init__(self):
+        parser = argparse.ArgumentParser(prog='Chef')
+
+        parser.add_argument('--debug', action='store_true', help='activate debug printing')
+        parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
+
+        # parsing subcommand's arguments
+        subparsers = parser.add_subparsers(help='subcommands of Chef')
+
+        # `cook` command (`prepare` + `build`)
+        cook_parser = subparsers.add_parser('cook', help='prepare the directories and build the targets of the menu')
+        cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        cook_parser.add_argument('targets', help='target to build', nargs='*')
+        cook_parser.set_defaults(func=self.cook)
+
+        # `prepare` command (`init` + `update` + `generate`)
+        prepare_parser = subparsers.add_parser('prepare', help='create the content of the menu')
+        prepare_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        prepare_parser.set_defaults(func=self.prepare)
+
+        # `init` command
+        init_parser = subparsers.add_parser('init', help='initialize the project-dir')
+        init_parser.add_argument('-f', '--force', help='re-init an existing project',
+                                 default=False, action='store_true')
+        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned')
+        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
+        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
+        init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        init_parser.set_defaults(func=self.init)
+
+        # `update` command
+        update_parser = subparsers.add_parser('update', help='update source layers')
+        update_parser.set_defaults(func=self.update)
+
+        # `generate` command
+        generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
+        generate_parser.set_defaults(func=self.generate)
+
+        target_info = subparsers.add_parser('target-info', help='target information')
+        target_info.set_defaults(func=self.target_info)
+
+        # `build` command
+        build_parser = subparsers.add_parser('build', help='build the targets from the menu')
+        build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
+        build_parser.add_argument('targets', help='target to build', nargs='*')
+        build_parser.set_defaults(func=self.build)
+
+        self.clargs = parser.parse_args()
+
+        ChefCall.DEBUG = self.clargs.debug
+        ChefCall.VERBOSE = self.clargs.verbose
+
+        # find and initialize config
+        self.config = Config()
+
+        debug('Project root', self.config.project_root())
+
+        if self.config.empty():
+            debug('empty config')
+        else:
+            debug('config present')
+
+        # figure out which menu-file to use
+        menu_file = None
+        if 'menu' in self.clargs and self.clargs.menu is not None: # menu-file from the cmdline has priority
+            menu_file = self.clargs.menu[0]
+        elif not self.config.empty(): # or the one from the config-file
+            try:
+                menu_file = open(self.config.menu())
+            except Exception as e:
+                fatal_error('menu load error', e)
+
+        self.menu = None
+        if menu_file:
+            try:
+                self.menu = json.load(menu_file)
+            except Exception as e:
+                fatal_error('menu load error:', e)
+
+            script_path = os.path.dirname(os.path.realpath(__file__))
+            with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+                schema = json.load(schema_file)
+                try:
+                    jsonschema.validate(self.menu, schema)
+                except Exception as e:
+                    fatal_error('menu file validation failed:', e)
+
+                debug('menu file validation passed')
+
+        self.commands = ChefCommands(self.config, self.menu)
+
+        if 'func' in self.clargs:
+            self.clargs.func() # call function of selected command
+        else:
+            debug('no function selected, did nothing')
+
+        sys.exit(0)
+
+
+    def init(self):
+        """ function use by command-line-arg-parser as entry point for the 'init' """
+        if not self.clargs.force and not self.config.empty():
+            fatal_error('Project in', self.config.project_root(), 'has already been initalized')
+
+        self.commands.init(self.clargs.menu[0].name,
+                           self.clargs.layer_dir,
+                           self.clargs.build_dir,
+                           self.clargs.dl_dir)
+
+
+    def update(self):
+        """ entry point for 'update' """
+        if self.menu is None:
+            fatal_error('update needs a menu')
+
+        self.commands.update()
+
+
+    def prepare(self):
+        self.commands.init(self.clargs.menu[0].name)
+        self.commands.update()
+        self.commands.generate()
+
+
+    def cook(self):
+        self.prepare()
+        self.commands.build(self.clargs.targets, True)
+
+
+    def generate(self):
+        if self.menu is None:
+            fatal_error('generate needs a menu')
+
+        self.commands.generate()
+
+
+    def target_info(self):
+        if self.menu is None:
+            fatal_error('target-info needs a menu')
+
+        self.commands.target_info()
+
+
+    def build(self):
+        if self.menu is None:
+            fatal_error('build needs a menu')
+
+        self.commands.build(self.clargs.targets, self.clargs.sdk)
+
+
 if __name__ == '__main__':
     ChefCall()
-
-
-#def clear_directory():
-#    debug('Clearing directory')
-#
-#    try:
-#        for source in Menu['sources']:
-#            remove_source(source)
-#
-#        for target in Menu['targets']:
-#            directory = 'build-' + target
-#            remove_directory(directory)
-#    except:
-#        raise
-#    return 0
-#
-#
-#def remove_directory(directory):
-#    debug('  Removing directory "{}"'.format(directory))
-#
-#    if os.path.isdir(directory):
-#        shutil.rmtree(directory, ignore_errors=True)
-#
-#
-#def remove_source(source):
-#    if 'url' in source:
-#        try:
-#            url = urlparse(source['url'])
-#            remove_directory(url.path[1:])
-#        except:
-#            raise
-#
