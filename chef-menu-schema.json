@@ -45,6 +45,7 @@
                         "minLength": 1
                     }
                 },
+                "required": ["url"],
                 "additionalProperties": false
             }
         },
