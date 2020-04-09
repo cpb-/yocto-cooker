@@ -38,7 +38,7 @@ Install the `chef` script as follows:
 $ git  clone  https://github.com/cpb-/chef
 $ cd  chef/
 $ pip3  install  -r requirements.txt
-$ ln  -sf  $(realpath  chef)  ~/bin
+$ sudo  ln  -sf  $(realpath  chef)  /usr/local/bin
 ```
 
 Ensure the `~/bin` directory is in your `PATH` environment variable.
