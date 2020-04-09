@@ -1,0 +1,73 @@
+{
+	"notes" : [
+
+		" To install a Yocto Project image on a Raspberry Pi Compute Module 3, follow this steps:     ",
+
+		" - Install the development package of libusb ('sudo apt install libusb-dev')                 ",
+
+		" $ git clone --depth=1 https://github.com/raspberrypi/usbboot                                ",
+		" $ cd usbboot                                                                                ",
+		" $ make                                                                                      ",
+		" $ sudo cp rpiboot /usr/bin/                                                                 ",
+		" $ cd ..                                                                                     ",
+
+		" - Set the `Slave/Boot` jumper of the Compute Module Develoment Kit on `Slave`               ",
+		" - Plug the USB Slave socket of the Compute Modude Development Kit to your PC                ",
+
+		" $ sudo rpiboot                                                                              ",
+		" - Power on the Compute Module Development Kit (plug the second micro-USB socket)            ",
+		"   Wait for `rpiboot` to indicate that the system is detected.                               ",
+
+		" - Use `lsblk` to see the device name of the Raspberry Pi CM 3 eMMC.                         ",
+		" - Unmount the eMMC partitions if needed.                                                    ",
+		" - Write the Yocto Project image (`.rpi-sdimg` file) on the eMMC partition.                  ",
+
+		" - Turn off the Development Kit and place the Slave/Boot jumper on `Boot`                    ",
+		" - Turn on the Development Kit to boot the Raspberry Pi CM 3.                                "
+
+	],
+
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "commit": "4c773c7b03fb4596cd3873261de438dfd7b44158" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "commit": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "warrior", "commit": "5551792e642d6cc32e22dfe6dbfd29ac3e2390cd" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"targets" : {
+
+		"pi-cm3-uboot": {
+
+			"notes": [
+				"Base image for Raspberry Pi Compute Module 3 with U-boot as secondary bootloader.  ",
+				"The image to write to the eMMC is:                                                 ",
+				"build-pi-cm3-uboot/tmp/deploy/images/raspberrypi-cm3/core-image-base-raspberrypi-cm3.rpi-sdimg"
+			],
+
+			"image" : "core-image-base",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE          = 'raspberrypi-cm3'  ",
+
+				"ENABLE_UART      = '1'                ",
+				"RPI_USE_U_BOOT   = '1'                ",
+
+				"INHERIT += 'extrausers'   ",
+				"EXTRA_USERS_PARAMS_append = 'usermod -P root  root;' ",
+				"EXTRA_USERS_PARAMS_append = 'useradd -P pi    pi;'  "
+
+			]
+		}
+	}
+}
+
