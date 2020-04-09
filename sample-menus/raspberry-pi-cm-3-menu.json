@@ -53,7 +53,7 @@
 			"image" : "core-image-base",
 
 			"layers" : [
-					"meta-raspberrypi"
+				"meta-raspberrypi"
 			],
 
 			"local.conf": [
