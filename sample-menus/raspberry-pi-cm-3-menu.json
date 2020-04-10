@@ -1,7 +1,7 @@
 {
 	"notes" : [
 
-		" To install a Yocto Project image on a Raspberry Pi Compute Module 3, follow this steps:     ",
+		" To install a Yocto Project image on a Raspberry Pi Compute Module 3, follow these steps:     ",
 
 		" - Install the development package of libusb ('sudo apt install libusb-dev')                 ",
 
@@ -53,7 +53,7 @@
 			"image" : "core-image-base",
 
 			"layers" : [
-					"meta-raspberrypi"
+				"meta-raspberrypi"
 			],
 
 			"local.conf": [

@@ -1,0 +1,79 @@
+{
+	"notes" : [
+		"Some example builds for Raspberry Pi 4.",
+
+		"Please refer to the README file for instruction on how to build the image"
+	],
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "commit": "warrior-21.0.3" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "commit": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "commit": "5551792e642d6cc32e22dfe6dbfd29ac3e2390cd" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"targets" : {
+
+		"raspberry-pi-4-console": {
+
+			"notes" : [
+				" The default `core-image-base` image with some minor   ",
+				" tweaks:                                               ",
+				"  - the root password is 'ROOT' (change it below),     ",
+				"  - a normal 'pi' user (password 'PI') is present,     ",
+				"  - the root filesystem is mounted read-only.          ",
+				"                                                       ",
+				" If you want to write into the root filesystem, you    ",
+				" can remount it (as root) with `mount / -o remount,rw` ",
+				"                                                       ",
+				" The image to write to your SD-card is:                ",
+				" builds/build-raspberry-pi-4-console/tmp/deploy/images/raspberrypi4/core-image-base-raspberrypi4.rpi-sdimg"
+			],
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE                    = 'raspberrypi4'            ",
+				"ENABLE_UART                = '1'                       ",
+				"INHERIT                   += 'extrausers'              ",
+				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT  root;'  ",
+				"EXTRA_USERS_PARAMS_append  = 'useradd -P PI    pi;'    ",
+				"EXTRA_IMAGE_FEATURES      += 'read-only-rootfs'        "
+			]
+		},
+
+		"raspberry-pi-4-x11": {
+
+			"notes" : [
+				" The `core-image-x11` image with the same tweaks as    ",
+				" the previous one. You'll get a graphical X-window     ",
+				" environment with a simple Xterm-like console.         ",
+				"                                                       ",
+				" The image to write to your SD-card is:                ",
+				" builds/build-raspberry-pi-4-x11/tmp/deploy/images/raspberrypi4/core-image-x11-raspberrypi4.rpi-sdimg"
+			],
+
+			"image": "core-image-x11",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE                    = 'raspberrypi4'           ",
+				"ENABLE_UART                = '1'                      ",
+				"INHERIT                   += 'extrausers'             ",
+				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT  root;' ",
+				"EXTRA_USERS_PARAMS_append  = 'useradd -P PI    pi;'   ",
+				"EXTRA_IMAGE_FEATURES      += 'read-only-rootfs'       "
+			]
+		}
+	}
+}
