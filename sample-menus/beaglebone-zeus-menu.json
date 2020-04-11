@@ -1,0 +1,47 @@
+{
+	"notes" : [
+		"Some sample builds for BeagleBone family boards.                           ",
+		"Tested on: BeagleBone Black.                                               ",
+		"Please refer to the README file for instruction on how to build the image. "
+	],
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "zeus", "commit": "zeus-22.0.2" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "zeus", "commit": "9e60d30669a2ad0598e9abf0cd15ee06b523986b" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"targets" : {
+
+		"beaglebone-console": {
+
+			"notes": [
+				" The default `core-image-base` image with some minor   ",
+				" tweaks:                                               ",
+				"  - the root password is 'ROOT' (change it below),     ",
+				"  - a normal 'pi' user (password 'PI') is present.     ",
+				"                                                       ",
+				" The image to write to your SD-card is:                ",
+				" builds/build-beaglebone-console/tmp/deploy/images/beaglebone-yocto/core-image-base-beaglebone-yocto.wic"
+			],
+
+			"image" : "core-image-base",
+
+			"layers" : [
+			],
+
+			"local.conf": [
+				"MACHINE                    = 'beaglebone-yocto'        ",
+				"ENABLE_UART                = '1'                       ",
+				"INHERIT                   += 'extrausers'              ",
+				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT root;'   ",
+				"EXTRA_USERS_PARAMS_append  = 'useradd -P BB   bb;'     "
+			]
+		}
+	}
+}
