@@ -162,7 +162,7 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 `chef` downloads the needed layers in the `sources` directory and create the target sub-directories into the `builds` directory. For example, after running `chef prepare {menu file}`, the working directory could contains:
 
 ```
-./---+---sources-+--- poky/
+./---+---layers--+--- poky/
      |           +--- meta-openembedded/
      |           +--- meta-raspberrypi/
      |           +--- meta-sunxi/
