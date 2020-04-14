@@ -1,2 +1,12 @@
 .chefconfig
 
+# Exclude pycharm config
+*.idea/
+
+# Exclude generated files by setuptool
+*build/
+*egg*/
+*dist/
+
+# Exclude python runtime generated files
+*__pycache__/

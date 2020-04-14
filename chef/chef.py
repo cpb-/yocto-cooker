@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """ chef.py: meta build tool for Yocto Project based Linux embedded systems."""
 
-__author__ = "Christophe BLAESS, Patrick BOETTCHER"
-__license__ = "GPL"
-
 import argparse
 import json
 import sys
@@ -445,7 +442,7 @@ class ChefCall:
                 fatal_error('menu load error:', e)
 
             script_path = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+            with open(os.path.join(script_path, '..', 'chef-menu-schema.json')) as schema_file:
                 schema = json.load(schema_file)
                 try:
                     jsonschema.validate(self.menu, schema)
@@ -511,5 +508,10 @@ class ChefCall:
         self.commands.build(self.clargs.targets, self.clargs.sdk)
 
 
-if __name__ == '__main__':
+def main():
+    """ Entry point for chef """
     ChefCall()
+
+
+if __name__ == '__main__':
+    main()
