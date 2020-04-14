@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """ chef.py: meta build tool for Yocto Project based Linux embedded systems."""
 
-__author__ = "Christophe BLAESS, Patrick BOETTCHER"
-__license__ = "GPL"
-
 import argparse
 import json
 import sys
@@ -517,6 +514,11 @@ class ChefCall:
             fatal_error('build needs a menu')
 
         self.commands.build(self.clargs.targets, self.clargs.sdk)
+
+
+def main():
+    """ Entry point for chef """
+    ChefCall()
 
 
 if __name__ == '__main__':

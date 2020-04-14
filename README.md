@@ -32,17 +32,17 @@ files written in JSON and cna thus be stored anywhere.
 
 ## Installing `chef`
 
-Install the `chef` script as follows:
-
-```
-$ git  clone  https://github.com/cpb-/chef
-$ cd  chef/
-$ pip3  install  -r requirements.txt
-$ ln  -sf  $(realpath  chef)  ~/bin
+Install `chef` using PyPi:
+``` bash
+$ pip3 install git+https://github.com/cpb-/chef.git
 ```
 
-Ensure the `~/bin` directory is in your `PATH` environment variable.
-Otherwise invoke `PATH=$PATH:~/bin` before starting to work with `chef`.
+Install `chef` from source:
+```
+$ git clone https://github.com/cpb-/chef
+$ cd chef/
+$ python3 setup.py install
+```
 
 ## `chef` command line arguments
 
