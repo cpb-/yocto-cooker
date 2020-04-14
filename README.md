@@ -34,7 +34,7 @@ files written in JSON and cna thus be stored anywhere.
 
 Install `chef` using PyPi:
 ``` bash
-$ pip3 install git+https://github.com/cpb-/chef.git
+$ python3 -m pip install --upgrade git+https://github.com/cpb-/chef.git
 ```
 
 Install `chef` from source:
