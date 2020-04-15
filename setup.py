@@ -21,7 +21,7 @@ setup(
     author=__author__,
     author_email=__email__,
     url=__url__,
-    license='GPL',
+    license=__license__,
     long_description=_long_description,
     data_files=[('', ['chef-menu-schema.json'])],
 
