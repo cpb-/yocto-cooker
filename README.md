@@ -47,25 +47,15 @@ Otherwise invoke `PATH=$PATH:~/bin` before starting to work with `chef`.
 ## `chef` command line arguments
 
 The `chef` command accepts some arguments to know what to do. The first
-argument is the sub-command name (`cook`, `prepare`, `build`...) sometimes
+argument is the sub-command name (`cook`, `build`, `init` and others) sometimes
 followed by options, menu filename or targets names.
 
 The top-level sub-command proposed by `chef` is:
 
 - `chef cook {menu file} [targets...]`: does the whole production job from the
-  initial configuration up to the final image(s).
+  initial configuration and downloading up to the final image(s).
 
-In fact, `chef cook` is equivalent to the two medium-level commands:
-
-- `chef prepare {menu file}` downloads the needed layers, and fills the
-  configuration files into the build sub-directory.
-
-- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given
-  targets. If no target are indicated on the command line, `chef` builds all
-  the targets of the menu file. With the `--sdk` option on the command line,
-  `chef` will also build the cross-compiler toolchain and headers.
-
-The higher level commands are based on the following low-level sub-commands:
+In fact, `chef cook` is equivalent to a collection of low-level commands:
 
 - `chef init {menu file}`: store the current menu filename into the
   `.chefconfig` configuration file. The content of the configuration will be
@@ -77,45 +67,69 @@ The higher level commands are based on the following low-level sub-commands:
 - `chef generate`: prepare the build-dir and configuration files (`local.conf`,
   `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-In fact `chef prepare menu-file` is equivalent to `chef init menu-file; chef
-update; chef generate`.
+- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given
+  targets. If no target are indicated on the command line, `chef` builds all
+  the targets of the menu file. With the `--sdk` option on the command line,
+  `chef` will also build the cross-compiler toolchain and headers.
 
 Each time you do some changes in the menu file, you may need to call:
 
 - `chef update`: if you have modified a commit number or you want to pull the
   latest version of a branch
-- `chef generate`: if you have modified a `local.conf` attribute
+- `chef generate`: if you have modified a `local.conf` or a `layers`-attribute.
 
 Then `chef build` to restart the compilations.
 
+Each sub-command has additional command line options, e.g. with `init` the
+download-dir can be set using the `-d`-switch.
+
 ## How to build a standard image for Raspberry Pi 3?
 
-Enter a work directory where the build will take place:
+Create and enter a project directory where everything will be downloaded,
+stored and built.
 
 ```
-$ mkdir  ~/build-dir
-$ cd  ~/build-dir
+$ mkdir  ~/yocto-project
+$ cd  ~/yocto-project
 ```
 
 You can call `chef` with a single command to build the whole content of a menu file:
 
 ```
-$ chef  cook  ~/chef/pi3-sample-menu.json
+$ chef  cook  /path/to/chef/sample-manues/pi3-sample-menu.json
 ```
 
-Or you can proceed in two steps:
+Or you can proceed by using the low-level commands:
 
-First, ask `chef` to `prepare` the needed files and directories to build the `pi3-sample-menu.json` menu file:
+First, ask `chef` to `initialize` the project-dir.
 
 ```
-$ chef  prepare  ~/chef/pi3-sample-menu.json
+$ chef  init  /path/to/chef/sample-manues/pi3-sample-menu.json
 ```
 
-After a few minutes, the work directory will contain the needed layers and the configuration files.
+Then let chef download the layers mentioned in the menu.
+
+```
+$ chef  update
+```
+
+Here no menu-file needs to be given. This works with the help of a
+`.chefconfig`-file written in the project dir.
+
+
+Generating the build-directories, one per target with
+
+```
+$ chef  generate
+```
+
+When this is done, the directory-structure should looks like this:
 
 ```
 $ ls
-build-pi3  meta-openembedded  meta-raspberrypi  poky
+build-pi3 layers
+$ ls layers
+meta-openembedded  meta-raspberrypi  poky
 ```
 
 Then you can run a full build with:
@@ -159,7 +173,10 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 ## Directory map
 
-`chef` downloads the needed layers in the `sources` directory and create the target sub-directories into the `builds` directory. For example, after running `chef prepare {menu file}`, the working directory could contains:
+`chef` downloads the needed layers in the `layers` directory (by default) and
+creates the target sub-directories into the `builds` directory.  For example,
+after running `chef init {menu file}; chef update; chef generate`, the working
+directory might contain:
 
 ```
 ./---+---layers--+--- poky/
@@ -182,8 +199,9 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 The menu file follows the JSON syntax and contains three main parts:
 
-- `sources`: which describes how to download the correct versions of the layers,
-- `layers`: (optional) the list of the layers used by every targets,
+- `sources`: which describes how to download the required versions of the layers,
+- `layers`: (optional) the list of the layers used globally for all targets
+  or on a per-target-base
 - `targets`: a collection of targets to build.
 
 
