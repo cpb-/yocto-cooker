@@ -96,7 +96,7 @@ $ cd  ~/yocto-project
 You can call `chef` with a single command to build the whole content of a menu file:
 
 ```
-$ chef  cook  /path/to/chef/sample-manues/pi3-sample-menu.json
+$ chef  cook  /path/to/chef/sample-menus/pi3-sample-menu.json
 ```
 
 Or you can proceed by using the low-level commands:
@@ -104,7 +104,7 @@ Or you can proceed by using the low-level commands:
 First, ask `chef` to `initialize` the project-dir.
 
 ```
-$ chef  init  /path/to/chef/sample-manues/pi3-sample-menu.json
+$ chef  init  /path/to/chef/sample-menus/pi3-sample-menu.json
 ```
 
 Then let chef download the layers mentioned in the menu.
