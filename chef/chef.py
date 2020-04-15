@@ -446,7 +446,7 @@ class ChefCall:
                 fatal_error('menu load error:', e)
 
             script_path = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(script_path, 'chef-menu-schema.json')) as schema_file:
+            with open(os.path.join(script_path, '..', 'chef-menu-schema.json')) as schema_file:
                 schema = json.load(schema_file)
                 try:
                     jsonschema.validate(self.menu, schema)
