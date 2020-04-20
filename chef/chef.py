@@ -265,7 +265,7 @@ class ChefCommands:
             file.write('DL_DIR = "{}"\n'.format(dl_dir))
             file.write('SSTATE_DIR = "{}"\n'.format(sstate_dir))
 
-            for line in target['local.conf']:
+            for line in self.menu.setdefault('local.conf', []) + target.setdefault('local.conf', []):
                 file.write(line + '\n')
 
             file.write('''DISTRO ?= "poky"
@@ -289,7 +289,7 @@ BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 ''')
             file.write('BBLAYERS ?= " \\\n')
-            for layer in self.menu['layers'] + target['layers']:
+            for layer in self.menu.setdefault('layers', []) + target.setdefault('layers', []):
                 layer_path = os.path.relpath(self.config.layer_dir(layer), path)
                 file.write('${{TOPDIR}}/{} \\\n'.format(layer_path))
             file.write('"\n')
