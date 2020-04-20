@@ -15,6 +15,13 @@
                 "type": "string",
                 "minLength": 1
             }
+        },
+        "local.conf": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1
+            }
         }
     },
 
@@ -54,6 +61,10 @@
             "$ref": "#/definitions/layers"
         },
 
+        "local.conf": {
+            "$ref": "#definitions/local.conf"
+        },
+
         "targets": {
             "patternProperties": {
                 ".+": {
@@ -69,17 +80,13 @@
                         },
 
                         "local.conf": {
-                            "type": "array",
-                            "items": {
-                                "type": "string",
-                                "minLength": 1
-                            }
+                            "$ref": "#definitions/local.conf"
                         },
+
                         "notes": {
                             "$ref": "#/definitions/notes"
                         }
                     },
-                    "required": ["local.conf", "layers"],
                     "additionalProperties": false
                 }
             }
