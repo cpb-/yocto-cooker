@@ -28,9 +28,9 @@
 	],
 
 	"sources" : [
-		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "commit": "4c773c7b03fb4596cd3873261de438dfd7b44158" },
-		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "commit": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
-		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "warrior", "commit": "5551792e642d6cc32e22dfe6dbfd29ac3e2390cd" }
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "rev": "4c773c7b03fb4596cd3873261de438dfd7b44158" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "warrior", "rev": "5551792e642d6cc32e22dfe6dbfd29ac3e2390cd" }
 	],
 
 	"layers" : [

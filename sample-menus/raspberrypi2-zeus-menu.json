@@ -1,8 +1,8 @@
 {
 	"sources" : [
-		{ "url": "git://git.yoctoproject.org/poky", "branch": "zeus", "commit": "5531ffc5668c2f24b9018a7b7174b5c77315a1cf" },
-		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "zeus", "commit": "9e60d30669a2ad0598e9abf0cd15ee06b523986b" },
-		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "zeus", "commit": "0e05098853eea77032bff9cf81955679edd2f35d" }
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "zeus", "rev": "5531ffc5668c2f24b9018a7b7174b5c77315a1cf" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "zeus", "rev": "9e60d30669a2ad0598e9abf0cd15ee06b523986b" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "zeus", "rev": "0e05098853eea77032bff9cf81955679edd2f35d" }
 	],
 
 	"layers" : [
