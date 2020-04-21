@@ -231,14 +231,14 @@ if `method` is `ignore` the layer must already be there and `dir` is
 mandatory. Otherwise, this is the place to store the downloaded layer.
 - `branch`: the `git` branch to use. Especially usefull when no `commit` is
 given.
-- `commit`: the `git` index of the revision desired.
+- `rev`: the `git` tag or index of the revision desired.
 
 `chef` aims to build reproducible systems.
-Using a specific `commit` number for each layer is the best way to do this.
+Using a specific `rev` number for each layer is the best way to do this.
 
 If only a `branch` attribute is given, `chef` will try to pull the last remote
 update if an `url` is present. But this is not as reproducible as giving a
-fixed `commit` number.
+fixed `rev` number or tag.
 
 
 ### Common layers
