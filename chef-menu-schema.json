@@ -30,6 +30,12 @@
             "type": "array",
             "items": {
                 "properties": {
+                    "method": {
+                        "type": "string",
+                        "minLength": 1,
+                        "enum": ["git", "ignore"]
+                    },
+
                     "url": {
                         "type": "string",
                         "pattern": "^(https?|ssh|git)://.*$"
@@ -39,14 +45,12 @@
                         "type": "string",
                         "minLength": 1
                     },
-                    "commit": {
+
+                    "rev": {
                         "type": "string",
                         "minLength": 1
                     },
-                    "method": {
-                        "type": "string",
-                        "minLength": 1
-                    },
+
                     "dir": {
                         "type": "string",
                         "minLength": 1

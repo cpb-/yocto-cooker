@@ -176,16 +176,11 @@ class ChefCommands:
         if not os.path.isdir(local_dir):
             self.update_directory_initial(method, remote_dir, local_dir)
 
-        branch = ''
-        if 'branch' in source:
-            branch = source['branch']
-
-        commit = ''
-        if 'commit' in source:
-            commit = source['commit']
+        branch = source.setdefault('branch', '')
+        rev = source.setdefault('rev', '')
 
         if os.path.isdir(local_dir):
-            self.update_directory(method, local_dir, remote_dir != '', branch, commit)
+            self.update_directory(method, local_dir, remote_dir != '', branch, rev)
 
 
     def update_directory_initial(self, method, remote_dir, local_dir):
@@ -201,7 +196,7 @@ class ChefCommands:
                 fatal_error('Unable to clone', remote_dir)
 
 
-    def update_directory(self, method, local_dir, has_remote, branch, commit):
+    def update_directory(self, method, local_dir, has_remote, branch, rev):
         if ChefCall.VERBOSE:
             redirect = ''
         else:
@@ -209,16 +204,16 @@ class ChefCommands:
 
         if method == 'git':
 
-            if commit == '':
+            if rev == '':
 
-                if 'branch' == '':
-                    warn('ATTENTION! source "{}" has no "commit" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
+                if branch == '':
+                    warn('ATTENTION! source "{}" has no "rev" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
                         if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
                             fatal_error('Unable to pull updates for {}'.format(local_dir))
                 else:
-                    warn('source "{}" has no "commit" field, the build will not be reproducible!'.format(local_dir))
+                    warn('source "{}" has no "rev" field, the build will not be reproducible!'.format(local_dir))
                     info('Updating source {}... '.format(local_dir))
                     if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
                         fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
@@ -228,8 +223,8 @@ class ChefCommands:
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if os.system('cd ' + local_dir + '; git checkout ' + commit + redirect) != 0:
-                    fatal_error('Unable to checkout commit {} for {}'.format(commit, local_dir))
+                if os.system('cd ' + local_dir + '; git checkout ' + rev + redirect) != 0:
+                    fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
             if os.system('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
                 fatal_error('Unable to update submodules in ' + local_dir)
