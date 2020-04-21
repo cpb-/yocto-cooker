@@ -81,7 +81,11 @@ Each time you do some changes in the menu file, you may need to call:
 Then `chef build` to restart the compilations.
 
 Each sub-command has additional command line options, e.g. with `init` the
-download-dir can be set using the `-d`-switch.
+download-dir can be set using the `-d` switch.
+
+- `chef target-info` displays the command line to execute to initialize the
+environment if you want to work directly with `bitbake`.
+
 
 ## How to build a standard image for Raspberry Pi 3?
 
@@ -93,7 +97,8 @@ $ mkdir  ~/yocto-project
 $ cd  ~/yocto-project
 ```
 
-You can call `chef` with a single command to build the whole content of a menu file:
+You can call `chef` with a single command to build the whole content
+of a menu file:
 
 ```
 $ chef  cook  /path/to/chef/sample-menus/pi3-sample-menu.json
@@ -138,7 +143,8 @@ Then you can run a full build with:
 $ chef  build
 ```
 
-You will see the classic Yocto Project progress messages, and after a while the build will complete with:
+You will see the classic Yocto Project progress messages, and after a while
+the build will complete with:
 
 ```
 Build Configuration:
@@ -199,10 +205,13 @@ directory might contain:
 
 The menu file follows the JSON syntax and contains three main parts:
 
-- `sources`: which describes how to download the required versions of the layers,
+- `sources`: which describes how to download the required versions of the
+ layers,
 - `layers`: (optional) the list of the layers used globally for all targets
-  or on a per-target-base
+ or on a per-target-base
 - `targets`: a collection of targets to build.
+- `local.conf`: a list of lines to be used in the configuration files of all
+ targets (more on this below).
 
 
 ### Sources
@@ -212,17 +221,24 @@ Each object of the array describes one layer.
 
 The following attributes can be used:
 
-- `url`: the URL used to download the layer. If missing, `chef` will consider that the layer is already present and will not try to download anything.
-- `dir`: the path of the layer relative to the directory where you run `chef`. If `url` is present, this is the place to store the downloaded layer. If `url` is absent the layer must already be there and in that case `dir` is mandatory.
-- `method`: the way to handle the versionning of the layer. `chef`is currently developped mainly for `git`. Other methods will be available in the future.
-- `branch`: the `git` branch to use. Especially usefull when no `commit` is given.
+- `url`: the URL used to download the layer. This attribute is mandatory.
+- `method`: the way to handle the versionning of the layer. `chef`is currently
+developped mainly for `git`. Other methods will be available in the future.
+The `ignore` method tells `chef` to not download anything and to consider that
+the layer is already preset?
+- `dir`: the path of the layer relative to the directory where you run `chef`.
+if `method` is not `ignore` the layer must already be there and `dir` is
+mandatory. Otherwise, this is the place to store the downloaded layer.
+- `branch`: the `git` branch to use. Especially usefull when no `commit` is
+given.
 - `commit`: the `git` index of the revision desired.
 
 `chef` aims to build reproducible systems.
 Using a specific `commit` number for each layer is the best way to do this.
 
-If only a `branch` attribute is given, `chef` will try to pull the last remote update if an `url` is present.
-But this is not as reproducible as giving a fixed `commit` number.
+If only a `branch` attribute is given, `chef` will try to pull the last remote
+update if an `url` is present. But this is not as reproducible as giving a
+fixed `commit` number.
 
 
 ### Common layers
@@ -266,9 +282,10 @@ Basically, each target will contain at least a `MACHINE` specification with the 
   "MACHINE = 'raspberrypi3' "
 ```
 
-You can use simple quotes to surround variable value.
+You can use simple quotes to surround variable value, and double quotes for
+the whole JSON line.
 
 ### Comments
 
-You can add a `notes` section (array of free strings ignored by chef) to insert your own comments into the menu as the same level as `sources` or `target` or into the `target` section.
+You can add a `notes` section (array of free strings ignored by `chef`) to insert your own comments into the menu as the same level as `sources` or `target` or into the `target` section.
 
