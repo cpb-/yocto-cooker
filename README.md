@@ -225,9 +225,9 @@ The following attributes can be used:
 - `method`: the way to handle the versionning of the layer. `chef`is currently
 developped mainly for `git`. Other methods will be available in the future.
 The `ignore` method tells `chef` to not download anything and to consider that
-the layer is already preset?
+the layer is already present.
 - `dir`: the path of the layer relative to the directory where you run `chef`.
-if `method` is not `ignore` the layer must already be there and `dir` is
+if `method` is `ignore` the layer must already be there and `dir` is
 mandatory. Otherwise, this is the place to store the downloaded layer.
 - `branch`: the `git` branch to use. Especially usefull when no `commit` is
 given.
