@@ -75,14 +75,18 @@
             "patternProperties": {
                 ".+": {
                     "properties": {
+                        "inherit": {
+                            "type": "string",
+                            "minLength": 1
+                        },
+
+                        "target": {
+                            "type": "string",
+                            "minLength": 1
+                        },
 
                         "layers": {
                             "$ref": "#/definitions/layers"
-                        },
-
-                        "image": {
-                            "type": "string",
-                            "minLength": 1
                         },
 
                         "local.conf": {
@@ -102,6 +106,6 @@
             "$ref": "#/definitions/notes"
         }
     },
-    "required": ["sources", "layers", "targets"],
+    "required": ["sources", "targets"],
     "additionalProperties": false
 }
