@@ -1,0 +1,94 @@
+{
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "rev": "warrior-21.0.3"  },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "warrior", "rev": "615a1a83399623bcb7afb500bd9d3fc633e32004" },
+		{ "method": "git", "url": "https://github.com/mendersoftware/meta-mender", "dir": "meta-mender", "branch": "warrior", "rev": "warrior-v2020.03" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"targets" : {
+
+		"raspberry-pi" : {
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"ENABLE_UART               = '1'                          ",
+				"EXTRA_IMAGE_FEATURES     += 'read-only-rootfs'           ",
+				"INHERIT                  += 'extrausers'                 ",
+				"EXTRA_USERS_PARAMS_append = 'useradd -P rpi  rpi;'       ",
+				"EXTRA_USERS_PARAMS_append = 'usermod -P root root;'      "
+			]
+		},
+
+		"raspberry-pi-3": {
+
+			"inherit" : [ "raspberry-pi" ],
+
+			"target": "core-image-base",
+
+			"local.conf": [
+				"MACHINE                   = 'raspberrypi3'               ",
+				"KERNEL_DEVICETREE         = 'bcm2710-rpi-3-b.dtb'        "
+			]
+
+		},
+
+		"raspberry-pi-uboot" : {
+
+			"inherit": [ "raspberry-pi" ],
+
+			"local.conf": [
+				"RPI_USE_U_BOOT = '1'"
+			]
+		},
+
+		"raspberry-pi-mender": {
+
+			"layers" : [
+				"meta-mender/meta-mender-core"
+			],
+
+			"local.conf": [
+
+				"MENDER_ARTIFACT_NAME = 'release-1'",
+				"INHERIT += 'mender-full'",
+				"ARTIFACTIMG_FSTYPE = 'ext4'",
+
+				"MENDER_STORAGE_DEVICE = '/dev/mmcblk0'",
+				"MENDER_STORAGE_TOTAL_SIZE_MB = '4096'",
+
+				"MENDER_BOOT_PART = '${MENDER_STORAGE_DEVICE_BASE}1'",
+				"MENDER_DATA_PART = '${MENDER_STORAGE_DEVICE_BASE}4'",
+				"MENDER_ROOTFS_PART_A = '${MENDER_STORAGE_DEVICE_BASE}2'",
+				"MENDER_ROOTFS_PART_B = '${MENDER_STORAGE_DEVICE_BASE}3'",
+
+				"MENDER_FEATURES_ENABLE_append = ' mender-uboot mender-image-sd'",
+				"MENDER_FEATURES_DISABLE_append = ' mender-grub mender-image-uefi'",
+
+				"MENDER_PARTITION_ALIGNMENT = '4194304'",
+				"MENDER_BOOT_PART_SIZE_MB = '40'",
+				"IMAGE_INSTALL_append = ' kernel-image kernel-devicetree'",
+				"IMAGE_FSTYPES_remove = ' rpi-sdimg'",
+				"SDIMG_ROOTFS_TYPE = 'ext4'"
+			]
+		},
+
+		"rpi3-uboot-mender" : {
+
+			"target" : "core-image-base",
+
+			"inherit" : [ "raspberry-pi-3", "raspberry-pi-uboot", "raspberry-pi-mender" ]
+		}
+	}
+}
+

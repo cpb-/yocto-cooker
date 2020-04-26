@@ -1,0 +1,9 @@
+target: first 
+targets ancestors: ['root']
+target: fourth (bakes fourth-bitbake)
+targets ancestors: ['root', 'second', 'third', 'first']
+target: root 
+target: second 
+targets ancestors: ['root']
+target: third (bakes third-bitbake)
+targets ancestors: ['root', 'second']

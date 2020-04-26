@@ -58,3 +58,16 @@ function assert_eq
 		exit 1
 	fi
 }
+
+function expect_fail
+{
+	set +e
+	$@
+	rc=$?
+	set -e
+	if [ $rc -eq 0 ]
+	then
+		echo expected \"$@\" to fail with non-zero exit-code, got $rc
+		exit 1
+	fi
+}

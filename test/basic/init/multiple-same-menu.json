@@ -1,0 +1,16 @@
+{
+    "sources": [],
+    "targets": {
+        "first": {
+        },
+        "second": {
+            "inherit": ["first"]
+        },
+        "third": {
+            "inherit": ["second"]
+        },
+        "fourth": {
+            "inherit": ["third", "first"]
+        }
+    }
+}

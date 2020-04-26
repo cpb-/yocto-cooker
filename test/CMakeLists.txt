@@ -28,8 +28,6 @@ macro(test path)
                     ${CMAKE_CURRENT_SOURCE_DIR}/${path})
 endmacro()
 
-
 test(basic/init)
 test(basic/generate)
-
-
+test(basic/show)

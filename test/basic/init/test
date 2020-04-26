@@ -1,8 +1,29 @@
-! chef init $S/unknown-menu.json
 
-
+expect_fail chef init $S/non-existing-menu.json
 filesExist . .chefconfig 0
 
+expect_fail chef init $S/unknown-parent-menu.json
+filesExist . .chefconfig 0
+
+expect_fail chef init $S/recursive-self-as-parent-menu.json
+filesExist . .chefconfig 0
+
+expect_fail chef init $S/recursive-menu.json
+filesExist . .chefconfig 0
+
+expect_fail chef init $S/mutual-dependency-menu.json
+filesExist . .chefconfig 0
+
+chef init $S/multiple-same-menu.json
+filesExist . .chefconfig 1
+rm .chefconfig
+
+chef init $S/multiple-parents-root-menu.json
+filesExist . .chefconfig 1
+rm .chefconfig
+
+
+# now some successes
 chef init $S/menu.json
 
 fileExists .chefconfig
@@ -13,7 +34,7 @@ textInFile .chefconfig '"layer-dir": "layers",' 1
 textInFile .chefconfig '"build-dir": "builds",' 1
 textInFile .chefconfig '"dl-dir": "downloads"' 1
 
-! chef init $S/menu.json
+expect_fail chef init $S/menu.json
 
 # force new menu
 chef init -f $S/menu-copy.json
@@ -21,7 +42,7 @@ chef init -f $S/menu-copy.json
 textInFile .chefconfig '/menu-copy.json",' 1
 
 # force new, non-existing, menu
-! chef init -f $S/unknown-menu.json
+expect_fail chef init -f $S/unknown-menu.json
 
 # force new layer-dir
 chef init -fl layers_dir $S/menu.json

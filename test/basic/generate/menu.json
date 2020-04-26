@@ -6,9 +6,15 @@
     ],
     "targets": {
         "first": {
+            "target": "bitbake-target",
             "layers": [
                 "first/layer1",
                 "first/layer2"
+            ]
+        },
+        "second-no-target": {
+            "layers": [
+                "second/layer1"
             ]
         }
     }

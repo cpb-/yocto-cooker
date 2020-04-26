@@ -126,18 +126,15 @@ class BuildConfiguration:
         self.target_ = target
         self.inherit_ = inherit
 
-        self.parent_ = None
-        self.children_ = []
+        self.parents_ = [] # first level parents
+        self.ancestors_ = [] # all ancestors cleaned of duplicates
 
         BuildConfiguration.ALL[name] = self
 
 
-    def add_child(self, child):
-        self.children_.append(child)
-
-
     def target(self):
         return self.target_
+
 
     def name(self):
         return self.name_
@@ -147,38 +144,90 @@ class BuildConfiguration:
         return self.config_.build_dir('build-' + self.name_)
 
 
-    def resolve_parent(self):
-        if self.inherit_:
-            if not self.inherit_ in BuildConfiguration.ALL:
-                fatal_error('target "{}"\'s parent "{}" not found in targets-section'
-                            .format(self.name_, self.inherit_))
-            self.parent_ = BuildConfiguration.ALL[self.inherit_]
-            self.parent_.add_child(self)
-
-
     def target(self):
         return self.target_
 
 
     def layers(self):
-        if self.parent_:
-            layers = self.parent_.layers()
-        else:
-            layers = []
-        return layers + self.layers_
+        layers = []
+
+        for build in self.ancestors_ + [ self ]:
+            for layer in build.layers_:
+                if not layer in layers:
+                    layers.append(layer)
+                else:
+                    debug('ignored - duplicate layer for target "{}": "{}"'
+                          .format(build.name(), layer))
+
+        return layers
 
 
     def local_conf(self):
-        if self.parent_:
-            lines = self.parent_.local_conf()
-        else:
-            lines = []
-        return lines + self.local_conf_
+        lines = []
+
+        for build in self.ancestors_ + [ self ]:
+            for new_line in build.local_conf_:
+                if new_line in lines:
+                    debug('ignored - duplicate line in local.conf for target "{}": "{}"'
+                          .format(build.name(), new_line))
+                lines.append(new_line)
+
+        return lines
 
 
-    def resolve():
+    def set_parents(self):
+        debug('setting first-level-parents of target "{}"'.format(self.name_))
+
+        if self.inherit_:
+            for parent_name in self.inherit_:
+
+                if not parent_name in BuildConfiguration.ALL:
+                    fatal_error('target "{}"\'s parent "{}" not found in targets-section'
+                                .format(self.name_, parent_name))
+
+                parent_instance = BuildConfiguration.ALL[parent_name]
+
+                if parent_instance == self:
+                    fatal_error('"{}" inherits from itself, that is impossible'.format(self.name_))
+
+                debug('adding {} as parent to {}'.format(parent_instance.name(), self.name()))
+                self.parents_.append(parent_instance)
+
+
+    def get_ancestors(self, start, path=[]):
+        path.append(self.name())
+
+        parents = []
+
+        if start in self.parents_:
+            fatal_error('recursive inheritance detected for "{}" via "{}"'
+                        .format(start.name(), ' -> '.join(path + [start.name()])))
+
+        for parent in self.parents_:
+
+            new_parents = parent.get_ancestors(start, path) + [parent]
+
+            for new_parent in new_parents:
+                if new_parent in parents:
+                    debug('target "{}" parent "{}" inherited multiple times - ignoring'
+                          .format(self.name(), new_parent.name()))
+                else:
+                    parents.append(new_parent)
+
+        path.pop()
+
+        return parents
+
+
+    def resolve_parents():
         for _, build in BuildConfiguration.ALL.items():
-            build.resolve_parent()
+            build.set_parents()
+
+        for _, build in BuildConfiguration.ALL.items():
+            build.ancestors_ = build.get_ancestors(build)
+
+            debug('ancestors of target "{}": "{}"'
+                  .format(build.name(), [ n.name() for n in build.ancestors_ ]))
 
 
 class ChefCommands:
@@ -351,7 +400,7 @@ BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 ''')
             file.write('BBLAYERS ?= " \\\n')
-            for layer in target.layers():
+            for layer in sorted(target.layers()):
                 layer_path = os.path.relpath(self.config.layer_dir(layer), target.build_dir())
                 file.write('${{TOPDIR}}/{} \\\n'.format(layer_path))
             file.write('"\n')
@@ -359,11 +408,6 @@ BBFILES ?= ""
         with open(os.path.join(conf_path, 'templateconf.cfg'), 'w') as file:
             file.write("meta-poky/conf\n")
 
-
-    def show_target_tree(self, build, level):
-        print(2*level * ' ', '-', build.name())
-        for child in build.children_:
-            self.show_target_tree(child, level + 1)
 
     def show(self, targets, layers, conf, tree, build):
 
@@ -405,9 +449,9 @@ BBFILES ?= ""
                 else:
                     info('target', target.name(), 'has no build-target')
 
-        if tree:
-            info('targets parent-child-tree:')
-            self.show_target_tree(BuildConfiguration.ALL['root'], 0)
+            if tree:
+                if target.ancestors_:
+                    info('targets ancestors:', [ n.name() for n in target.ancestors_ ])
 
 
     def build(self, targets, sdk):
@@ -576,9 +620,9 @@ class ChefCall:
                                    target.setdefault('layers', []),
                                    target.setdefault('local.conf', []),
                                    target.setdefault('target', None),
-                                   target.setdefault('inherit', 'root'))
+                                   target.setdefault('inherit', [ 'root' ]))
 
-            BuildConfiguration.resolve()
+            BuildConfiguration.resolve_parents()
 
 
         self.commands = ChefCommands(self.config, self.menu)

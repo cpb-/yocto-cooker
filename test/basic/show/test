@@ -1,0 +1,22 @@
+chef init $S/menu.json
+
+chef show -l > layer-output
+
+# remove current path from output
+sed -i "s|$(pwd)||" layer-output
+
+diff $S/layer-output.ref layer-output
+
+chef show -c > conf-output
+diff $S/conf-output.ref conf-output
+
+chef show -b > build-output
+diff $S/build-output.ref build-output
+
+chef show -t > tree-output
+diff $S/tree-output.ref tree-output
+
+chef show -a fourth > fourth-all-output
+sed -i "s|$(pwd)||" fourth-all-output
+diff $S/fourth-all-output.ref fourth-all-output
+
