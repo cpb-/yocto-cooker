@@ -70,6 +70,8 @@
         },
 
         "targets": {
+            "type": "object",
+
             "patternProperties": {
                 ".+": {
                     "properties": {
