@@ -1,0 +1,64 @@
+# fail is no init done
+! chef generate
+
+
+# empty menu, nothing is generated
+chef init $S/empty-menu.json
+chef generate
+
+filesExist . builds 0
+
+
+# one target
+chef init -f $S/menu.json
+chef generate
+
+dirsExist . builds 1
+dirsExist builds build-first 1
+
+diff builds/build-first/conf/bblayers.conf $S/one-target-first-bblayers.conf
+
+textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers"' 1
+textInFile builds/build-first/conf/local.conf 'DL_DIR = "\${TOPDIR}/../../downloads"' 1
+textInFile builds/build-first/conf/local.conf 'SSTATE_DIR = "\${TOPDIR}/../../sstate-cache"' 1
+
+# regenate after layers-dir-change
+chef init -f -l layers_dir $S/menu.json
+chef generate
+textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
+textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1
+
+
+# TODO if not target-field, not build dir shall be created
+
+
+
+
+#
+#chef init $S/menu.json
+#
+#fileExists .chefconfig
+#
+#linesInFile .chefconfig 5
+#textInFile .chefconfig '/menu.json",' 1
+#textInFile .chefconfig '"layer-dir": "layers",' 1
+#textInFile .chefconfig '"build-dir": "builds",' 1
+#textInFile .chefconfig '"dl-dir": "downloads"' 1
+#
+#! chef init $S/menu.json
+#
+## force new menu
+#chef init -f $S/menu-copy.json
+#
+#textInFile .chefconfig '/menu-copy.json",' 1
+#
+## force new, non-existing, menu
+#! chef init -f $S/unknown-menu.json
+#
+## force new layer-dir
+#chef init -fl layers_dir $S/menu.json
+#
+#linesInFile .chefconfig 5
+#textInFile .chefconfig '"layer-dir": "layers_dir",' 1
+#textInFile .chefconfig '"build-dir": "builds",' 1
+#textInFile .chefconfig '"dl-dir": "downloads"' 1

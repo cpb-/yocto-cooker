@@ -1,0 +1,15 @@
+{
+    "sources": [],
+    "layers": [
+        "generic/layer1",
+        "generic/layer2"
+    ],
+    "targets": {
+        "first": {
+            "layers": [
+                "first/layer1",
+                "first/layer2"
+            ]
+        }
+    }
+}
