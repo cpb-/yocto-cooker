@@ -289,3 +289,48 @@ the whole JSON line.
 
 You can add a `notes` section (array of free strings ignored by `chef`) to insert your own comments into the menu as the same level as `sources` or `target` or into the `target` section.
 
+
+## Internal tests
+
+Ideally each functionally is unit and functional tested via a script within the
+`test/`-path.
+
+To run the tests, `cmake` and `ctest` are used.
+
+```bash
+mkdir test-dir
+cd test-dir
+
+cmake path/to/chef/test
+make    # prepare the test-environment, nothing is compiled
+ctest   # run the tests and show the result-summary
+
+# useful ctest arguments
+
+ctest -N   # shows the available tests
+ctest -V   # shows verbose outputs of tests, all tests are run
+ctest -R <pattern> -V   # run tests matching "pattern" and show their verbose output
+```
+
+Tests are written as a sequence of (chef-)-commands and checks to see whether
+the expected result or output has been generated or not.
+
+The CMakeLists.txt in the test-folder contains the list of tests to be run.
+
+The name of the test is identical to its subdirectory in the test-folder, e.g.,
+the `basic/init`-test is located in `test/basic/init/`. This folder has to
+contain a file called `test` (written in bash-syntax) which is sourced by the
+test-driver (`driver.sh`). A non-zero exit-code indicates that a test has
+failed. Any failing commands which end the test-run.
+
+Within the script `test` the variable `$S` references the test's source-dir and
+`$T` the test's runtime-dir.
+
+The runtime-dir is wiped out before a test-run, but can be inspected after a
+run.
+
+Files related to and used by the test can be stored in the test's source-dir
+accessible with `$S`.
+
+Test-result evaluation functions are available in the `function.sh`-library and
+are sourced by the test-driver.

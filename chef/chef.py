@@ -502,11 +502,5 @@ class ChefCall:
 
         self.commands.build(self.clargs.targets, self.clargs.sdk)
 
-
 def main():
-    """ Entry point for chef """
     ChefCall()
-
-
-if __name__ == '__main__':
-    main()

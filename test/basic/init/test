@@ -1,0 +1,32 @@
+! chef init $S/unknown-menu.json
+
+
+filesExist . .chefconfig 0
+
+chef init $S/menu.json
+
+fileExists .chefconfig
+
+linesInFile .chefconfig 5
+textInFile .chefconfig '/menu.json",' 1
+textInFile .chefconfig '"layer-dir": "layers",' 1
+textInFile .chefconfig '"build-dir": "builds",' 1
+textInFile .chefconfig '"dl-dir": "downloads"' 1
+
+! chef init $S/menu.json
+
+# force new menu
+chef init -f $S/menu-copy.json
+
+textInFile .chefconfig '/menu-copy.json",' 1
+
+# force new, non-existing, menu
+! chef init -f $S/unknown-menu.json
+
+# force new layer-dir
+chef init -fl layers_dir $S/menu.json
+
+linesInFile .chefconfig 5
+textInFile .chefconfig '"layer-dir": "layers_dir",' 1
+textInFile .chefconfig '"build-dir": "builds",' 1
+textInFile .chefconfig '"dl-dir": "downloads"' 1

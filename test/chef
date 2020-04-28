@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+import sys, os
+
+# realpath resolves links
+thisdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+
+sys.path.append(os.path.join(thisdir, '..', 'chef'))
+
+from chef import main
+
+if __name__ == '__main__':
+	main()
