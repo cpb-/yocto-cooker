@@ -30,5 +30,6 @@ endmacro()
 
 
 test(basic/init)
+test(basic/generate)
 
 
