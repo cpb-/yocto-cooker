@@ -1,32 +1,41 @@
+# `chef init` fails on absent menu file.
 ! chef init $S/unknown-menu.json
 
-
+# On failure, `chef init` doesn't create `.chefconfig` file.
 filesExist . .chefconfig 0
 
+# `chef init` succeeds with minimal menu (all entries present but empty).
 chef init $S/menu.json
 
+# On success `chef init` creates a `.chefconfig` file.
 fileExists .chefconfig
 
+# The `.chefconfig` file is correct.
 linesInFile .chefconfig 5
 textInFile .chefconfig '/menu.json",' 1
 textInFile .chefconfig '"layer-dir": "layers",' 1
 textInFile .chefconfig '"build-dir": "builds",' 1
 textInFile .chefconfig '"dl-dir": "downloads"' 1
 
+# `chef init` fails if `.chefconfig` file already exist.
 ! chef init $S/menu.json
 
-# force new menu
+# `chef init` succeeds with `force` option if `.chefconfig` already exists.
 chef init -f $S/menu-copy.json
 
+# With `force` option, the menu name is updated.
 textInFile .chefconfig '/menu-copy.json",' 1
 
-# force new, non-existing, menu
+# `chef init` fails, even with `force` option if menu file is absent.
 ! chef init -f $S/unknown-menu.json
 
-# force new layer-dir
-chef init -fl layers_dir $S/menu.json
+# On failure `chef init` doesn't overwite the `.chefconfig` file.
+textInFile .chefconfig '/menu-copy.json",' 1
 
+# With `-l` option `chef init` overwrite the `layer-dir` parameter in `.chefconfig`
+chef init -fl layers_dir $S/menu.json
 linesInFile .chefconfig 5
 textInFile .chefconfig '"layer-dir": "layers_dir",' 1
 textInFile .chefconfig '"build-dir": "builds",' 1
 textInFile .chefconfig '"dl-dir": "downloads"' 1
+
