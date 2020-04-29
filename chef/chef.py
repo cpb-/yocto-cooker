@@ -7,6 +7,7 @@ import sys
 import os
 from urllib.parse import urlparse
 import jsonschema
+import pkg_resources
 
 
 def debug(*args):
@@ -436,15 +437,13 @@ class ChefCall:
             except Exception as e:
                 fatal_error('menu load error:', e)
 
-            script_path = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(script_path, '..', 'chef-menu-schema.json')) as schema_file:
-                schema = json.load(schema_file)
-                try:
-                    jsonschema.validate(self.menu, schema)
-                except Exception as e:
-                    fatal_error('menu file validation failed:', e)
+            schema = json.loads(pkg_resources.resource_string(__name__, "chef-menu-schema.json"))
+            try:
+                jsonschema.validate(self.menu, schema)
+            except Exception as e:
+                fatal_error('menu file validation failed:', e)
 
-                debug('menu file validation passed')
+            debug('menu file validation passed')
 
         self.commands = ChefCommands(self.config, self.menu)
 
