@@ -23,7 +23,7 @@ setup(
     url=__url__,
     license=__license__,
     long_description=_long_description,
-    data_files=[('..', ['chef-menu-schema.json'])],
+    package_data={'': ['chef-menu-schema.json']},
 
     packages=[
         "chef",
