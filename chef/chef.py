@@ -224,7 +224,7 @@ class ChefCommands:
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if os.system('cd ' + local_dir + '; git checkout ' + rev + redirect) != 0:
+                if os.system('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
                     fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
             if os.system('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
