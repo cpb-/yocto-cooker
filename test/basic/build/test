@@ -1,0 +1,69 @@
+# `chef build` fails when `chef init` has not been called.'
+rm -f .chefconfig
+expect_fail chef build
+
+
+# `chef build` succeeds when `targets` is empty.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "targets": {}
+	}
+EOF
+chef init menu.json
+chef build
+# `chef build` fails without Poky `oe-init-build-env` script.
+rm -f layers/poky/oe-init-build-env
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "targets": {
+	        "target-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+chef init -f menu.json
+expect_fail chef build
+
+mkdir -p layers/poky
+touch layers/poky/oe-init-build-env
+cat > bitbake <<-EOF
+	#! /bin/sh
+	exit 0
+EOF
+chmod +x bitbake
+PATH=.:$PATH
+
+
+# `chef build` succeeds when no target is buildable.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "targets": {
+	        "target-1" : {
+	            "layers": [
+	                "meta-doesnt-exist",
+	                "meta-doesnt-exist-neither"
+	            ],
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        },
+	        "target-2" : {
+	            "local.conf": [
+	                "MACHINE = raspberrypi"
+	            ]
+	       }
+	    }
+	}
+EOF
+chef init -f menu.json
+chef build
