@@ -219,6 +219,16 @@ class BuildConfiguration:
         return parents
 
 
+    def check_duplicate_targets():
+        targets = {}
+        for _, build in BuildConfiguration.ALL.items():
+            if build.target(): # only create a build-dir if a build-target is set
+                if build.target() in targets:
+                    fatal_error('target "{}" wants to build bitbake-target "{}" which is already built by "{}".'
+                                .format(build.name(), build.target(), targets[build.target()]))
+                targets[build.target()] = build.name()
+
+
     def resolve_parents():
         for _, build in BuildConfiguration.ALL.items():
             build.set_parents()
@@ -622,6 +632,7 @@ class ChefCall:
                                    target.setdefault('target', None),
                                    target.setdefault('inherit', [ 'root' ]))
 
+            BuildConfiguration.check_duplicate_targets()
             BuildConfiguration.resolve_parents()
 
 

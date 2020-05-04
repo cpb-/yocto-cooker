@@ -1,0 +1,11 @@
+{
+    "sources": [],
+    "targets": {
+        "first": {
+            "target": "foo"
+        },
+        "second": {
+            "target": "foo"
+        }
+    }
+}

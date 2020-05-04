@@ -30,6 +30,10 @@ chef init $S/multiple-parents-root-menu.json
 filesExist . .chefconfig 1
 rm .chefconfig
 
+# `chef init` shall fail if duplicated build-targets are used
+expect_fail chef init $S/duplicated-target-menu.json
+filesExist . .chefconfig 0
+
 # `chef init` succeeds with correct empty menu.
 chef init $S/menu.json
 
