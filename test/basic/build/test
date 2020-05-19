@@ -3,12 +3,12 @@ rm -f .chefconfig
 expect_fail chef build
 
 
-# `chef build` succeeds when `targets` is empty.
+# `chef build` succeeds when `builds` is empty.
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "layers": [],
-	    "targets": {}
+	    "builds": {}
 	}
 EOF
 chef init menu.json
@@ -19,7 +19,7 @@ cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "layers": [],
-	    "targets": {
+	    "builds": {
 	        "target-1": {
 	            "target": "core-image-base",
 	            "local.conf": [
@@ -47,7 +47,7 @@ cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "layers": [],
-	    "targets": {
+	    "builds": {
 	        "target-1" : {
 	            "layers": [
 	                "meta-doesnt-exist",

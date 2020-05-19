@@ -16,7 +16,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"pi3": {
 

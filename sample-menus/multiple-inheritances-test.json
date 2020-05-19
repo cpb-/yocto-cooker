@@ -13,7 +13,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"raspberry-pi" : {
 

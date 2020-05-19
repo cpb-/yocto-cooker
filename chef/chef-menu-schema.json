@@ -68,10 +68,10 @@
         },
 
         "local.conf": {
-            "$ref": "#definitions/local.conf"
+            "$ref": "#/definitions/local.conf"
         },
 
-        "targets": {
+        "builds": {
             "type": "object",
 
             "patternProperties": {
@@ -96,7 +96,7 @@
                         },
 
                         "local.conf": {
-                            "$ref": "#definitions/local.conf"
+                            "$ref": "#/definitions/local.conf"
                         },
 
                         "notes": {
@@ -112,6 +112,6 @@
             "$ref": "#/definitions/notes"
         }
     },
-    "required": ["sources", "targets"],
+    "required": ["sources", "builds"],
     "additionalProperties": false
 }

@@ -48,11 +48,11 @@ $ python3 setup.py install
 
 The `chef` command accepts some arguments to know what to do. The first
 argument is the sub-command name (`cook`, `build`, `init` and others) sometimes
-followed by options, menu filename or targets names.
+followed by options, menu filename or build-config-names.
 
 The top-level sub-command proposed by `chef` is:
 
-- `chef cook {menu file} [targets...]`: does the whole production job from the
+- `chef cook {menu file} [build-configs...]`: does the whole production job from the
   initial configuration and downloading up to the final image(s).
 
 In fact, `chef cook` is equivalent to a collection of low-level commands:
@@ -67,10 +67,10 @@ In fact, `chef cook` is equivalent to a collection of low-level commands:
 - `chef generate`: prepare the build-dir and configuration files (`local.conf`,
   `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-- `chef build [--sdk] [targets...]` runs `bitbake` to produce the given
-  targets. If no target are indicated on the command line, `chef` builds all
-  the targets of the menu file. With the `--sdk` option on the command line,
-  `chef` will also build the cross-compiler toolchain and headers.
+- `chef build [--sdk] [build-configs...]` runs `bitbake` to produce the given
+  build-configs. If no build-config is indicated on the command line, `chef`
+  builds all the build-configs of the menu file. With the `--sdk` option on the
+  command line, `chef` will also build the cross-compiler toolchain and headers.
 
 Each time you do some changes in the menu file, you may need to call:
 
@@ -82,10 +82,6 @@ Then `chef build` to restart the compilations.
 
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
-
-- `chef target-info` displays the command line to execute to initialize the
-environment if you want to work directly with `bitbake`.
-
 
 ## How to build a standard image for Raspberry Pi 3?
 
@@ -122,7 +118,7 @@ Here no menu-file needs to be given. This works with the help of a
 `.chefconfig`-file written in the project dir.
 
 
-Generating the build-directories, one per target with
+Generating the build-directories, one per build-configuration with
 
 ```
 $ chef  generate
@@ -180,7 +176,7 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 ## Directory map
 
 `chef` downloads the needed layers in the `layers` directory (by default) and
-creates the target sub-directories into the `builds` directory.  For example,
+creates the build-sub-directories into the `builds` directory.  For example,
 after running `chef init {menu file}; chef update; chef generate`, the working
 directory might contain:
 
@@ -209,9 +205,9 @@ The menu file follows the JSON syntax and contains three main parts:
  layers,
 - `layers`: (optional) the list of the layers used globally for all targets
  or on a per-target-base
-- `targets`: a collection of targets to build.
+- `builds`: a collection of build-configurations to build.
 - `local.conf`: a list of lines to be used in the configuration files of all
- targets (more on this below).
+ build-configs (more on this below).
 
 
 ### Sources
@@ -243,9 +239,9 @@ fixed `rev` number or tag.
 
 ### Common layers
 
-This section contains an array of layers common to all targets.
+This section contains an array of layers common to all build-configurations.
 
-Most of the targets uses
+Most of the build-configurations uses
 
 - `poky/meta`
 - `poky/meta-poky`
@@ -253,33 +249,41 @@ Most of the targets uses
 - `meta-openembedded/meta-oe`
 
 
-### Targets
+### Build configurations
 
-The `targets` section is a collection of target objects to build.
-The name of the target is used to create the build directory.
+The `builds` section is a collection of build-configurations.
+The name of the build-config is used to create the build directory.
 
-For example, when preparing the compilation of the `pi3` target, `chef` creates the `build-pi3` directory.
+For example, when preparing the compilation of the `pi3` build-config, `chef`
+creates the `build-pi3` directory.
 
-The target object contains two attributes : the specific layers and the specific configuration.
+A build-configuration may contain the following attributes: specific layers,
+specific local.conf-entries, the bitbake-target to be produced and one or more
+parent build-configuration from which it inherits layers and local
+configuration entries.
 
+#### Build-config specific layers
 
-#### Target specific layers
+The `layers` attribute is an array of layer names which can been downloaded
+from the `sources` section.
 
-The `layers` attribute is an array of layer names which can been downloaded from the `sources` section.
-
-We recommand to indicate in this section the layers used only for this target and to keep the more general ones in the `layers` section seen above.
+We recommand to indicate in this section the layers used only for this
+build-config and to keep the more general ones in the `layers` section seen
+above.
 
 
 #### Target specific configuration
 
-The `local.conf` attribute is an array of lines to add into the target configuration file.
+The `local.conf` attribute is an array of lines to add into the build's
+configuration file.
 
 `chef` produces a standard `local.conf` file and add the given lines.
 
-Basically, each target will contain at least a `MACHINE` specification with the form:
+Basically, each build-config will contain at least a `MACHINE` specification
+with the form:
 
 ```
-  "MACHINE = 'raspberrypi3' "
+  "MACHINE = 'raspberrypi3'"
 ```
 
 You can use simple quotes to surround variable value, and double quotes for
@@ -287,8 +291,9 @@ the whole JSON line.
 
 ### Comments
 
-You can add a `notes` section (array of free strings ignored by `chef`) to insert your own comments into the menu as the same level as `sources` or `target` or into the `target` section.
-
+You can add a `notes` section (array of free strings ignored by `chef`) to
+insert your own comments at the root-level of the menu or in the `builds`
+section.
 
 ## Internal tests
 

@@ -16,7 +16,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"beaglebone-console": {
 
@@ -30,7 +30,7 @@
 				" builds/build-beaglebone-console/tmp/deploy/images/beaglebone-yocto/core-image-base-beaglebone-yocto.wic"
 			],
 
-			"image" : "core-image-base",
+			"target" : "core-image-base",
 
 			"layers" : [
 			],

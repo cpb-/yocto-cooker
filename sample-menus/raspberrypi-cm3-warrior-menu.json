@@ -40,7 +40,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"pi-cm3-uboot": {
 
@@ -50,7 +50,7 @@
 				"build-pi-cm3-uboot/tmp/deploy/images/raspberrypi-cm3/core-image-base-raspberrypi-cm3.rpi-sdimg"
 			],
 
-			"image" : "core-image-base",
+			"target" : "core-image-base",
 
 			"layers" : [
 				"meta-raspberrypi"
