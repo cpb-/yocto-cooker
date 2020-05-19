@@ -17,7 +17,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"raspberry-pi-4-console": {
 
@@ -60,7 +60,7 @@
 				" builds/build-raspberry-pi-4-x11/tmp/deploy/images/raspberrypi4/core-image-x11-raspberrypi4.rpi-sdimg"
 			],
 
-			"image": "core-image-x11",
+			"target": "core-image-x11",
 
 			"layers" : [
 					"meta-raspberrypi"

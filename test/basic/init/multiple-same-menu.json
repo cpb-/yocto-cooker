@@ -1,6 +1,6 @@
 {
     "sources": [],
-    "targets": {
+    "builds": {
         "first": {
         },
         "second": {

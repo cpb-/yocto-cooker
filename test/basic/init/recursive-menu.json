@@ -1,6 +1,6 @@
 {
     "sources": [],
-    "targets": {
+    "builds": {
         "second": {
             "inherit": ["fourth"]
         },

@@ -4,7 +4,7 @@
         "generic/layer1",
         "generic/layer2"
     ],
-    "targets": {
+    "builds": {
         "first": {
             "target": "bitbake-target",
             "layers": [

@@ -1,22 +1,22 @@
-target: first 
+build: first
  local.conf entries
   - root=root
   - first=first
-target: fourth (bakes fourth-bitbake)
+build: fourth (bakes fourth-bitbake)
  local.conf entries
   - root=root
   - second=second
   - third=third
   - first=first
   - fourth=fourth
-target: root 
+build: root
  local.conf entries
   - root=root
-target: second 
+build: second
  local.conf entries
   - root=root
   - second=second
-target: third (bakes third-bitbake)
+build: third (bakes third-bitbake)
  local.conf entries
   - root=root
   - second=second

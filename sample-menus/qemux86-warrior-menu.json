@@ -14,7 +14,7 @@
 		"meta-openembedded/meta-oe"
 	],
 
-	"targets" : {
+	"builds" : {
 
 		"qemu-x86": {
 
@@ -22,7 +22,7 @@
 				" The default `core-image-base` image for qemu x86 emulation"
 			],
 
-			"image" : "core-image-base",
+			"target" : "core-image-base",
 
 			"layers" : [
 			],

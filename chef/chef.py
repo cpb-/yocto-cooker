@@ -140,12 +140,8 @@ class BuildConfiguration:
         return self.name_
 
 
-    def build_dir(self):
+    def dir(self):
         return self.config_.build_dir('build-' + self.name_)
-
-
-    def target(self):
-        return self.target_
 
 
     def layers(self):
@@ -156,7 +152,7 @@ class BuildConfiguration:
                 if not layer in layers:
                     layers.append(layer)
                 else:
-                    debug('ignored - duplicate layer for target "{}": "{}"'
+                    debug('ignored - duplicate layer for build "{}": "{}"'
                           .format(build.name(), layer))
 
         return layers
@@ -168,7 +164,7 @@ class BuildConfiguration:
         for build in self.ancestors_ + [ self ]:
             for new_line in build.local_conf_:
                 if new_line in lines:
-                    debug('ignored - duplicate line in local.conf for target "{}": "{}"'
+                    debug('ignored - duplicate line in local.conf for build "{}": "{}"'
                           .format(build.name(), new_line))
                 lines.append(new_line)
 
@@ -176,13 +172,13 @@ class BuildConfiguration:
 
 
     def set_parents(self):
-        debug('setting first-level-parents of target "{}"'.format(self.name_))
+        debug('setting first-level-parents of build "{}"'.format(self.name_))
 
         if self.inherit_:
             for parent_name in self.inherit_:
 
                 if not parent_name in BuildConfiguration.ALL:
-                    fatal_error('target "{}"\'s parent "{}" not found in targets-section'
+                    fatal_error('build "{}"\'s parent "{}" not found in builds-section'
                                 .format(self.name_, parent_name))
 
                 parent_instance = BuildConfiguration.ALL[parent_name]
@@ -209,7 +205,7 @@ class BuildConfiguration:
 
             for new_parent in new_parents:
                 if new_parent in parents:
-                    debug('target "{}" parent "{}" inherited multiple times - ignoring'
+                    debug('build "{}" parent "{}" inherited multiple times - ignoring'
                           .format(self.name(), new_parent.name()))
                 else:
                     parents.append(new_parent)
@@ -226,7 +222,7 @@ class BuildConfiguration:
         for _, build in BuildConfiguration.ALL.items():
             build.ancestors_ = build.get_ancestors(build)
 
-            debug('ancestors of target "{}": "{}"'
+            debug('ancestors of build "{}": "{}"'
                   .format(build.name(), [ n.name() for n in build.ancestors_ ]))
 
 
@@ -347,36 +343,36 @@ class ChefCommands:
 
 
     def generate(self):
-        info('Generating build dirs for target in project directory')
+        info('Generating dirs for all build-configurations')
 
-        for target in BuildConfiguration.ALL.values():
-            if target.target(): # only create a build-dir if a build-target is set
-                self.prepare_build_directory(target)
+        for build in BuildConfiguration.ALL.values():
+            if build.target(): # only create a build-dir if a target is set
+                self.prepare_build_directory(build)
 
 
-    def prepare_build_directory(self, target):
-        debug('Preparing directory:', target.build_dir())
+    def prepare_build_directory(self, build):
+        debug('Preparing directory:', build.dir())
 
-        os.makedirs(target.build_dir(), exist_ok=True)
+        os.makedirs(build.dir(), exist_ok=True)
 
-        conf_path = os.path.join(target.build_dir(), 'conf')
+        conf_path = os.path.join(build.dir(), 'conf')
         os.makedirs(conf_path, exist_ok=True)
 
-        dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), target.build_dir())
+        dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), build.dir())
 
         sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
-        sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, target.build_dir())
+        sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, build.dir())
 
         with open(os.path.join(conf_path, 'local.conf'), 'w') as file:
             file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
 
-            layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), target.build_dir()))
+            layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
             file.write('CHEF_LAYER_DIR = "{}"\n'.format(layer_dir))
             file.write('DL_DIR = "{}"\n'.format(dl_dir))
             file.write('SSTATE_DIR = "{}"\n'.format(sstate_dir))
 
-            for line in target.local_conf():
+            for line in build.local_conf():
                 file.write(line + '\n')
 
             file.write('''DISTRO ?= "poky"
@@ -400,8 +396,8 @@ BBPATH = "${TOPDIR}"
 BBFILES ?= ""
 ''')
             file.write('BBLAYERS ?= " \\\n')
-            for layer in sorted(target.layers()):
-                layer_path = os.path.relpath(self.config.layer_dir(layer), target.build_dir())
+            for layer in sorted(build.layers()):
+                layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
                 file.write('${{TOPDIR}}/{} \\\n'.format(layer_path))
             file.write('"\n')
 
@@ -409,97 +405,97 @@ BBFILES ?= ""
             file.write("meta-poky/conf\n")
 
 
-    def show(self, targets, layers, conf, tree, build):
+    def show(self, builds, layers, conf, tree, build_arg):
 
-        # check if selected targets exist
-        for target in targets:
-            if not target in BuildConfiguration.ALL:
-                fatal_error('cannot show infos about target', target, 'as it does not exists.')
+        # check if selected builds exist
+        for build in builds:
+            if not build in BuildConfiguration.ALL:
+                fatal_error('cannot show infos about build "{}" as it does not exists.'.format(build))
 
-        # empty given targets - use all existing ones
-        if not targets:
-            targets = BuildConfiguration.ALL.keys()
+        # empty given builds - use all existing ones
+        if not builds:
+            builds = BuildConfiguration.ALL.keys()
 
-        # print information per target
-        for target_name in sorted(targets):
-            target = BuildConfiguration.ALL[target_name]
+        # print information per build
+        for build_name in sorted(builds):
+            build = BuildConfiguration.ALL[build_name]
 
-            if target.target():
-                build_info = '(bakes {})'.format(target.target())
+            if build.target():
+                build_info = ' (bakes {})'.format(build.target())
             else:
                 build_info = ''
 
-            info('target:', target.name(), build_info)
+            info('build: {}{}'.format(build.name(), build_info))
 
             if layers:
                 info(' used layers')
-                for layer in target.layers():
+                for layer in build.layers():
                     info('  - {} ({})'.format(layer, self.config.layer_dir(layer)))
 
             if conf:
                 info(' local.conf entries')
-                for entry in target.local_conf():
+                for entry in build.local_conf():
                     info('  - {}'.format(entry))
 
-            if build:
-                if target.target():
+            if build_arg:
+                if build.target():
                     info('  .',
                          os.path.relpath(self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
-                         os.path.relpath(target.build_dir(), os.getcwd()))
+                         os.path.relpath(build.dir(), os.getcwd()))
                 else:
-                    info('target', target.name(), 'has no build-target')
+                    info('build', build.name(), 'has no target')
 
             if tree:
-                if target.ancestors_:
-                    info('targets ancestors:', [ n.name() for n in target.ancestors_ ])
+                if build.ancestors_:
+                    info('builds ancestors:', [ n.name() for n in build.ancestors_ ])
 
 
-    def build(self, targets, sdk):
-        debug('Building targets')
+    def build(self, builds, sdk):
+        debug('Building build-configurations')
 
-        filtered_targets = []
+        filtered_builds = []
 
-        if targets: # filter out unwanted targets
-            for target in targets:
-                if not target in BuildConfiguration.ALL:
-                    fatal_error('undefined target:', target)
+        if builds: # filter out unwanted targets
+            for build in builds:
+                if not build in BuildConfiguration.ALL:
+                    fatal_error('undefined build:', build)
 
-                if not BuildConfiguration.ALL[target].target():
-                    fatal_error('target has no build-target:', target)
+                if not BuildConfiguration.ALL[build].target():
+                    fatal_error('build has no target:', build)
 
-                filtered_targets.append(BuildConfiguration.ALL[target])
+                filtered_builds.append(BuildConfiguration.ALL[build])
 
-        else: # use all targets which have build-targets
-            filtered_targets = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
+        else: # use all builds which have targets
+            filtered_builds = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
 
-        for target in filtered_targets:
-            self.build_target(target, sdk)
+        for build in filtered_builds:
+            self.build_target(build, sdk)
 
 
-    def build_target(self, target, sdk):
+    def build_target(self, build, sdk):
         try:
-            info('Building target', target.name())
+            info('Building {} ({})'.format(build.name(), build.target()))
 
-            directory = target.build_dir()
+            directory = build.dir()
 
             init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
             if not os.path.isfile(init_script):
                 fatal_error('init-script', init_script, 'not found')
 
-            command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, target.target())
+            command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, build.target())
 
             debug('    Executing : "{}"'.format(command_line))
             if os.system(command_line) != 0:
                 fatal_error('execution of "{}" failed'.format(command_line))
 
             if sdk:
-                command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, target.target())
+                command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, build.target())
                 debug('    Executing : "{}"'.format(command_line))
                 if os.system(command_line) != 0:
                     fatal_error('execution of "{}" failed'.format(command_line))
 
         except Exception as e:
-            fatal_error('build for', target_name, 'failed', e)
+            fatal_error('build for', build.name(), 'failed', e)
 
 
 class ChefCall:
@@ -522,10 +518,10 @@ class ChefCall:
         subparsers = parser.add_subparsers(help='subcommands of Chef')
 
         # `cook` command (`init` + `update` + `generate`)
-        cook_parser = subparsers.add_parser('cook', help='prepare the directories and build the targets of the menu')
+        cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
         cook_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
-        cook_parser.add_argument('targets', help='target to build', nargs='*')
+        cook_parser.add_argument('builds', help='build-configuration to build', nargs='*')
         cook_parser.set_defaults(func=self.cook)
 
         # `init` command
@@ -547,19 +543,19 @@ class ChefCall:
         generate_parser.set_defaults(func=self.generate)
 
         # `show` command
-        show = subparsers.add_parser('show', help='show targets and target information')
-        show.add_argument('-l', '--layers', help='list layers per target', action='store_true', default=False)
-        show.add_argument('-c', '--conf', help='list local.conf-entries per target', action='store_true', default=False)
-        show.add_argument('-t', '--tree', help='list all targets as a parent-child-tree', action='store_true', default=False)
+        show = subparsers.add_parser('show', help='show builds and targets information')
+        show.add_argument('-l', '--layers', help='list layers per build-configuration', action='store_true', default=False)
+        show.add_argument('-c', '--conf', help='list local.conf-entries per build-configuration', action='store_true', default=False)
+        show.add_argument('-t', '--tree', help='list all build-configurations as a parent-child-tree', action='store_true', default=False)
         show.add_argument('-b', '--build', help='show poky-command-line to enter the build-dir and initialize the environment', action='store_true', default=False)
-        show.add_argument('-a', '--all', help='show all information about the targets', action='store_true', default=False)
-        show.add_argument('targets', help='show information of the given targets', nargs='*')
+        show.add_argument('-a', '--all', help='show all information about the build-configurations', action='store_true', default=False)
+        show.add_argument('builds', help='show information of the given builds', nargs='*')
         show.set_defaults(func=self.show)
 
         # `build` command
-        build_parser = subparsers.add_parser('build', help='build the targets from the menu')
+        build_parser = subparsers.add_parser('build', help='build one or more configurations')
         build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-        build_parser.add_argument('targets', help='target to build', nargs='*')
+        build_parser.add_argument('builds', help='build-configuration to build', nargs='*')
         build_parser.set_defaults(func=self.build)
 
         self.clargs = parser.parse_args()
@@ -614,13 +610,13 @@ class ChefCall:
                                None,
                                None)
 
-            for name, target in self.menu['targets'].items():
+            for name, build in self.menu['builds'].items():
                 BuildConfiguration(name,
                                    self.config,
-                                   target.setdefault('layers', []),
-                                   target.setdefault('local.conf', []),
-                                   target.setdefault('target', None),
-                                   target.setdefault('inherit', [ 'root' ]))
+                                   build.setdefault('layers', []),
+                                   build.setdefault('local.conf', []),
+                                   build.setdefault('target', None),
+                                   build.setdefault('inherit', [ 'root' ]))
 
             BuildConfiguration.resolve_parents()
 
@@ -658,7 +654,7 @@ class ChefCall:
         self.commands.init(self.clargs.menu[0].name)
         self.commands.update()
         self.commands.generate()
-        self.commands.build(self.clargs.targets, self.clargs.sdk)
+        self.commands.build(self.clargs.builds, self.clargs.sdk)
 
 
     def generate(self):
@@ -672,7 +668,7 @@ class ChefCall:
         if self.menu is None:
             fatal_error('show command needs a menu')
 
-        self.commands.show(self.clargs.targets,
+        self.commands.show(self.clargs.builds,
                            self.clargs.layers or self.clargs.all,
                            self.clargs.conf or self.clargs.all,
                            self.clargs.tree or self.clargs.all,
@@ -683,7 +679,8 @@ class ChefCall:
         if self.menu is None:
             fatal_error('build needs a menu')
 
-        self.commands.build(self.clargs.targets, self.clargs.sdk)
+        self.commands.build(self.clargs.builds, self.clargs.sdk)
+
 
 def main():
     ChefCall()

@@ -1,4 +1,4 @@
-target: fourth (bakes fourth-bitbake)
+build: fourth (bakes fourth-bitbake)
  used layers
   - root/1 (/layers/root/1)
   - root/2 (/layers/root/2)
@@ -17,4 +17,4 @@ target: fourth (bakes fourth-bitbake)
   - first=first
   - fourth=fourth
   . layers/poky/oe-init-build-env builds/build-fourth
-targets ancestors: ['root', 'second', 'third', 'first']
+builds ancestors: ['root', 'second', 'third', 'first']
