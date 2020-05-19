@@ -8,6 +8,7 @@ import os
 from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
+import subprocess
 
 
 def debug(*args):
@@ -225,6 +226,12 @@ class BuildConfiguration:
             debug('ancestors of build "{}": "{}"'
                   .format(build.name(), [ n.name() for n in build.ancestors_ ]))
 
+class GitSource:
+    """ class describing a source using git to be acquired """
+
+    def __init__(self):
+        pass
+
 
 class ChefCommands:
     """ The class aggregates all functions representing a low-lever chef-command """
@@ -258,17 +265,9 @@ class ChefCommands:
         for source in self.menu['sources']:
             self.update_source(source)
 
-
-    def update_source(self, source):
-        method = 'git'
-        remote_dir = ''
+    def source_dirs(self, source):
         local_dir = ''
-
-        if 'method' in source:
-            method = source['method']
-
-        if method == 'ignore':
-            return
+        remote_dir = ''
 
         if 'dir' in source:
             local_dir = source['dir']
@@ -284,6 +283,20 @@ class ChefCommands:
                 local_dir = url.path[1:]
 
         local_dir = os.path.realpath(self.config.layer_dir(local_dir))
+
+        return local_dir, remote_dir
+
+
+    def update_source(self, source):
+        method = 'git'
+
+        if 'method' in source:
+            method = source['method']
+
+        if method == 'ignore':
+            return
+
+        local_dir, remote_dir = self.source_dirs(source)
 
         if not os.path.isdir(local_dir):
             self.update_directory_initial(method, remote_dir, local_dir)
@@ -519,6 +532,17 @@ BBFILES ?= ""
             fatal_error('execution of "{}" failed'.format(command_line))
 
 
+    def foreach_source(self, command):
+        for source in self.menu['sources']:
+            local_dir,_ = self.source_dirs(source)
+
+            info("Entering '{}' {}".format(local_dir, command))
+            status = subprocess.run(command, cwd=local_dir).returncode
+
+            if status != 0:
+                fatal_error('command returned non-zero status for {}'.format(local_dir))
+                return
+
 
 class ChefCall:
     """
@@ -585,6 +609,14 @@ class ChefCall:
         clean_parser.add_argument('recipe', help='bitbake recipe to clean', nargs=1)
         clean_parser.add_argument('builds', help='build-configurations concerned', nargs='*')
         clean_parser.set_defaults(func=self.clean)
+
+        # `foreach` command
+        foreach_parser = subparsers.add_parser('foreach', help='run a given command on each source or layer directory')
+        group = foreach_parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-l', '--layer', type=str, help='foreach on all layer-dirs (set)')
+        group.add_argument('-s', '--source', action='store_true', help='foreach on all source-dirs (set)')
+        foreach_parser.add_argument('command', help='command and arguments to run', nargs=argparse.REMAINDER)
+        foreach_parser.set_defaults(func=self.foreach)
 
         self.clargs = parser.parse_args()
 
@@ -715,6 +747,14 @@ class ChefCall:
             fatal_error('clean needs a menu')
 
         self.commands.clean(self.clargs.recipe[0], self.clargs.builds)
+
+
+    def foreach(self):
+        if self.menu is None:
+            fatal_error('foreach needs a menu')
+
+        if self.clargs.source:
+            self.commands.foreach_source(self.clargs.command)
 
 
 def main():
