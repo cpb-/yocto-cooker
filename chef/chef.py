@@ -498,6 +498,50 @@ BBFILES ?= ""
             fatal_error('build for', build.name(), 'failed', e)
 
 
+    def clean(self, recipe, builds):
+
+        debug('cleaning {}'.format(recipe))
+
+        filtered_builds = []
+
+        if builds:
+            for build in builds:
+                if not build in BuildConfiguration.ALL:
+                    fatal_error('undefined build:', build)
+
+                if not BuildConfiguration.ALL[build].target():
+                    fatal_error('build has no target:', build)
+
+                filtered_builds.append(BuildConfiguration.ALL[build])
+
+        else:
+            filtered_builds = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
+
+        for build in filtered_builds:
+            self.clean_build_config(recipe, build)
+
+
+    def clean_build_config(self, recipe, build):
+        try:
+            info('Clean {} for {}'.format(recipe, build.name()))
+
+            directory = build.dir()
+
+            init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
+            if not os.path.isfile(init_script):
+                fatal_error('init-script', init_script, 'not found')
+
+            command_line = 'env bash -c "source {} {} && bitbake -c cleansstate {}"'.format(init_script, directory, recipe)
+
+            debug('    Executing : "{}"'.format(command_line))
+            if os.system(command_line) != 0:
+                fatal_error('execution of "{}" failed'.format(command_line))
+
+        except Exception as e:
+            fatal_error('clean {} for {} failed'.format(recipe, build.name()))
+
+
+
 class ChefCall:
     """
     ChefCall represents a call of the chef-tool, handles all arguments, opens the config-file,
@@ -557,6 +601,12 @@ class ChefCall:
         build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         build_parser.add_argument('builds', help='build-configuration to build', nargs='*')
         build_parser.set_defaults(func=self.build)
+
+        # `clean` command
+        clean_parser = subparsers.add_parser('clean', help='clean a previously build recipe')
+        clean_parser.add_argument('recipe', help='bitbake recipe to clean', nargs=1)
+        clean_parser.add_argument('builds', help='build-configurations concerned', nargs='*')
+        clean_parser.set_defaults(func=self.clean)
 
         self.clargs = parser.parse_args()
 
@@ -680,6 +730,13 @@ class ChefCall:
             fatal_error('build needs a menu')
 
         self.commands.build(self.clargs.builds, self.clargs.sdk)
+
+
+    def clean(self):
+        if self.menu is None:
+            fatal_error('clean needs a menu')
+
+        self.commands.clean(self.clargs.recipe[0], self.clargs.builds)
 
 
 def main():

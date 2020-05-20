@@ -76,9 +76,16 @@ Each time you do some changes in the menu file, you may need to call:
 
 - `chef update`: if you have modified a commit number or you want to pull the
   latest version of a branch
+
 - `chef generate`: if you have modified a `local.conf` or a `layers`-attribute.
 
 Then `chef build` to restart the compilations.
+
+Another useful sub-command is:
+
+- `chef clean {recipe} [build-configs...]` that will erase all files produced
+during the compilation of a recipe (and also the shared-state-cache associated
+files).
 
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
