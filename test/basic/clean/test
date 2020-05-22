@@ -1,0 +1,161 @@
+# `chef clean recipe` fails when `chef init` has not been called.'
+rm -f .chefconfig
+expect_fail chef clean recipe
+
+# Initialize an empty menu.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {}
+	}
+EOF
+chef init menu.json
+
+# `chef clean` fails without recipe name.
+expect_fail chef clean
+
+# `chef clean recipe` succeeds when `builds` is empty.
+chef clean recipe
+
+# Initialize a simple menu.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "target-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+chef init -f menu.json
+
+# `chef clean recipe` fails without Poky `oe-init-build-env` script.
+rm -f layers/poky/oe-init-build-env
+
+expect_fail chef clean recipe
+
+# Add poky and bitbake
+mkdir -p layers/poky
+touch layers/poky/oe-init-build-env
+cat > bitbake <<-EOF
+	#! /bin/sh
+	exit \${bitbake_result}
+EOF
+chmod +x bitbake
+PATH=.:$PATH
+
+# `chef clean recipe` succeeds when bitbake succeeds.
+export bitbake_result=0
+chef clean recipe
+
+# `chef clean recipe` fails when bitbake fails.
+export bitbake_result=1
+expect_fail chef clean recipe
+
+export bitbake_result=0
+
+# `chef clean recipe` succeeds when no build-configuration are buildable.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "build-1": {
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+chef init -f menu.json
+chef generate
+
+chef clean recipe
+
+# `chef clean recipe buid-config` fails when build-config doesn't exist.
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "build-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+chef init -f menu.json
+chef generate
+
+expect_fail chef clean recipe build-config
+
+# `chef clean recipe build-1` calls `bitbake -c cleansstate recipe` for `build-1` 
+cat > bitbake <<-EOF
+	#! /bin/sh
+	echo "\$@" >> bitbake.log
+	exit 0
+EOF
+
+cat > layers/poky/oe-init-build-env <<-EOF
+	#! /bin/sh
+	echo "\$@" >> poky.log
+EOF
+rm -f bitbake.log
+rm -f poky.log
+chef clean recipe build-1
+
+textInFile poky.log build-build-1$ 1
+textInFile bitbake.log "c cleansstate recipe" 1
+
+# Prepare a menu with two buildable configs
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "build-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        },
+	        "build-2": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        },
+	        "build-3": {
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+chef init -f menu.json
+chef generate
+
+# `chef clean recipe` calls `bitbake -c cleansstate recipe` for each buildable configs.
+rm -f bitbake.log
+rm -f poky.log
+chef clean recipe
+
+textInFile poky.log build-build-1$ 1
+textInFile poky.log build-build-2$ 1
+textInFile poky.log build-build-3$ 0 0
+textInFile bitbake.log "-c cleansstate recipe" 2
+
+exit 0
+
+
