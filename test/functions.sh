@@ -6,7 +6,7 @@ function textInFile
 
 function textInFileRange
 {
-	count=$(cat $1 | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | grep -P "$2"  | wc -l)
+	count=$(cat $1 | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g" | grep -P -- "$2"  | wc -l)
 	if [ $count -lt $3 -o $count -gt $4 ]
 	then
 		echo "expected '$2' in $1 between $3 and $4 times - but found $count times"
