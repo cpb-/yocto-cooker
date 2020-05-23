@@ -461,23 +461,9 @@ BBFILES ?= ""
         try:
             info('Building {} ({})'.format(build.name(), build.target()))
 
-            directory = build.dir()
-
-            init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
-            if not os.path.isfile(init_script):
-                fatal_error('init-script', init_script, 'not found')
-
-            command_line = 'env bash -c "source {} {} && bitbake {}"'.format(init_script, directory, build.target())
-
-            debug('    Executing : "{}"'.format(command_line))
-            if os.system(command_line) != 0:
-                fatal_error('execution of "{}" failed'.format(command_line))
-
+            self.run_bitbake(build, "", build.target())
             if sdk:
-                command_line = 'env bash -c "source {} {} && bitbake -c populate_sdk {}"'.format(init_script, directory, build.target())
-                debug('    Executing : "{}"'.format(command_line))
-                if os.system(command_line) != 0:
-                    fatal_error('execution of "{}" failed'.format(command_line))
+                self.run_bitbake(build, "-c populate_sdk", build.target())
 
         except Exception as e:
             fatal_error('build for', build.name(), 'failed', e)
@@ -493,21 +479,9 @@ BBFILES ?= ""
     def clean_build_config(self, recipe, build):
         try:
             info('Clean {} for {}'.format(recipe, build.name()))
-
-            directory = build.dir()
-
-            init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
-            if not os.path.isfile(init_script):
-                fatal_error('init-script', init_script, 'not found')
-
-            command_line = 'env bash -c "source {} {} && bitbake -c cleansstate {}"'.format(init_script, directory, recipe)
-
-            debug('    Executing : "{}"'.format(command_line))
-            if os.system(command_line) != 0:
-                fatal_error('execution of "{}" failed'.format(command_line))
-
+            self.run_bitbake(build, "-c cleansstate", recipe)
         except Exception as e:
-            fatal_error('clean {} for {} failed'.format(recipe, build.name()))
+            fatal_error('clean for', build.name(), 'failed', e)
 
 
     def filter_build_configs(self, builds):
@@ -529,6 +503,20 @@ BBFILES ?= ""
 
         return filtered_build_configs
 
+
+    def run_bitbake(self, build_config, bb_task, bb_target):
+
+        directory = build_config.dir()
+
+        init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        if not os.path.isfile(init_script):
+            fatal_error('init-script', init_script, 'not found')
+
+        command_line = 'env bash -c "source {} {} && bitbake {}  {}"'.format(init_script, directory, bb_task, bb_target)
+
+        debug('    Executing : "{}"'.format(command_line))
+        if os.system(command_line) != 0:
+            fatal_error('execution of "{}" failed'.format(command_line))
 
 
 
