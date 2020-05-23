@@ -453,22 +453,7 @@ BBFILES ?= ""
     def build(self, builds, sdk):
         debug('Building build-configurations')
 
-        filtered_builds = []
-
-        if builds: # filter out unwanted targets
-            for build in builds:
-                if not build in BuildConfiguration.ALL:
-                    fatal_error('undefined build:', build)
-
-                if not BuildConfiguration.ALL[build].target():
-                    fatal_error('build has no target:', build)
-
-                filtered_builds.append(BuildConfiguration.ALL[build])
-
-        else: # use all builds which have targets
-            filtered_builds = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
-
-        for build in filtered_builds:
+        for build in self.filter_build_configs(builds):
             self.build_target(build, sdk)
 
 
@@ -499,25 +484,9 @@ BBFILES ?= ""
 
 
     def clean(self, recipe, builds):
-
         debug('cleaning {}'.format(recipe))
 
-        filtered_builds = []
-
-        if builds:
-            for build in builds:
-                if not build in BuildConfiguration.ALL:
-                    fatal_error('undefined build:', build)
-
-                if not BuildConfiguration.ALL[build].target():
-                    fatal_error('build has no target:', build)
-
-                filtered_builds.append(BuildConfiguration.ALL[build])
-
-        else:
-            filtered_builds = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
-
-        for build in filtered_builds:
+        for build in self.filter_build_configs(builds):
             self.clean_build_config(recipe, build)
 
 
@@ -539,6 +508,27 @@ BBFILES ?= ""
 
         except Exception as e:
             fatal_error('clean {} for {} failed'.format(recipe, build.name()))
+
+
+    def filter_build_configs(self, builds):
+
+        filtered_build_configs = []
+
+        if builds: # filter out unwanted configs.
+            for build in builds:
+                if not build in BuildConfiguration.ALL:
+                    fatal_error('undefined build:', build)
+
+                if not BuildConfiguration.ALL[build].target():
+                    fatal_error('build has no target:', build)
+
+                filtered_build_configs.append(BuildConfiguration.ALL[build])
+
+        else: # use all builds which have targets
+            filtered_build_configs = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
+
+        return filtered_build_configs
+
 
 
 
