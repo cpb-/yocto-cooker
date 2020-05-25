@@ -52,12 +52,12 @@ followed by options, menu filename or build-config-names.
 
 The top-level sub-command proposed by `chef` is:
 
-- `chef cook {menu file} [build-configs...]`: does the whole production job from the
+- `chef cook <menu-file> [<build-configs>...]`: does the whole production job from the
   initial configuration and downloading up to the final image(s).
 
 In fact, `chef cook` is equivalent to a collection of low-level commands:
 
-- `chef init {menu file}`: store the current menu filename into the
+- `chef init <menu-file>`: store the current menu filename into the
   `.chefconfig` configuration file. The content of the configuration will be
   explained later.
 
@@ -67,7 +67,7 @@ In fact, `chef cook` is equivalent to a collection of low-level commands:
 - `chef generate`: prepare the build-dir and configuration files (`local.conf`,
   `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-- `chef build [--sdk] [build-configs...]` runs `bitbake` to produce the given
+- `chef build [--sdk] [<build-configs>...]` runs `bitbake` to produce the given
   build-configs. If no build-config is indicated on the command line, `chef`
   builds all the build-configs of the menu file. With the `--sdk` option on the
   command line, `chef` will also build the cross-compiler toolchain and headers.
@@ -83,7 +83,7 @@ Then `chef build` to restart the compilations.
 
 Another useful sub-command is:
 
-- `chef clean {recipe} [build-configs...]` that will erase all files produced
+- `chef clean <recipe> [<build-configs>...]` that will erase all files produced
 during the compilation of a recipe (and also the shared-state-cache associated
 files).
 
@@ -184,7 +184,7 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 `chef` downloads the needed layers in the `layers` directory (by default) and
 creates the build-sub-directories into the `builds` directory.  For example,
-after running `chef init {menu file}; chef update; chef generate`, the working
+after running `chef init <menu-file>; chef update; chef generate`, the working
 directory might contain:
 
 ```
