@@ -184,7 +184,7 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 `chef` downloads the needed layers in the `layers` directory (by default) and
 creates the build-sub-directories into the `builds` directory.  For example,
-after running `chef init {menu file}; chef update; chef generate`, the working
+after running `chef init <menu-file>; chef update; chef generate`, the working
 directory might contain:
 
 ```
