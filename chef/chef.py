@@ -537,7 +537,8 @@ class ChefCall:
         parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
 
         # parsing subcommand's arguments
-        subparsers = parser.add_subparsers(help='subcommands of Chef')
+        subparsers = parser.add_subparsers(help='subcommands of Chef', dest='sub-command')
+        subparsers.required = True
 
         # `cook` command (`init` + `update` + `generate`)
         cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
