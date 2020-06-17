@@ -232,7 +232,7 @@ the layer is already present.
 - `dir`: the path of the layer relative to the directory where you run `chef`.
 if `method` is `ignore` the layer must already be there and `dir` is
 mandatory. Otherwise, this is the place to store the downloaded layer.
-- `branch`: the `git` branch to use. Especially usefull when no `commit` is
+- `branch`: the `git` branch to use. Especially usefull when no `rev` is
 given.
 - `rev`: the `git` tag or index of the revision desired.
 
