@@ -1,7 +1,7 @@
 __title__ = 'chef'
-__version__ = '0.1'
+__version__ = '1.0.0'
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
-__email__ = 'Christophe@Blaess.fr, patrick.boettcher@stimio.fr'
+__email__ = 'christophe.blaess@logilin.fr, p@yai.se'
 __license__ = "GPL"
 __url__ = "https://github.com/cpb-/chef"
 
