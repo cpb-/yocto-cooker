@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
 
+__version__ = '1.0.0'
+
 
 def debug(*args):
     if ChefCall.DEBUG:
@@ -534,11 +536,11 @@ class ChefCall:
         parser = argparse.ArgumentParser(prog='Chef')
 
         parser.add_argument('--debug', action='store_true', help='activate debug printing')
+        parser.add_argument('--version', action='store_true', help='chef version')
         parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
 
         # parsing subcommand's arguments
         subparsers = parser.add_subparsers(help='subcommands of Chef', dest='sub-command')
-        subparsers.required = True
 
         # `cook` command (`init` + `update` + `generate`)
         cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
@@ -591,6 +593,10 @@ class ChefCall:
 
         ChefCall.DEBUG = self.clargs.debug
         ChefCall.VERBOSE = self.clargs.verbose
+
+        if self.clargs.version:
+            info(__version__)
+            sys.exit(0)
 
         # find and initialize config
         self.config = Config()
@@ -655,7 +661,7 @@ class ChefCall:
         if 'func' in self.clargs:
             self.clargs.func() # call function of selected command
         else:
-            debug('no function selected, did nothing')
+            parser.print_usage()
 
         sys.exit(0)
 
