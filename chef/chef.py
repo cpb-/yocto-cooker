@@ -18,7 +18,8 @@ def debug(*args):
 
 
 def info(*args):
-    print(*args)
+    if not ChefCall.DRY_RUN:
+        print(*args)
 
 
 def warn(*args):
@@ -29,6 +30,54 @@ def warn(*args):
 def fatal_error(*args):
     print('FATAL:', *args)
     sys.exit(1)
+
+
+def execute_command(command):
+    if ChefCall.DRY_RUN:
+        print(command)
+        return 0
+    else:
+        return os.system(command)
+
+
+def create_directory(dir):
+    if ChefCall.DRY_RUN:
+        print('mkdir {}'.format(dir))
+    else:
+        os.makedirs(dir, exist_ok=True)
+
+
+def open_file_write(filename):
+    if ChefCall.DRY_RUN:
+        print('cat > {} <<-EOF'.format(filename))
+        return 0
+    else:
+        return open(filename, 'w')
+
+
+def write_into_file(file, string):
+    if ChefCall.DRY_RUN:
+        print('\t{}'.format(string))
+    else:
+        file.write('{}\n'.format(string))
+
+
+def close_file(file):
+    if ChefCall.DRY_RUN:
+        print('EOF')
+    else:
+        file.close()
+
+def file_exists(filename):
+    if ChefCall.DRY_RUN:
+        return True
+    return os.path.isfile(filename)
+
+
+def directory_exists(dirname):
+    if ChefCall.DRY_RUN:
+        return True
+    return os.path.isdir(dirname)
 
 
 class Config:
@@ -293,7 +342,7 @@ class ChefCommands:
         branch = source.setdefault('branch', '')
         rev = source.setdefault('rev', '')
 
-        if os.path.isdir(local_dir):
+        if directory_exists(local_dir):
             self.update_directory(method, local_dir, remote_dir != '', branch, rev)
 
 
@@ -306,7 +355,7 @@ class ChefCommands:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            if os.system('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+            if execute_command('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
                 fatal_error('Unable to clone', remote_dir)
 
 
@@ -324,23 +373,23 @@ class ChefCommands:
                     warn('ATTENTION! source "{}" has no "rev" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
-                        if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        if execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
                             fatal_error('Unable to pull updates for {}'.format(local_dir))
                 else:
                     warn('source "{}" has no "rev" field, the build will not be reproducible!'.format(local_dir))
                     info('Updating source {}... '.format(local_dir))
-                    if os.system('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
+                    if execute_command('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
                         fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
                     if has_remote:
-                        if os.system('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        if execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
                             fatal_error('Unable to pull updates for {}'.format(local_dir))
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if os.system('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
+                if execute_command('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
                     fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
-            if os.system('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
+            if execute_command('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
                 fatal_error('Unable to update submodules in ' + local_dir)
 
 
@@ -355,56 +404,54 @@ class ChefCommands:
     def prepare_build_directory(self, build):
         debug('Preparing directory:', build.dir())
 
-        os.makedirs(build.dir(), exist_ok=True)
+        create_directory(build.dir())
 
         conf_path = os.path.join(build.dir(), 'conf')
-        os.makedirs(conf_path, exist_ok=True)
-
+        create_directory(conf_path)
         dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), build.dir())
 
         sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, build.dir())
+        layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
-        with open(os.path.join(conf_path, 'local.conf'), 'w') as file:
-            file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+        file = open_file_write(os.path.join(conf_path, 'local.conf'))
 
-            layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
+        write_into_file(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+        write_into_file(file, 'CHEF_LAYER_DIR = "{}"'.format(layer_dir))
+        write_into_file(file, 'DL_DIR = "{}"'.format(dl_dir))
+        write_into_file(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
+        for line in build.local_conf():
+            write_into_file(file, line)
+        write_into_file(file, 'DISTRO ?= "poky"')
+        write_into_file(file, 'PACKAGE_CLASSES ?= "package_rpm"')
+        write_into_file(file, 'BB_DISKMON_DIRS ??= "\\')
+        write_into_file(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
+        write_into_file(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
+        write_into_file(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
+        write_into_file(file, '\tSTOPTASKS,/tmp,100M,100K \\')
+        write_into_file(file, '\tABORT,${TMPDIR},100M,1K \\')
+        write_into_file(file, '\tABORT,${DL_DIR},100M,1K \\')
+        write_into_file(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
+        write_into_file(file, '\tABORT,/tmp,10M,1K"')
+        write_into_file(file, 'CONF_VERSION = "1"')
+        close_file(file)
 
-            file.write('CHEF_LAYER_DIR = "{}"\n'.format(layer_dir))
-            file.write('DL_DIR = "{}"\n'.format(dl_dir))
-            file.write('SSTATE_DIR = "{}"\n'.format(sstate_dir))
 
-            for line in build.local_conf():
-                file.write(line + '\n')
+        file = open_file_write(os.path.join(conf_path, 'bblayers.conf'))
+        write_into_file(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+        write_into_file(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
+        write_into_file(file, 'BBPATH = "${TOPDIR}"')
+        write_into_file(file, 'BBFILES ?= ""')
+        write_into_file(file, 'BBLAYERS ?= " \\')
+        for layer in sorted(build.layers()):
+            layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
+            write_into_file(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
+        write_into_file(file, '"\n')
+        close_file(file)
 
-            file.write('''DISTRO ?= "poky"
-PACKAGE_CLASSES ?= "package_rpm"
-BB_DISKMON_DIRS ??= "\\
-\tSTOPTASKS,${TMPDIR},1G,100K \\
-\tSTOPTASKS,${DL_DIR},1G,100K \\
-\tSTOPTASKS,${SSTATE_DIR},1G,100K \\
-\tSTOPTASKS,/tmp,100M,100K \\
-\tABORT,${TMPDIR},100M,1K \\
-\tABORT,${DL_DIR},100M,1K \\
-\tABORT,${SSTATE_DIR},100M,1K \\
-\tABORT,/tmp,10M,1K"
-CONF_VERSION = "1"
-''')
-
-        with open(os.path.join(conf_path, 'bblayers.conf'), 'w') as file:
-            file.write('\n# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-            file.write('''POKY_BBLAYERS_CONF_VERSION = "2"
-BBPATH = "${TOPDIR}"
-BBFILES ?= ""
-''')
-            file.write('BBLAYERS ?= " \\\n')
-            for layer in sorted(build.layers()):
-                layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
-                file.write('${{TOPDIR}}/{} \\\n'.format(layer_path))
-            file.write('"\n')
-
-        with open(os.path.join(conf_path, 'templateconf.cfg'), 'w') as file:
-            file.write("meta-poky/conf\n")
+        file = open_file_write(os.path.join(conf_path, 'templateconf.cfg'))
+        write_into_file(file, 'meta-poky/conf\n')
+        close_file(file)
 
 
     def show(self, builds, layers, conf, tree, build_arg):
@@ -511,13 +558,12 @@ BBFILES ?= ""
         directory = build_config.dir()
 
         init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
-        if not os.path.isfile(init_script):
+        if not file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
         command_line = 'env bash -c "source {} {} && bitbake {}  {}"'.format(init_script, directory, bb_task, bb_target)
-
         debug('    Executing : "{}"'.format(command_line))
-        if os.system(command_line) != 0:
+        if execute_command(command_line) != 0:
             fatal_error('execution of "{}" failed'.format(command_line))
 
 
@@ -531,6 +577,7 @@ class ChefCall:
     DEBUG = False
     WARNING = True
     VERBOSE = False
+    DRY_RUN = False
 
     def __init__(self):
         parser = argparse.ArgumentParser(prog='Chef')
@@ -538,6 +585,7 @@ class ChefCall:
         parser.add_argument('--debug', action='store_true', help='activate debug printing')
         parser.add_argument('--version', action='store_true', help='chef version')
         parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
+        parser.add_argument('-n', '--dry-run', action='store_true', help='print what would have been done (without doing anything)')
 
         # parsing subcommand's arguments
         subparsers = parser.add_subparsers(help='subcommands of Chef', dest='sub-command')
@@ -593,6 +641,7 @@ class ChefCall:
 
         ChefCall.DEBUG = self.clargs.debug
         ChefCall.VERBOSE = self.clargs.verbose
+        ChefCall.DRY_RUN = self.clargs.dry_run
 
         if self.clargs.version:
             info(__version__)
