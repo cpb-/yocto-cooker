@@ -662,6 +662,7 @@ class ChefCall:
             self.clargs.func() # call function of selected command
         else:
             parser.print_usage()
+            sys.exit(1)
 
         sys.exit(0)
 
