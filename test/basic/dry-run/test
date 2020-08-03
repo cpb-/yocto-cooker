@@ -1,0 +1,33 @@
+# `chef --dry-run` command with no sub-command must fail with an error message.
+rm -f error.txt
+expect_fail chef --dry-run > error.txt 2>&1
+linesInFile error.txt 2
+rm -f error.txt
+
+
+# Mock `bitbake`
+cat > bitbake <<-EOF
+        #! /bin/sh
+        exit 0
+EOF
+chmod +x bitbake
+
+# Mock `git`
+
+cat > git <<-EOF
+	#! /bin/sh
+	exit 0
+EOF
+chmod +x git
+PATH=.:$PATH
+
+
+rm -f error.txt output.txt
+chef --dry-run cook $S/menu-01.json >output.txt 2>error.txt
+linesInFile output.txt 56
+linesInFile error.txt 0
+rm -f error.txt output.txt
+
+exit 0
+
+
