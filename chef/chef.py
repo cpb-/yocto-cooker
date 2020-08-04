@@ -40,13 +40,13 @@ class OsCalls:
     def create_directory(self, dir):
         os.makedirs(dir, exist_ok=True)
 
-    def open_file_write(self, filename):
+    def file_open(self, filename):
         return open(filename, 'w')
 
-    def write_into_file(self, file, string):
+    def file_write(self, file, string):
         file.write('{}\n'.format(string))
 
-    def close_file(self, file):
+    def file_close(self, file):
         file.close()
 
     def file_exists(self, filename):
@@ -66,14 +66,14 @@ class DryRunOsCalls:
     def create_directory(self, dir):
         print('mkdir {}'.format(dir))
 
-    def open_file_write(self, filename):
+    def file_open(self, filename):
         print('cat > {} <<-EOF'.format(filename))
         return 0
 
-    def write_into_file(self, file, string):
+    def file_write(self, file, string):
         print('\t{}'.format(string))
 
-    def close_file(self, file):
+    def file_close(self, file):
         print('EOF')
 
     def file_exists(self, filename):
@@ -418,43 +418,43 @@ class ChefCommands:
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, build.dir())
         layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
-        file = ChefCall.os.open_file_write(os.path.join(conf_path, 'local.conf'))
+        file = ChefCall.os.file_open(os.path.join(conf_path, 'local.conf'))
 
-        ChefCall.os.write_into_file(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        ChefCall.os.write_into_file(file, 'CHEF_LAYER_DIR = "{}"'.format(layer_dir))
-        ChefCall.os.write_into_file(file, 'DL_DIR = "{}"'.format(dl_dir))
-        ChefCall.os.write_into_file(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
+        ChefCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+        ChefCall.os.file_write(file, 'CHEF_LAYER_DIR = "{}"'.format(layer_dir))
+        ChefCall.os.file_write(file, 'DL_DIR = "{}"'.format(dl_dir))
+        ChefCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
         for line in build.local_conf():
-            ChefCall.os.write_into_file(file, line)
-        ChefCall.os.write_into_file(file, 'DISTRO ?= "poky"')
-        ChefCall.os.write_into_file(file, 'PACKAGE_CLASSES ?= "package_rpm"')
-        ChefCall.os.write_into_file(file, 'BB_DISKMON_DIRS ??= "\\')
-        ChefCall.os.write_into_file(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
-        ChefCall.os.write_into_file(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
-        ChefCall.os.write_into_file(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
-        ChefCall.os.write_into_file(file, '\tSTOPTASKS,/tmp,100M,100K \\')
-        ChefCall.os.write_into_file(file, '\tABORT,${TMPDIR},100M,1K \\')
-        ChefCall.os.write_into_file(file, '\tABORT,${DL_DIR},100M,1K \\')
-        ChefCall.os.write_into_file(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
-        ChefCall.os.write_into_file(file, '\tABORT,/tmp,10M,1K"')
-        ChefCall.os.write_into_file(file, 'CONF_VERSION = "1"')
-        ChefCall.os.close_file(file)
+            ChefCall.os.file_write(file, line)
+        ChefCall.os.file_write(file, 'DISTRO ?= "poky"')
+        ChefCall.os.file_write(file, 'PACKAGE_CLASSES ?= "package_rpm"')
+        ChefCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
+        ChefCall.os.file_write(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
+        ChefCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
+        ChefCall.os.file_write(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
+        ChefCall.os.file_write(file, '\tSTOPTASKS,/tmp,100M,100K \\')
+        ChefCall.os.file_write(file, '\tABORT,${TMPDIR},100M,1K \\')
+        ChefCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
+        ChefCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
+        ChefCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
+        ChefCall.os.file_write(file, 'CONF_VERSION = "1"')
+        ChefCall.os.file_close(file)
 
-        file = ChefCall.os.open_file_write(os.path.join(conf_path, 'bblayers.conf'))
-        ChefCall.os.write_into_file(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        ChefCall.os.write_into_file(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
-        ChefCall.os.write_into_file(file, 'BBPATH = "${TOPDIR}"')
-        ChefCall.os.write_into_file(file, 'BBFILES ?= ""')
-        ChefCall.os.write_into_file(file, 'BBLAYERS ?= " \\')
+        file = ChefCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
+        ChefCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
+        ChefCall.os.file_write(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
+        ChefCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
+        ChefCall.os.file_write(file, 'BBFILES ?= ""')
+        ChefCall.os.file_write(file, 'BBLAYERS ?= " \\')
         for layer in sorted(build.layers()):
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
-            ChefCall.os.write_into_file(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
-        ChefCall.os.write_into_file(file, '"\n')
-        ChefCall.os.close_file(file)
+            ChefCall.os.file_write(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
+        ChefCall.os.file_write(file, '"\n')
+        ChefCall.os.file_close(file)
 
-        file = ChefCall.os.open_file_write(os.path.join(conf_path, 'templateconf.cfg'))
-        ChefCall.os.write_into_file(file, 'meta-poky/conf\n')
-        ChefCall.os.close_file(file)
+        file = ChefCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
+        ChefCall.os.file_write(file, 'meta-poky/conf\n')
+        ChefCall.os.file_close(file)
 
 
     def show(self, builds, layers, conf, tree, build_arg):
