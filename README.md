@@ -356,7 +356,5 @@ For example, `chef --dry-run cook <menu-filename>` will display all the shell
 commands that `chef` would execute. The output could even be redirected into a
 file that may later be run as a shell script.
 
-The commands are basically `mkdir`, `cd`, `git` and `bitbake`.
-
 The `--dry-run` output also displays the content of the files produced by 
-`chef` (`local.conf`, `bblayers.conf`, `templateconf.cfg`).
+`chef`.
