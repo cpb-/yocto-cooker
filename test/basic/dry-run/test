@@ -1,6 +1,6 @@
 # `chef --dry-run` command with no sub-command must fail with an error message.
 rm -f error.txt
-expect_fail chef --dry-run > error.txt 2>&1
+expect_fail chef --dry-run 2> error.txt
 linesInFile error.txt 2
 rm -f error.txt
 
@@ -25,7 +25,7 @@ PATH=.:$PATH
 rm -f error.txt output.txt
 chef --dry-run cook $S/menu-01.json >output.txt 2>error.txt
 linesInFile output.txt 56
-linesInFile error.txt 0
+linesInFile error.txt 9
 rm -f error.txt output.txt
 
 exit 0
