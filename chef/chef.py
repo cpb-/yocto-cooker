@@ -14,21 +14,20 @@ __version__ = '1.0.0'
 
 def debug(*args):
     if ChefCall.DEBUG:
-        print(*args)
+        print(*args, file=sys.stderr)
 
 
 def info(*args):
     if not ChefCall.DRY_RUN:
-        print(*args)
+        print(*args, file=sys.stderr)
 
 
 def warn(*args):
-    if ChefCall.WARNING:
-        print('WARN:', *args)
+    print('WARN:', *args, file=sys.stderr)
 
 
 def fatal_error(*args):
-    print('FATAL:', *args)
+    print('FATAL:', *args, file=sys.stderr)
     sys.exit(1)
 
 
@@ -645,7 +644,6 @@ class ChefCall:
 
         ChefCall.DEBUG = self.clargs.debug
         ChefCall.VERBOSE = self.clargs.verbose
-        ChefCall.DRY_RUN = self.clargs.dry_run
 
         if self.clargs.version:
             info(__version__)
@@ -719,7 +717,7 @@ class ChefCall:
         if 'func' in self.clargs:
             self.clargs.func() # call function of selected command
         else:
-            parser.print_usage()
+            parser.print_usage(file=sys.stderr)
             sys.exit(1)
 
         sys.exit(0)
