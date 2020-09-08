@@ -1,10 +1,10 @@
-build: first
-build first has no target
-build: fourth (bakes fourth-bitbake)
-  . layers/poky/oe-init-build-env builds/build-fourth
-build: root
-build root has no target
-build: second
-build second has no target
-build: third (bakes third-bitbake)
-  . layers/poky/oe-init-build-env builds/build-third
+# build: first
+# build first has no target
+# build: fourth (bakes fourth-bitbake)
+#   . layers/poky/oe-init-build-env builds/build-fourth
+# build: root
+# build root has no target
+# build: second
+# build second has no target
+# build: third (bakes third-bitbake)
+#   . layers/poky/oe-init-build-env builds/build-third

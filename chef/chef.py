@@ -18,8 +18,9 @@ def debug(*args):
 
 
 def info(*args):
-    if not ChefCall.DRY_RUN:
-        print(*args, file=sys.stderr)
+    print('# ', end='')
+    print(*args)
+    sys.stdout.flush()
 
 
 def warn(*args):
@@ -61,20 +62,25 @@ class DryRunOsCalls:
 
     def execute_command(self, command):
         print(command)
+        sys.stdout.flush()
         return 0
 
     def create_directory(self, dir):
         print('mkdir {}'.format(dir))
+        sys.stdout.flush()
 
     def file_open(self, filename):
         print('cat > {} <<-EOF'.format(filename))
+        sys.stdout.flush()
         return 0
 
     def file_write(self, file, string):
         print('\t{}'.format(string))
+        sys.stdout.flush()
 
     def file_close(self, file):
         print('EOF')
+        sys.stdout.flush()
 
     def file_exists(self, filename):
         return True
@@ -580,7 +586,6 @@ class ChefCall:
     DEBUG = False
     WARNING = True
     VERBOSE = False
-    DRY_RUN = False
 
     def __init__(self):
         parser = argparse.ArgumentParser(prog='Chef')
