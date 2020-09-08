@@ -1,23 +1,23 @@
-build: first
- local.conf entries
-  - root=root
-  - first=first
-build: fourth (bakes fourth-bitbake)
- local.conf entries
-  - root=root
-  - second=second
-  - third=third
-  - first=first
-  - fourth=fourth
-build: root
- local.conf entries
-  - root=root
-build: second
- local.conf entries
-  - root=root
-  - second=second
-build: third (bakes third-bitbake)
- local.conf entries
-  - root=root
-  - second=second
-  - third=third
+# build: first
+#  local.conf entries
+#   - root=root
+#   - first=first
+# build: fourth (bakes fourth-bitbake)
+#  local.conf entries
+#   - root=root
+#   - second=second
+#   - third=third
+#   - first=first
+#   - fourth=fourth
+# build: root
+#  local.conf entries
+#   - root=root
+# build: second
+#  local.conf entries
+#   - root=root
+#   - second=second
+# build: third (bakes third-bitbake)
+#  local.conf entries
+#   - root=root
+#   - second=second
+#   - third=third

@@ -1,9 +1,9 @@
-build: first
-builds ancestors: ['root']
-build: fourth (bakes fourth-bitbake)
-builds ancestors: ['root', 'second', 'third', 'first']
-build: root
-build: second
-builds ancestors: ['root']
-build: third (bakes third-bitbake)
-builds ancestors: ['root', 'second']
+# build: first
+# builds ancestors: ['root']
+# build: fourth (bakes fourth-bitbake)
+# builds ancestors: ['root', 'second', 'third', 'first']
+# build: root
+# build: second
+# builds ancestors: ['root']
+# build: third (bakes third-bitbake)
+# builds ancestors: ['root', 'second']

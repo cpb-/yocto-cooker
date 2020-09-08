@@ -1,6 +1,6 @@
 chef init $S/menu.json
 
-chef show -l > layer-output
+chef show -l >layer-output
 
 # remove current path from output
 sed -i "s|$(pwd)||" layer-output
