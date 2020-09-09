@@ -8,7 +8,7 @@ Meta buildtool for Yocto Project based Linux embedded systems
 The aim of this project is to prepare the needed directories and configuration
 files before running a Yocto Project build.
 
-The tool is called `chef` to follow the culinary metaphore specific to the
+The tool is called `chef` to follow the culinary metaphor specific to the
 Yocto Project.
 
 `chef` uses a project file called a _menu_ :-).
@@ -19,8 +19,8 @@ have to be downloaded and which revision has to be checked out.
 It also contains custom lines to be written into the `local.conf` file and
 which layers have to be included.
 
-With the help of a _menu_ a reproducible build can achieved. Menu-files are
-files written in JSON and cna thus be stored anywhere.
+With the help of a _menu_ a reproducible build can be achieved. Menu-files are
+files written in JSON and can thus be stored anywhere.
 
 `chef` can also call directly `bitbake` to run the build.
 
@@ -225,14 +225,14 @@ Each object of the array describes one layer.
 The following attributes can be used:
 
 - `url`: the URL used to download the layer. This attribute is mandatory.
-- `method`: the way to handle the versionning of the layer. `chef`is currently
-developped mainly for `git`. Other methods will be available in the future.
+- `method`: the way to handle the versioning of the layer. `chef`is currently
+developed mainly for `git`. Other methods will be available in the future.
 The `ignore` method tells `chef` to not download anything and to consider that
 the layer is already present.
 - `dir`: the path of the layer relative to the directory where you run `chef`.
 if `method` is `ignore` the layer must already be there and `dir` is
 mandatory. Otherwise, this is the place to store the downloaded layer.
-- `branch`: the `git` branch to use. Especially usefull when no `rev` is
+- `branch`: the `git` branch to use. Especially useful when no `rev` is
 given.
 - `rev`: the `git` tag or index of the revision desired.
 
@@ -271,10 +271,10 @@ configuration entries.
 
 #### Build-config specific layers
 
-The `layers` attribute is an array of layer names which can been downloaded
+The `layers` attribute is an array of layer names which can be downloaded
 from the `sources` section.
 
-We recommand to indicate in this section the layers used only for this
+We recommend to indicate in this section the layers used only for this
 build-config and to keep the more general ones in the `layers` section seen
 above.
 
