@@ -686,7 +686,7 @@ class ChefCall:
             except Exception as e:
                 fatal_error('menu load error:', e)
 
-            schema = json.loads(pkg_resources.resource_string(__name__, "chef-menu-schema.json"))
+            schema = json.loads(pkg_resources.resource_string(__name__, "chef-menu-schema.json").decode('utf-8'))
             try:
                 jsonschema.validate(self.menu, schema)
             except Exception as e:
