@@ -41,7 +41,17 @@ Install `chef` from source:
 ```
 $ git clone https://github.com/cpb-/chef
 $ cd chef/
-$ python3 setup.py install
+$ sudo pip3 install .
+```
+
+### Installing chef to contribute
+
+To ease software modifications of chef itself, use the `-e` option with pip3 to
+install chef with editable mode enabled.
+This way you can bring your modifications to `chef.py` and call your updated `chef`
+tool anywhere you want to run it.
+```
+sudo pip3 install -e .
 ```
 
 ## `chef` command line arguments
@@ -356,5 +366,5 @@ For example, `chef --dry-run cook <menu-filename>` will display all the shell
 commands that `chef` would execute. The output could even be redirected into a
 file that may later be run as a shell script.
 
-The `--dry-run` output also displays the content of the files produced by 
+The `--dry-run` output also displays the content of the files produced by
 `chef`.
