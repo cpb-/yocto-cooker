@@ -18,10 +18,10 @@ cd /layers/meta-raspberrypi; git submodule update --recursive --init  >/dev/null
 mkdir /builds/build-pi2-base
 mkdir /builds/build-pi2-base/conf
 cat > /builds/build-pi2-base/conf/local.conf <<-EOF
-	# DO NOT EDIT! - This file is automatically created by chef.
+	# DO NOT EDIT! - This file is automatically created by cooker.
 
 
-	CHEF_LAYER_DIR = "${TOPDIR}/../../layers"
+	COOKER_LAYER_DIR = "${TOPDIR}/../../layers"
 	DL_DIR = "${TOPDIR}/../../downloads"
 	SSTATE_DIR = "${TOPDIR}/../../sstate-cache"
 	MACHINE = 'raspberrypi2'
@@ -42,7 +42,7 @@ cat > /builds/build-pi2-base/conf/local.conf <<-EOF
 	CONF_VERSION = "1"
 EOF
 cat > /builds/build-pi2-base/conf/bblayers.conf <<-EOF
-	# DO NOT EDIT! - This file is automatically created by chef.
+	# DO NOT EDIT! - This file is automatically created by cooker.
 
 
 	POKY_BBLAYERS_CONF_VERSION = "2"

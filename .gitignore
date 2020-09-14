@@ -1,4 +1,4 @@
-.chefconfig
+.cookerconfig
 
 # Exclude pycharm config
 *.idea/

@@ -1,9 +1,9 @@
-__title__ = 'chef'
-__version__ = '1.0.0'
+__title__ = 'cooker'
+__version__ = '1.0.1'
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __email__ = 'christophe.blaess@logilin.fr, p@yai.se'
 __license__ = "GPL"
-__url__ = "https://github.com/cpb-/chef"
+__url__ = "https://github.com/cpb-/yocto-cooker"
 
 from setuptools import setup
 import os
@@ -23,15 +23,15 @@ setup(
     url=__url__,
     license=__license__,
     long_description=_long_description,
-    package_data={'': ['chef-menu-schema.json']},
+    package_data={'': ['cooker-menu-schema.json']},
 
     packages=[
-        "chef",
+        "cooker",
     ],
 
     entry_points={
         'console_scripts': [
-            'chef = chef.chef:main',
+            'cooker = cooker.cooker:main',
         ],
     },
 
@@ -41,7 +41,7 @@ setup(
     ],
 
     project_urls={
-        'Bug Reports': 'https://github.com/cpb-/chef/issues',
+        'Bug Reports': 'https://github.com/cpb-/yocto-cooker/issues',
         'Source': __url__,
     },
 )

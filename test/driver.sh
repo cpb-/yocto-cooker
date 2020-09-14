@@ -2,15 +2,15 @@
 
 set -e
 
-# use chef-executable this-dir
+# use cooker-executable this-dir
 THISDIR=$(realpath `dirname $0`)
 PATH=$THISDIR:$PATH
 
-WHICH=$(which chef)
+WHICH=$(which cooker)
 
-if [ $WHICH != "$THISDIR/chef" ]
+if [ $WHICH != "$THISDIR/cooker" ]
 then
-	echo need to use internal chef-executable - paths need fixing
+	echo need to use internal cooker-executable - paths need fixing
 	exit 1
 fi
 

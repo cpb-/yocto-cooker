@@ -1,9 +1,9 @@
-# `chef build` fails when `chef init` has not been called.'
-rm -f .chefconfig
-expect_fail chef build
+# `cooker build` fails when `cooker init` has not been called.'
+rm -f .cookerconfig
+expect_fail cooker build
 
 
-# `chef build` succeeds when `builds` is empty.
+# `cooker build` succeeds when `builds` is empty.
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
@@ -11,9 +11,9 @@ cat > menu.json <<-EOF
 	    "builds": {}
 	}
 EOF
-chef init menu.json
-chef build
-# `chef build` fails without Poky `oe-init-build-env` script.
+cooker init menu.json
+cooker build
+# `cooker build` fails without Poky `oe-init-build-env` script.
 rm -f layers/poky/oe-init-build-env
 cat > menu.json <<-EOF
 	{
@@ -29,8 +29,8 @@ cat > menu.json <<-EOF
 	    }
 	}
 EOF
-chef init -f menu.json
-expect_fail chef build
+cooker init -f menu.json
+expect_fail cooker build
 
 mkdir -p layers/poky
 touch layers/poky/oe-init-build-env
@@ -42,7 +42,7 @@ chmod +x bitbake
 PATH=.:$PATH
 
 
-# `chef build` succeeds when no target is buildable.
+# `cooker build` succeeds when no target is buildable.
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
@@ -65,5 +65,5 @@ cat > menu.json <<-EOF
 	    }
 	}
 EOF
-chef init -f menu.json
-chef build
+cooker init -f menu.json
+cooker build

@@ -1,16 +1,16 @@
 # fail is no init done
-! chef generate
+! cooker generate
 
 
 # empty menu, nothing is generated
-chef init $S/empty-menu.json
-chef generate
+cooker init $S/empty-menu.json
+cooker generate
 
 filesExist . builds 0
 
 # one target
-chef init -f $S/menu.json
-chef generate
+cooker init -f $S/menu.json
+cooker generate
 
 # builds-dir exists
 dirsExist . builds 1
@@ -22,12 +22,12 @@ dirsExist builds build-first 1
 # bblayers as expected
 diff builds/build-first/conf/bblayers.conf $S/one-target-first-bblayers.conf
 
-textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers"' 1
+textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 1
 textInFile builds/build-first/conf/local.conf 'DL_DIR = "\${TOPDIR}/../../downloads"' 1
 textInFile builds/build-first/conf/local.conf 'SSTATE_DIR = "\${TOPDIR}/../../sstate-cache"' 1
 
 # regenerate after layers-dir-change
-chef init -f -l layers_dir $S/menu.json
-chef generate
-textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
-textInFile builds/build-first/conf/local.conf 'CHEF_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1
+cooker init -f -l layers_dir $S/menu.json
+cooker generate
+textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
+textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1

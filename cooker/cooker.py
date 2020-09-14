@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" chef.py: meta build tool for Yocto Project based Linux embedded systems."""
+""" cooker.py: meta build tool for Yocto Project based Linux embedded systems."""
 
 import argparse
 import json
@@ -9,11 +9,11 @@ from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 def debug(*args):
-    if ChefCall.DEBUG:
+    if CookerCall.DEBUG:
         print(*args, file=sys.stderr)
 
 
@@ -91,7 +91,7 @@ class DryRunOsCalls:
 
 
 class Config:
-    DEFAULT_CONFIG_FILENAME = '.chefconfig'
+    DEFAULT_CONFIG_FILENAME = '.cookerconfig'
 
     def __init__(self):
         debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
@@ -287,8 +287,8 @@ class BuildConfiguration:
                   .format(build.name(), [ n.name() for n in build.ancestors_ ]))
 
 
-class ChefCommands:
-    """ The class aggregates all functions representing a low-lever chef-command """
+class CookerCommands:
+    """ The class aggregates all functions representing a low-lever cooker-command """
 
     DEFAULT_INIT_BUILD_SCRIPT = 'poky/oe-init-build-env'
 
@@ -298,7 +298,7 @@ class ChefCommands:
 
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
-        """ chef-command 'init': (re)set the configuration file """
+        """ cooker-command 'init': (re)set the configuration file """
         self.config.set_menu(menu_name)
 
         if layer_dir:
@@ -352,25 +352,25 @@ class ChefCommands:
         branch = source.setdefault('branch', '')
         rev = source.setdefault('rev', '')
 
-        if ChefCall.os.directory_exists(local_dir):
+        if CookerCall.os.directory_exists(local_dir):
             self.update_directory(method, local_dir, remote_dir != '', branch, rev)
 
 
     def update_directory_initial(self, method, remote_dir, local_dir):
         info('Downloading source from ', remote_dir)
 
-        if ChefCall.VERBOSE:
+        if CookerCall.VERBOSE:
             redirect = ''
         else:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            if ChefCall.os.execute_command('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+            if CookerCall.os.execute_command('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
                 fatal_error('Unable to clone', remote_dir)
 
 
     def update_directory(self, method, local_dir, has_remote, branch, rev):
-        if ChefCall.VERBOSE:
+        if CookerCall.VERBOSE:
             redirect = ''
         else:
             redirect = ' >/dev/null 2>&1'
@@ -383,23 +383,23 @@ class ChefCommands:
                     warn('ATTENTION! source "{}" has no "rev" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
-                        if ChefCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        if CookerCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
                             fatal_error('Unable to pull updates for {}'.format(local_dir))
                 else:
                     warn('source "{}" has no "rev" field, the build will not be reproducible!'.format(local_dir))
                     info('Updating source {}... '.format(local_dir))
-                    if ChefCall.os.execute_command('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
+                    if CookerCall.os.execute_command('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
                         fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
                     if has_remote:
-                        if ChefCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
+                        if CookerCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
                             fatal_error('Unable to pull updates for {}'.format(local_dir))
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if ChefCall.os.execute_command('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
+                if CookerCall.os.execute_command('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
                     fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
-            if ChefCall.os.execute_command('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
+            if CookerCall.os.execute_command('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
                 fatal_error('Unable to update submodules in ' + local_dir)
 
 
@@ -414,53 +414,53 @@ class ChefCommands:
     def prepare_build_directory(self, build):
         debug('Preparing directory:', build.dir())
 
-        ChefCall.os.create_directory(build.dir())
+        CookerCall.os.create_directory(build.dir())
 
         conf_path = os.path.join(build.dir(), 'conf')
-        ChefCall.os.create_directory(conf_path)
+        CookerCall.os.create_directory(conf_path)
         dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), build.dir())
 
         sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, build.dir())
         layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
-        file = ChefCall.os.file_open(os.path.join(conf_path, 'local.conf'))
+        file = CookerCall.os.file_open(os.path.join(conf_path, 'local.conf'))
 
-        ChefCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        ChefCall.os.file_write(file, 'CHEF_LAYER_DIR = "{}"'.format(layer_dir))
-        ChefCall.os.file_write(file, 'DL_DIR = "{}"'.format(dl_dir))
-        ChefCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
+        CookerCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by cooker.\n\n')
+        CookerCall.os.file_write(file, 'COOKER_LAYER_DIR = "{}"'.format(layer_dir))
+        CookerCall.os.file_write(file, 'DL_DIR = "{}"'.format(dl_dir))
+        CookerCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
         for line in build.local_conf():
-            ChefCall.os.file_write(file, line)
-        ChefCall.os.file_write(file, 'DISTRO ?= "poky"')
-        ChefCall.os.file_write(file, 'PACKAGE_CLASSES ?= "package_rpm"')
-        ChefCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
-        ChefCall.os.file_write(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
-        ChefCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
-        ChefCall.os.file_write(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
-        ChefCall.os.file_write(file, '\tSTOPTASKS,/tmp,100M,100K \\')
-        ChefCall.os.file_write(file, '\tABORT,${TMPDIR},100M,1K \\')
-        ChefCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
-        ChefCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
-        ChefCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
-        ChefCall.os.file_write(file, 'CONF_VERSION = "1"')
-        ChefCall.os.file_close(file)
+            CookerCall.os.file_write(file, line)
+        CookerCall.os.file_write(file, 'DISTRO ?= "poky"')
+        CookerCall.os.file_write(file, 'PACKAGE_CLASSES ?= "package_rpm"')
+        CookerCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
+        CookerCall.os.file_write(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
+        CookerCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
+        CookerCall.os.file_write(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
+        CookerCall.os.file_write(file, '\tSTOPTASKS,/tmp,100M,100K \\')
+        CookerCall.os.file_write(file, '\tABORT,${TMPDIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
+        CookerCall.os.file_write(file, 'CONF_VERSION = "1"')
+        CookerCall.os.file_close(file)
 
-        file = ChefCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
-        ChefCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by chef.\n\n')
-        ChefCall.os.file_write(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
-        ChefCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
-        ChefCall.os.file_write(file, 'BBFILES ?= ""')
-        ChefCall.os.file_write(file, 'BBLAYERS ?= " \\')
+        file = CookerCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
+        CookerCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by cooker.\n\n')
+        CookerCall.os.file_write(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
+        CookerCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
+        CookerCall.os.file_write(file, 'BBFILES ?= ""')
+        CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
         for layer in sorted(build.layers()):
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
-            ChefCall.os.file_write(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
-        ChefCall.os.file_write(file, '"\n')
-        ChefCall.os.file_close(file)
+            CookerCall.os.file_write(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
+        CookerCall.os.file_write(file, '"\n')
+        CookerCall.os.file_close(file)
 
-        file = ChefCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
-        ChefCall.os.file_write(file, 'meta-poky/conf\n')
-        ChefCall.os.file_close(file)
+        file = CookerCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
+        CookerCall.os.file_write(file, 'meta-poky/conf\n')
+        CookerCall.os.file_close(file)
 
 
     def show(self, builds, layers, conf, tree, build_arg):
@@ -498,7 +498,7 @@ class ChefCommands:
             if build_arg:
                 if build.target():
                     info('  .',
-                         os.path.relpath(self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
+                         os.path.relpath(self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
                          os.path.relpath(build.dir(), os.getcwd()))
                 else:
                     info('build', build.name(), 'has no target')
@@ -566,20 +566,20 @@ class ChefCommands:
 
         directory = build_config.dir()
 
-        init_script = self.config.layer_dir(ChefCommands.DEFAULT_INIT_BUILD_SCRIPT)
-        if not ChefCall.os.file_exists(init_script):
+        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
         command_line = 'env bash -c "source {} {} && bitbake {}  {}"'.format(init_script, directory, bb_task, bb_target)
         debug('    Executing : "{}"'.format(command_line))
-        if ChefCall.os.execute_command(command_line) != 0:
+        if CookerCall.os.execute_command(command_line) != 0:
             fatal_error('execution of "{}" failed'.format(command_line))
 
 
 
-class ChefCall:
+class CookerCall:
     """
-    ChefCall represents a call of the chef-tool, handles all arguments, opens the config-file,
+    CookerCall represents a call of the cooker-tool, handles all arguments, opens the config-file,
     loads the menu, checks the menu and calls the appropriate low-level commands
     """
 
@@ -588,15 +588,15 @@ class ChefCall:
     VERBOSE = False
 
     def __init__(self):
-        parser = argparse.ArgumentParser(prog='Chef')
+        parser = argparse.ArgumentParser(prog='Cooker')
 
         parser.add_argument('--debug', action='store_true', help='activate debug printing')
-        parser.add_argument('--version', action='store_true', help='chef version')
+        parser.add_argument('--version', action='store_true', help='cooker version')
         parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
         parser.add_argument('-n', '--dry-run', action='store_true', help='print what would have been done (without doing anything)')
 
         # parsing subcommand's arguments
-        subparsers = parser.add_subparsers(help='subcommands of Chef', dest='sub-command')
+        subparsers = parser.add_subparsers(help='subcommands of Cooker', dest='sub-command')
 
         # `cook` command (`init` + `update` + `generate`)
         cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
@@ -647,17 +647,17 @@ class ChefCall:
 
         self.clargs = parser.parse_args()
 
-        ChefCall.DEBUG = self.clargs.debug
-        ChefCall.VERBOSE = self.clargs.verbose
+        CookerCall.DEBUG = self.clargs.debug
+        CookerCall.VERBOSE = self.clargs.verbose
 
         if self.clargs.version:
             info(__version__)
             sys.exit(0)
 
         if self.clargs.dry_run:
-            ChefCall.os = DryRunOsCalls()
+            CookerCall.os = DryRunOsCalls()
         else:
-            ChefCall.os = OsCalls()
+            CookerCall.os = OsCalls()
 
         # find and initialize config
         self.config = Config()
@@ -686,7 +686,7 @@ class ChefCall:
             except Exception as e:
                 fatal_error('menu load error:', e)
 
-            schema = json.loads(pkg_resources.resource_string(__name__, "chef-menu-schema.json").decode('utf-8'))
+            schema = json.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
             try:
                 jsonschema.validate(self.menu, schema)
             except Exception as e:
@@ -717,7 +717,7 @@ class ChefCall:
             BuildConfiguration.resolve_parents()
 
 
-        self.commands = ChefCommands(self.config, self.menu)
+        self.commands = CookerCommands(self.config, self.menu)
 
         if 'func' in self.clargs:
             self.clargs.func() # call function of selected command
@@ -787,4 +787,4 @@ class ChefCall:
 
 
 def main():
-    ChefCall()
+    CookerCall()

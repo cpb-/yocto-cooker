@@ -1,4 +1,4 @@
-project(ChefTest NONE)
+project(CookerTest NONE)
 
 cmake_minimum_required(VERSION 3.8)
 

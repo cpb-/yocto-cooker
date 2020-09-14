@@ -1,6 +1,6 @@
-<p><img width="64px" src="https://github.com/cpb-/chef/blob/master/doc/chef-logo-small-size.png"></p>
+<p><img width="64px" src="https://github.com/cpb-/yocto-cooker/blob/master/doc/cooker-logo-small-size.png"></p>
 
-# chef
+# Yocto Cooker
 
 
 Meta buildtool for Yocto Project based Linux embedded systems
@@ -8,10 +8,10 @@ Meta buildtool for Yocto Project based Linux embedded systems
 The aim of this project is to prepare the needed directories and configuration
 files before running a Yocto Project build.
 
-The tool is called `chef` to follow the culinary metaphor specific to the
+The tool is called `cooker` to follow the culinary metaphor specific to the
 Yocto Project.
 
-`chef` uses a project file called a _menu_ :-).
+`cooker` uses a project file called a _menu_ :-).
 
 A menu describes which sources (layers) (git repositories for example)
 have to be downloaded and which revision has to be checked out.
@@ -22,7 +22,7 @@ which layers have to be included.
 With the help of a _menu_ a reproducible build can be achieved. Menu-files are
 files written in JSON and can thus be stored anywhere.
 
-`chef` can also call directly `bitbake` to run the build.
+`cooker` can also call directly `bitbake` to run the build.
 
 
 ## Maintainers
@@ -30,70 +30,70 @@ files written in JSON and can thus be stored anywhere.
 - [Christophe Blaess](https://github.com/cpb-/)
 - [Patrick Boettcher](https://github.com/pboettch)
 
-## Installing `chef`
+## Installing Yocto Cooker
 
-Install `chef` using PyPi:
+Install Yocto Cooker using PyPi:
 ``` bash
-$ python3 -m pip install --upgrade git+https://github.com/cpb-/chef.git
+$ python3 -m pip install --upgrade git+https://github.com/cpb-/yocto-cooker.git
 ```
 
-Install `chef` from source:
+Install Yocto Cooker from source:
 ```
-$ git clone https://github.com/cpb-/chef
-$ cd chef/
+$ git clone https://github.com/cpb-/yocto-cooker
+$ cd yocto-cooker
 $ sudo pip3 install .
 ```
 
-### Installing chef to contribute
+### Installing Yocto Cooker to contribute
 
-To ease software modifications of chef itself, use the `-e` option with pip3 to
-install chef with editable mode enabled.
-This way you can bring your modifications to `chef.py` and call your updated `chef`
+To ease software modifications of Yocto Cooker itself, use the `-e` option with pip3 to
+install `cooker` with editable mode enabled.
+This way you can bring your modifications to `cooker.py` and call your updated `cooker`
 tool anywhere you want to run it.
 ```
 sudo pip3 install -e .
 ```
 
-## `chef` command line arguments
+## `cooker` command line arguments
 
-The `chef` command accepts some arguments to know what to do. The first
+The `cooker` command accepts some arguments to know what to do. The first
 argument is the sub-command name (`cook`, `build`, `init` and others) sometimes
 followed by options, menu filename or build-config-names.
 
-The top-level sub-command proposed by `chef` is:
+The top-level sub-command proposed by `cooker` is:
 
-- `chef cook <menu-file> [<build-configs>...]`: does the whole production job from the
+- `cooker cook <menu-file> [<build-configs>...]`: does the whole production job from the
   initial configuration and downloading up to the final image(s).
 
-In fact, `chef cook` is equivalent to a collection of low-level commands:
+In fact, `cooker cook` is equivalent to a collection of low-level commands:
 
-- `chef init <menu-file>`: store the current menu filename into the
-  `.chefconfig` configuration file. The content of the configuration will be
+- `cooker init <menu-file>`: store the current menu filename into the
+  `.cookerconfig` configuration file. The content of the configuration will be
   explained later.
 
-- `chef update`: fetch and checkout the version of each layer indicated in the
+- `cooker update`: fetch and checkout the version of each layer indicated in the
   current menu file.
 
-- `chef generate`: prepare the build-dir and configuration files (`local.conf`,
+- `cooker generate`: prepare the build-dir and configuration files (`local.conf`,
   `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-- `chef build [--sdk] [<build-configs>...]` runs `bitbake` to produce the given
-  build-configs. If no build-config is indicated on the command line, `chef`
+- `cooker build [--sdk] [<build-configs>...]` runs `bitbake` to produce the given
+  build-configs. If no build-config is indicated on the command line, `cooker`
   builds all the build-configs of the menu file. With the `--sdk` option on the
-  command line, `chef` will also build the cross-compiler toolchain and headers.
+  command line, `cooker` will also build the cross-compiler toolchain and headers.
 
 Each time you do some changes in the menu file, you may need to call:
 
-- `chef update`: if you have modified a commit number or you want to pull the
+- `cooker update`: if you have modified a commit number or you want to pull the
   latest version of a branch
 
-- `chef generate`: if you have modified a `local.conf` or a `layers`-attribute.
+- `cooker generate`: if you have modified a `local.conf` or a `layers`-attribute.
 
-Then `chef build` to restart the compilations.
+Then `cooker build` to restart the compilations.
 
 Another useful sub-command is:
 
-- `chef clean <recipe> [<build-configs>...]` that will erase all files produced
+- `cooker clean <recipe> [<build-configs>...]` that will erase all files produced
 during the compilation of a recipe (and also the shared-state-cache associated
 files).
 
@@ -110,35 +110,35 @@ $ mkdir  ~/yocto-project
 $ cd  ~/yocto-project
 ```
 
-You can call `chef` with a single command to build the whole content
+You can call `cooker` with a single command to build the whole content
 of a menu file:
 
 ```
-$ chef  cook  /path/to/chef/sample-menus/pi3-sample-menu.json
+$ cooker  cook  /path/to/yocto-cooker/sample-menus/pi3-sample-menu.json
 ```
 
 Or you can proceed by using the low-level commands:
 
-First, ask `chef` to `initialize` the project-dir.
+First, ask `cooker` to `initialize` the project-dir.
 
 ```
-$ chef  init  /path/to/chef/sample-menus/pi3-sample-menu.json
+$ cooker  init  /path/to/yocto-cooker/sample-menus/pi3-sample-menu.json
 ```
 
-Then let chef download the layers mentioned in the menu.
+Then let `cooker` download the layers mentioned in the menu.
 
 ```
-$ chef  update
+$ cooker  update
 ```
 
 Here no menu-file needs to be given. This works with the help of a
-`.chefconfig`-file written in the project dir.
+`.cookerconfig`-file written in the project dir.
 
 
 Generating the build-directories, one per build-configuration with
 
 ```
-$ chef  generate
+$ cooker  generate
 ```
 
 When this is done, the directory-structure should looks like this:
@@ -153,7 +153,7 @@ meta-openembedded  meta-raspberrypi  poky
 Then you can run a full build with:
 
 ```
-$ chef  build
+$ cooker  build
 ```
 
 You will see the classic Yocto Project progress messages, and after a while
@@ -192,9 +192,9 @@ build-pi3/tmp/deploy/images/raspberrypi3/core-image-base-raspberrypi3.rpi-sdimg
 
 ## Directory map
 
-`chef` downloads the needed layers in the `layers` directory (by default) and
+`cooker` downloads the needed layers in the `layers` directory (by default) and
 creates the build-sub-directories into the `builds` directory.  For example,
-after running `chef init <menu-file>; chef update; chef generate`, the working
+after running `cooker init <menu-file>; cooker update; cooker generate`, the working
 directory might contain:
 
 ```
@@ -235,21 +235,21 @@ Each object of the array describes one layer.
 The following attributes can be used:
 
 - `url`: the URL used to download the layer. This attribute is mandatory.
-- `method`: the way to handle the versioning of the layer. `chef`is currently
+- `method`: the way to handle the versioning of the layer. `cooker` is currently
 developed mainly for `git`. Other methods will be available in the future.
-The `ignore` method tells `chef` to not download anything and to consider that
+The `ignore` method tells `cooker` to not download anything and to consider that
 the layer is already present.
-- `dir`: the path of the layer relative to the directory where you run `chef`.
+- `dir`: the path of the layer relative to the directory where you run `cooker`.
 if `method` is `ignore` the layer must already be there and `dir` is
 mandatory. Otherwise, this is the place to store the downloaded layer.
 - `branch`: the `git` branch to use. Especially useful when no `rev` is
 given.
 - `rev`: the `git` tag or index of the revision desired.
 
-`chef` aims to build reproducible systems.
+`cooker` aims to build reproducible systems.
 Using a specific `rev` number for each layer is the best way to do this.
 
-If only a `branch` attribute is given, `chef` will try to pull the last remote
+If only a `branch` attribute is given, `cooker` will try to pull the last remote
 update if an `url` is present. But this is not as reproducible as giving a
 fixed `rev` number or tag.
 
@@ -271,7 +271,7 @@ Most of the build-configurations uses
 The `builds` section is a collection of build-configurations.
 The name of the build-config is used to create the build directory.
 
-For example, when preparing the compilation of the `pi3` build-config, `chef`
+For example, when preparing the compilation of the `pi3` build-config, `cooker`
 creates the `build-pi3` directory.
 
 A build-configuration may contain the following attributes: specific layers,
@@ -294,7 +294,7 @@ above.
 The `local.conf` attribute is an array of lines to add into the build's
 configuration file.
 
-`chef` produces a standard `local.conf` file and add the given lines.
+`cooker` produces a standard `local.conf` file and add the given lines.
 
 Basically, each build-config will contain at least a `MACHINE` specification
 with the form:
@@ -308,7 +308,7 @@ the whole JSON line.
 
 ### Comments
 
-You can add a `notes` section (array of free strings ignored by `chef`) to
+You can add a `notes` section (array of free strings ignored by `cooker`) to
 insert your own comments at the root-level of the menu or in the `builds`
 section.
 
@@ -323,7 +323,7 @@ To run the tests, `cmake` and `ctest` are used.
 mkdir test-dir
 cd test-dir
 
-cmake path/to/chef/test
+cmake path/to/yocto-cooker/test
 make    # prepare the test-environment, nothing is compiled
 ctest   # run the tests and show the result-summary
 
@@ -334,7 +334,7 @@ ctest -V   # shows verbose outputs of tests, all tests are run
 ctest -R <pattern> -V   # run tests matching "pattern" and show their verbose output
 ```
 
-Tests are written as a sequence of (chef-)-commands and checks to see whether
+Tests are written as a sequence of (cooker-)-commands and checks to see whether
 the expected result or output has been generated or not.
 
 The CMakeLists.txt in the test-folder contains the list of tests to be run.
@@ -357,14 +357,14 @@ accessible with `$S`.
 Test-result evaluation functions are available in the `function.sh`-library and
 are sourced by the test-driver.
 
-## What will `chef` do?
+## What will `cooker` do?
 
-The `--dry-run` (or `-n`) option can be used to see what a `chef` invocation
+The `--dry-run` (or `-n`) option can be used to see what a `cooker` invocation
 would produce without actually doing anything.
 
-For example, `chef --dry-run cook <menu-filename>` will display all the shell
-commands that `chef` would execute. The output could even be redirected into a
+For example, `cooker --dry-run cook <menu-filename>` will display all the shell
+commands that `cooker` would execute. The output could even be redirected into a
 file that may later be run as a shell script.
 
 The `--dry-run` output also displays the content of the files produced by
-`chef`.
+`cooker`.

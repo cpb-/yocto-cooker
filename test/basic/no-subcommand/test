@@ -1,6 +1,6 @@
-# `chef` command with no argument must fail with an error message.
+# `cooker` command with no argument must fail with an error message.
 rm -f error.txt
-expect_fail chef > error.txt 2>&1
+expect_fail cooker > error.txt 2>&1
 linesInFile error.txt 2
 rm -f error.txt
 

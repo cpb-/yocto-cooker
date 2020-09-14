@@ -1,6 +1,6 @@
-# `chef --dry-run` command with no sub-command must fail with an error message.
+# `cooker --dry-run` command with no sub-command must fail with an error message.
 rm -f error.txt
-expect_fail chef --dry-run 2> error.txt
+expect_fail cooker --dry-run 2> error.txt
 linesInFile error.txt 2
 rm -f error.txt
 
@@ -23,7 +23,7 @@ PATH=.:$PATH
 
 
 rm -f error.txt output.txt
-chef --dry-run cook $S/menu-01.json >output
+cooker --dry-run cook $S/menu-01.json >output
 
 sed -i "s|$(pwd)||g" output
 

@@ -5,9 +5,9 @@ import sys, os
 # realpath resolves links
 thisdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-sys.path.append(os.path.join(thisdir, '..', 'chef'))
+sys.path.append(os.path.join(thisdir, '..', 'cooker'))
 
-from chef import main
+from cooker import main
 
 if __name__ == '__main__':
 	main()
