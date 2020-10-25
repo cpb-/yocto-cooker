@@ -4,7 +4,7 @@
 	],
 	"sources" : [
 		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "rev": "warrior-21.0.3" },
-		{ "url": "git@github.com:openembedded/meta-openembedded.git", "branch": "warrior", "rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8" }
+		{ "url": "git@github.com:openembedded/meta-openembedded.git", "branch": "warrior", "rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8", "dir": "meta-openembedded" }
 	],
 
 	"layers" : [
