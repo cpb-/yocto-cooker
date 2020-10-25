@@ -40,7 +40,7 @@
 
                     "url": {
                         "type": "string",
-                        "pattern": "^(https?|ssh|git)://.*$"
+                        "pattern": "^(https?|ssh|git):(//.*$)|(@*.git)"
                     },
 
                     "branch": {
