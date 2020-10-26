@@ -1,0 +1,12 @@
+{
+    "sources" : [
+        { "method": "git", "url": "git@github.com:openembedded/meta-openembedded.git" },
+        { "method": "git", "url": "ssh://git@github.com/openembedded/meta-openembedded.git" },
+        { "method": "git", "url": "http://github.com/openembedded/meta-openembedded.git" },
+        { "method": "git", "url": "git://github.com/openembedded/meta-openembedded.git" }
+    ],
+
+    "builds" : {
+    }
+}
+

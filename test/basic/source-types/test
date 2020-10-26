@@ -1,0 +1,7 @@
+rm -f .cookerconfig
+
+cooker init $S/git-sources.json
+
+exit 0
+
+
