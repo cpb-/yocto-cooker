@@ -39,8 +39,16 @@
                     },
 
                     "url": {
-                        "type": "string",
-                        "pattern": "^(https?|ssh|git):(//.*$)|(@*.git)"
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "pattern": "^(https?|ssh|git)://.*$"
+                            },
+                            {
+                                "type": "string",
+                                "pattern": ".*@.*:.*\\.git$"
+                            }
+                        ]
                     },
 
                     "branch": {
