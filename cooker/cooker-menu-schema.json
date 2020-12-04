@@ -17,6 +17,14 @@
                 "minLength": 1
             }
         },
+        "layers.conf": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1,
+                "uniqueItems": true
+            }
+        },
         "local.conf": {
             "type": "array",
             "items": {
@@ -75,6 +83,10 @@
             "$ref": "#/definitions/layers"
         },
 
+        "layers.conf": {
+            "$ref": "#/definitions/layers.conf"
+        },
+
         "local.conf": {
             "$ref": "#/definitions/local.conf"
         },
@@ -101,6 +113,10 @@
 
                         "layers": {
                             "$ref": "#/definitions/layers"
+                        },
+
+                        "layers.conf": {
+                            "$ref": "#/definitions/layers.conf"
                         },
 
                         "local.conf": {

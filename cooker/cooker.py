@@ -179,10 +179,11 @@ class Config:
 class BuildConfiguration:
     ALL = {}
 
-    def __init__(self, name, config, layers, local_conf, target, inherit):
+    def __init__(self, name, config, layers, layers_conf, local_conf, target, inherit):
         self.name_ = name
         self.config_ = config
         self.layers_ = layers
+        self.layers_conf_ = layers_conf
         self.local_conf_ = local_conf
         self.target_ = target
         self.inherit_ = inherit
@@ -217,6 +218,19 @@ class BuildConfiguration:
                           .format(build.name(), layer))
 
         return layers
+
+
+    def layers_conf(self):
+        lines = []
+
+        for build in self.ancestors_ + [ self ]:
+            for new_line in build.layers_conf_:
+                if new_line in lines:
+                    debug('ignored - duplicate line in layers.conf for build "{}": "{}"'
+                          .format(build.name(), new_line))
+                lines.append(new_line)
+
+        return lines
 
 
     def local_conf(self):
@@ -456,6 +470,8 @@ class CookerCommands:
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
             CookerCall.os.file_write(file, '\t${{TOPDIR}}/{} \\'.format(layer_path))
         CookerCall.os.file_write(file, '"\n')
+        for line in build.layers_conf():
+            CookerCall.os.file_write(file, line)
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
@@ -489,6 +505,9 @@ class CookerCommands:
                 info(' used layers')
                 for layer in build.layers():
                     info('  - {} ({})'.format(layer, self.config.layer_dir(layer)))
+                info(' layers.conf entries')
+                for entry in build.layers_conf():
+                    info('  - {}'.format(entry))
 
             if conf:
                 info(' local.conf entries')
@@ -702,6 +721,7 @@ class CookerCall:
             BuildConfiguration('root',
                                self.config,
                                self.menu.setdefault('layers', []),
+                               self.menu.setdefault('layers.conf', []),
                                self.menu.setdefault('local.conf', []),
                                None,
                                None)
@@ -710,6 +730,7 @@ class CookerCall:
                 BuildConfiguration(name,
                                    self.config,
                                    build.setdefault('layers', []),
+                                   build.setdefault('layers.conf', []),
                                    build.setdefault('local.conf', []),
                                    build.setdefault('target', None),
                                    build.setdefault('inherit', [ 'root' ]))
