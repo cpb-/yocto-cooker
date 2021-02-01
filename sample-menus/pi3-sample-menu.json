@@ -24,6 +24,8 @@
 				"The default `core-image-base` image is used for bitbake."
 			],
 
+			"target" : "core-image-base",
+
 			"layers" : [
 					"meta-raspberrypi"
 			],
@@ -31,7 +33,7 @@
 			"local.conf": [
 				"MACHINE = 'raspberrypi3' ",
 				"ENABLE_UART = '1' ",
-				"CMDLINE += 'quiet' "
+				"CMDLINE_append += 'quiet' "
 			]
 		}
 	}
