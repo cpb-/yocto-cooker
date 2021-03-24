@@ -2,6 +2,7 @@
 
 # Yocto Cooker
 
+![unit-tests workflow](https://github.com/adri1mart1/yocto-cooker/actions/workflows/unit-tests.yaml/badge.svg)
 
 Meta buildtool for Yocto Project based Linux embedded systems
 
