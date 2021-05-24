@@ -1,0 +1,55 @@
+{
+	"notes" : [
+		"This is a specific menu for Live Embedded Event #2 conference",
+		"See https://live-embedded-event.com."
+	],
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "gatesgarth", "rev": "gatesgarth-24.0.4" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "gatesgarth", "rev": "f3f7a5f1" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "gatesgarth", "rev": "3ae135e5" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"builds" : {
+
+		"pi3": {
+
+			"notes" : [
+				"A simple image for Raspberry Pi 3."
+			],
+
+			"target" : "core-image-base",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE = 'raspberrypi3' ",
+				"ENABLE_UART = '1' ",
+				"CMDLINE_append += 'quiet' "
+			]
+		},
+
+		"qemu": {
+
+                        "notes" : [
+                                "A simple image for Qemu Arm."
+                        ],
+
+                        "target" : "core-image-base",
+
+                        "local.conf": [
+                                "MACHINE = 'qemuarm' "
+                        ]
+		}
+
+	}
+}
+
