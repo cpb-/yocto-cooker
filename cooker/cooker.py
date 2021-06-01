@@ -205,6 +205,15 @@ class BuildConfiguration:
         return self.config_.build_dir('build-' + self.name_)
 
 
+    def buildable(self):
+        if not self.name_.startswith('.'):
+            for build in self.ancestors_ + [ self ]:
+                if build.target_ is not None:
+                    return True
+
+        return False
+
+
     def layers(self):
         layers = []
 
@@ -407,7 +416,7 @@ class CookerCommands:
         info('Generating dirs for all build-configurations')
 
         for build in BuildConfiguration.ALL.values():
-            if build.target(): # only create a build-dir if a target is set
+            if build.buildable():
                 self.prepare_build_directory(build)
 
 
