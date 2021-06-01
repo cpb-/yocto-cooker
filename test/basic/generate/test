@@ -31,3 +31,14 @@ cooker init -f -l layers_dir $S/menu.json
 cooker generate
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1
+
+# inherited target
+cooker init -f $S/build-template-menu.json
+cooker generate
+
+# builds-dir exists
+dirsExist . builds 1
+# first-inherited has been created
+dirsExist builds build-first-inherited 1
+# .template must not be generated
+dirsExist builds build-.template 0
