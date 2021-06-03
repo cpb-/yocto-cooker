@@ -1,0 +1,22 @@
+{
+    "sources": [],
+    "layers": [
+        "generic/layer1",
+        "generic/layer2"
+    ],
+    "builds": {
+        ".template": {
+            "target": "bitbake-target",
+            "layers": [
+                "first/layer1",
+                "first/layer2"
+            ]
+        },
+        "first-inherited": {
+            "inherit": [".template"],
+            "layers": [
+                "second/layer1"
+            ]
+        }
+    }
+}
