@@ -369,3 +369,13 @@ file that may later be run as a shell script.
 
 The `--dry-run` output also displays the content of the files produced by
 `cooker`.
+
+
+## Licenses
+
+The source code and the afferent files of the Yocto Cooker project are
+distributed under [GPLv.2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+license terms.
+
+The present documention and the Yocto Cooker logo are distributed under
+[Creative Commons 4.0 CC-By-Sa](https://creativecommons.org/licenses/by-sa/4.0/).
