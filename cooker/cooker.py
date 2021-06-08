@@ -521,7 +521,8 @@ class CookerCommands:
         debug('Building build-configurations')
 
         for build in self.filter_build_configs(builds):
-            self.build_target(build, sdk)
+            if build.buildable():
+                self.build_target(build, sdk)
 
 
     def build_target(self, build, sdk):
