@@ -32,14 +32,13 @@ def fatal_error(*args):
     sys.exit(1)
 
 
-
 class OsCalls:
 
     def execute_command(self, command):
         return os.system(command)
 
-    def create_directory(self, dir):
-        os.makedirs(dir, exist_ok=True)
+    def create_directory(self, directory):
+        os.makedirs(directory, exist_ok=True)
 
     def file_open(self, filename):
         return open(filename, 'w')
@@ -57,7 +56,6 @@ class OsCalls:
         return os.path.isdir(dirname)
 
 
-
 class DryRunOsCalls:
 
     def execute_command(self, command):
@@ -65,8 +63,8 @@ class DryRunOsCalls:
         sys.stdout.flush()
         return 0
 
-    def create_directory(self, dir):
-        print('mkdir {}'.format(dir))
+    def create_directory(self, directory):
+        print('mkdir {}'.format(directory))
         sys.stdout.flush()
 
     def file_open(self, filename):
@@ -87,7 +85,6 @@ class DryRunOsCalls:
 
     def directory_exists(self, dirname):
         return True
-
 
 
 class Config:
@@ -124,53 +121,42 @@ class Config:
 
                 break
 
-            path.pop() # cd ..
+            path.pop()  # cd ..
 
         debug('No config-file found. Will be using', self.filename)
-
 
     def project_root(self):
         return os.path.dirname(self.filename)
 
-
     def set_menu(self, menu_file):
         self.cfg['menu'] = os.path.realpath(menu_file)
-
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
         self.cfg['layer-dir'] = os.path.relpath(path, self.project_root())
 
-
     def layer_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['layer-dir'], name)
-
 
     def set_build_dir(self, path):
         self.cfg['build-dir'] = os.path.relpath(path, self.project_root())
 
-
     def build_dir(self, name=''):
         return os.path.join(self.project_root(), self.cfg['build-dir'], name)
-
 
     def set_dl_dir(self, path):
         self.cfg['dl-dir'] = os.path.relpath(path, self.project_root())
 
-
     def dl_dir(self):
         return os.path.join(self.project_root(), self.cfg['dl-dir'])
 
-
     def menu(self):
         return self.cfg['menu']
-
 
     def save(self):
         debug('Saving configuration file')
         with open(self.filename, 'w') as json_file:
             json.dump(self.cfg, json_file, indent=4)
-
 
     def empty(self):
         return not self.cfg['menu']
@@ -187,39 +173,34 @@ class BuildConfiguration:
         self.target_ = target
         self.inherit_ = inherit
 
-        self.parents_ = [] # first level parents
-        self.ancestors_ = [] # all ancestors cleaned of duplicates
+        self.parents_ = []  # first level parents
+        self.ancestors_ = []  # all ancestors cleaned of duplicates
 
         BuildConfiguration.ALL[name] = self
-
 
     def target(self):
         return self.target_
 
-
     def name(self):
         return self.name_
-
 
     def dir(self):
         return self.config_.build_dir('build-' + self.name_)
 
-
     def buildable(self):
         if not self.name_.startswith('.'):
-            for build in self.ancestors_ + [ self ]:
+            for build in self.ancestors_ + [self]:
                 if build.target_ is not None:
                     return True
 
         return False
 
-
     def layers(self):
         layers = []
 
-        for build in self.ancestors_ + [ self ]:
+        for build in self.ancestors_ + [self]:
             for layer in build.layers_:
-                if not layer in layers:
+                if layer not in layers:
                     layers.append(layer)
                 else:
                     debug('ignored - duplicate layer for build "{}": "{}"'
@@ -227,11 +208,10 @@ class BuildConfiguration:
 
         return layers
 
-
     def local_conf(self):
         lines = []
 
-        for build in self.ancestors_ + [ self ]:
+        for build in self.ancestors_ + [self]:
             for new_line in build.local_conf_:
                 if new_line in lines:
                     debug('ignored - duplicate line in local.conf for build "{}": "{}"'
@@ -240,14 +220,13 @@ class BuildConfiguration:
 
         return lines
 
-
     def set_parents(self):
         debug('setting first-level-parents of build "{}"'.format(self.name_))
 
         if self.inherit_:
             for parent_name in self.inherit_:
 
-                if not parent_name in BuildConfiguration.ALL:
+                if parent_name not in BuildConfiguration.ALL:
                     fatal_error('build "{}"\'s parent "{}" not found in builds-section'
                                 .format(self.name_, parent_name))
 
@@ -259,8 +238,9 @@ class BuildConfiguration:
                 debug('adding {} as parent to {}'.format(parent_instance.name(), self.name()))
                 self.parents_.append(parent_instance)
 
-
-    def get_ancestors(self, start, path=[]):
+    def get_ancestors(self, start, path=None):
+        if path is None:
+            path = list()
         path.append(self.name())
 
         parents = []
@@ -285,15 +265,15 @@ class BuildConfiguration:
         return parents
 
 
-    def resolve_parents():
-        for _, build in BuildConfiguration.ALL.items():
-            build.set_parents()
+def resolve_parents():
+    for _, build in BuildConfiguration.ALL.items():
+        build.set_parents()
 
-        for _, build in BuildConfiguration.ALL.items():
-            build.ancestors_ = build.get_ancestors(build)
+    for _, build in BuildConfiguration.ALL.items():
+        build.ancestors_ = build.get_ancestors(build)
 
-            debug('ancestors of build "{}": "{}"'
-                  .format(build.name(), [ n.name() for n in build.ancestors_ ]))
+        debug('ancestors of build "{}": "{}"'
+              .format(build.name(), [n.name() for n in build.ancestors_]))
 
 
 class CookerCommands:
@@ -304,7 +284,6 @@ class CookerCommands:
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
-
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -321,13 +300,11 @@ class CookerCommands:
 
         self.config.save()
 
-
     def update(self):
         info('Update layers in project directory')
 
         for source in self.menu['sources']:
             self.update_source(source)
-
 
     def update_source(self, source):
         method = 'git'
@@ -346,12 +323,11 @@ class CookerCommands:
         if 'url' in source:
             try:
                 url = urlparse(source['url'])
+                remote_dir = url.geturl()
+                if local_dir == '':
+                    local_dir = url.path[1:]
             except Exception as e:
                 fatal_error('url-parse-error', source['url'], e)
-
-            remote_dir = url.geturl()
-            if local_dir == '':
-                local_dir = url.path[1:]
 
         local_dir = os.path.realpath(self.config.layer_dir(local_dir))
 
@@ -364,7 +340,6 @@ class CookerCommands:
         if CookerCall.os.directory_exists(local_dir):
             self.update_directory(method, local_dir, remote_dir != '', branch, rev)
 
-
     def update_directory_initial(self, method, remote_dir, local_dir):
         info('Downloading source from ', remote_dir)
 
@@ -374,9 +349,9 @@ class CookerCommands:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            if CookerCall.os.execute_command('git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
+            if CookerCall.os.execute_command(
+                    'git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
                 fatal_error('Unable to clone', remote_dir)
-
 
     def update_directory(self, method, local_dir, has_remote, branch, rev):
         if CookerCall.VERBOSE:
@@ -389,7 +364,9 @@ class CookerCommands:
             if rev == '':
 
                 if branch == '':
-                    warn('ATTENTION! source "{}" has no "rev" nor "branch" field, the build will not be reproducible at all!'.format(local_dir))
+                    warn('WARNING! source "{}" has no "rev" nor "branch" field, '.format(local_dir) +
+                         'the build will not be reproducible at all!')
+
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
                         if CookerCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
@@ -405,12 +382,13 @@ class CookerCommands:
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if CookerCall.os.execute_command('cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
+                if CookerCall.os.execute_command(
+                        'cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
                     fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
-            if CookerCall.os.execute_command('cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
+            if CookerCall.os.execute_command(
+                    'cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
                 fatal_error('Unable to update submodules in ' + local_dir)
-
 
     def generate(self):
         info('Generating dirs for all build-configurations')
@@ -418,7 +396,6 @@ class CookerCommands:
         for build in BuildConfiguration.ALL.values():
             if build.buildable():
                 self.prepare_build_directory(build)
-
 
     def prepare_build_directory(self, build):
         debug('Preparing directory:', build.dir())
@@ -471,12 +448,11 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'meta-poky/conf\n')
         CookerCall.os.file_close(file)
 
-
     def show(self, builds, layers, conf, tree, build_arg):
 
         # check if selected builds exist
         for build in builds:
-            if not build in BuildConfiguration.ALL:
+            if build not in BuildConfiguration.ALL:
                 fatal_error('cannot show infos about build "{}" as it does not exists.'.format(build))
 
         # empty given builds - use all existing ones
@@ -514,15 +490,13 @@ class CookerCommands:
 
             if tree:
                 if build.ancestors_:
-                    info('builds ancestors:', [ n.name() for n in build.ancestors_ ])
-
+                    info('builds ancestors:', [n.name() for n in build.ancestors_])
 
     def build(self, builds, sdk):
         debug('Building build-configurations')
 
         for build in self.filter_build_configs(builds):
             self.build_target(build, sdk)
-
 
     def build_target(self, build, sdk):
         try:
@@ -535,13 +509,11 @@ class CookerCommands:
         except Exception as e:
             fatal_error('build for', build.name(), 'failed', e)
 
-
     def clean(self, recipe, builds):
         debug('cleaning {}'.format(recipe))
 
         for build in self.filter_build_configs(builds):
             self.clean_build_config(recipe, build)
-
 
     def clean_build_config(self, recipe, build):
         try:
@@ -550,14 +522,13 @@ class CookerCommands:
         except Exception as e:
             fatal_error('clean for', build.name(), 'failed', e)
 
-
     def filter_build_configs(self, builds):
 
         filtered_build_configs = []
 
-        if builds: # filter out unwanted configs.
+        if builds:  # filter out unwanted configs.
             for build in builds:
-                if not build in BuildConfiguration.ALL:
+                if build not in BuildConfiguration.ALL:
                     fatal_error('undefined build:', build)
 
                 if not BuildConfiguration.ALL[build].target():
@@ -565,11 +536,10 @@ class CookerCommands:
 
                 filtered_build_configs.append(BuildConfiguration.ALL[build])
 
-        else: # use all builds which have targets
-            filtered_build_configs = [ x for x in BuildConfiguration.ALL.values() if x.target() ]
+        else:  # use all builds which have targets
+            filtered_build_configs = [x for x in BuildConfiguration.ALL.values() if x.target()]
 
         return filtered_build_configs
-
 
     def run_bitbake(self, build_config, bb_task, bb_target):
 
@@ -585,7 +555,6 @@ class CookerCommands:
             fatal_error('execution of "{}" failed'.format(command_line))
 
 
-
 class CookerCall:
     """
     CookerCall represents a call of the cooker-tool, handles all arguments, opens the config-file,
@@ -596,13 +565,17 @@ class CookerCall:
     WARNING = True
     VERBOSE = False
 
+    os = OsCalls()
+
     def __init__(self):
         parser = argparse.ArgumentParser(prog='Cooker')
 
         parser.add_argument('--debug', action='store_true', help='activate debug printing')
         parser.add_argument('--version', action='store_true', help='cooker version')
-        parser.add_argument('-v', '--verbose', action='store_true', help='activate verbose printing (of called subcommands)')
-        parser.add_argument('-n', '--dry-run', action='store_true', help='print what would have been done (without doing anything)')
+        parser.add_argument('-v', '--verbose', action='store_true',
+                            help='activate verbose printing (of called subcommands)')
+        parser.add_argument('-n', '--dry-run', action='store_true',
+                            help='print what would have been done (without doing anything)')
 
         # parsing subcommand's arguments
         subparsers = parser.add_subparsers(help='subcommands of Cooker', dest='sub-command')
@@ -634,11 +607,17 @@ class CookerCall:
 
         # `show` command
         show = subparsers.add_parser('show', help='show builds and targets information')
-        show.add_argument('-l', '--layers', help='list layers per build-configuration', action='store_true', default=False)
-        show.add_argument('-c', '--conf', help='list local.conf-entries per build-configuration', action='store_true', default=False)
-        show.add_argument('-t', '--tree', help='list all build-configurations as a parent-child-tree', action='store_true', default=False)
-        show.add_argument('-b', '--build', help='show poky-command-line to enter the build-dir and initialize the environment', action='store_true', default=False)
-        show.add_argument('-a', '--all', help='show all information about the build-configurations', action='store_true', default=False)
+        show.add_argument('-l', '--layers', help='list layers per build-configuration', action='store_true',
+                          default=False)
+        show.add_argument('-c', '--conf', help='list local.conf-entries per build-configuration', action='store_true',
+                          default=False)
+        show.add_argument('-t', '--tree', help='list all build-configurations as a parent-child-tree',
+                          action='store_true', default=False)
+        show.add_argument('-b', '--build',
+                          help='show poky-command-line to enter the build-dir and initialize the environment',
+                          action='store_true', default=False)
+        show.add_argument('-a', '--all', help='show all information about the build-configurations',
+                          action='store_true', default=False)
         show.add_argument('builds', help='show information of the given builds', nargs='*')
         show.set_defaults(func=self.show)
 
@@ -665,8 +644,6 @@ class CookerCall:
 
         if self.clargs.dry_run:
             CookerCall.os = DryRunOsCalls()
-        else:
-            CookerCall.os = OsCalls()
 
         # find and initialize config
         self.config = Config()
@@ -680,9 +657,9 @@ class CookerCall:
 
         # figure out which menu-file to use
         menu_file = None
-        if 'menu' in self.clargs and self.clargs.menu is not None: # menu-file from the cmdline has priority
+        if 'menu' in self.clargs and self.clargs.menu is not None:  # menu-file from the cmdline has priority
             menu_file = self.clargs.menu[0]
-        elif not self.config.empty(): # or the one from the config-file
+        elif not self.config.empty():  # or the one from the config-file
             try:
                 menu_file = open(self.config.menu())
             except Exception as e:
@@ -721,21 +698,19 @@ class CookerCall:
                                    build.setdefault('layers', []),
                                    build.setdefault('local.conf', []),
                                    build.setdefault('target', None),
-                                   build.setdefault('inherit', [ 'root' ]))
+                                   build.setdefault('inherit', ['root']))
 
-            BuildConfiguration.resolve_parents()
-
+            resolve_parents()
 
         self.commands = CookerCommands(self.config, self.menu)
 
         if 'func' in self.clargs:
-            self.clargs.func() # call function of selected command
+            self.clargs.func()  # call function of selected command
         else:
             parser.print_usage(file=sys.stderr)
             sys.exit(1)
 
         sys.exit(0)
-
 
     def init(self):
         """ function use by command-line-arg-parser as entry point for the 'init' """
@@ -747,7 +722,6 @@ class CookerCall:
                            self.clargs.build_dir,
                            self.clargs.dl_dir)
 
-
     def update(self):
         """ entry point for 'update' """
         if self.menu is None:
@@ -755,20 +729,17 @@ class CookerCall:
 
         self.commands.update()
 
-
     def cook(self):
         self.commands.init(self.clargs.menu[0].name)
         self.commands.update()
         self.commands.generate()
         self.commands.build(self.clargs.builds, self.clargs.sdk)
 
-
     def generate(self):
         if self.menu is None:
             fatal_error('generate needs a menu')
 
         self.commands.generate()
-
 
     def show(self):
         if self.menu is None:
@@ -780,13 +751,11 @@ class CookerCall:
                            self.clargs.tree or self.clargs.all,
                            self.clargs.build or self.clargs.all)
 
-
     def build(self):
         if self.menu is None:
             fatal_error('build needs a menu')
 
         self.commands.build(self.clargs.builds, self.clargs.sdk)
-
 
     def clean(self):
         if self.menu is None:
