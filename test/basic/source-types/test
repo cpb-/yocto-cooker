@@ -1,7 +1,13 @@
 rm -f .cookerconfig
 
 cooker init $S/git-sources.json
+cooker show -s > output
+
+textInFile $T/output $T/layers/openembedded/meta-1.git 1
+textInFile $T/output $T/layers/openembedded/meta-2.git 1
+textInFile $T/output $T/layers/openembedded/meta-3.git 1
+textInFile $T/output $T/layers/openembedded/meta-4.git 1
+textInFile $T/output $T/layers/meta-5 1
+textInFile $T/output $T/layers/meta-6 1
 
 exit 0
-
-
