@@ -1,0 +1,41 @@
+{
+    "sources": [],
+    "layers": [],
+    "builds": {
+        "base": {
+            "layers": [
+                "meta-base"
+            ],
+            "local.conf": [
+                "BASE = base"
+            ]
+        },
+        ".virtual-base": {
+            "inherit": ["base"],
+            "target": "virtual-base-target"
+        },
+        "target1" : {
+            "inherit": [".virtual-base"],
+            "layers": [
+                "meta-target1-1",
+                "meta-target1-2"
+            ],
+            "local.conf": [
+                "MACHINE = one"
+            ]
+        },
+        "target2" : {
+            "inherit": ["base"],
+            "local.conf": [
+                "MACHINE = two"
+            ]
+        },
+        "target3" : {
+            "inherit": [".virtual-base"],
+            "local.conf": [
+                "MACHINE = three"
+            ],
+            "target": "target3"
+        }
+    }
+}

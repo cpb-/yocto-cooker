@@ -1,0 +1,9 @@
+rm -f .cookerconfig
+
+cooker init $S/menu.json
+
+cooker show -a > output
+sed -i "s|$(pwd)||" output
+diff output $S/show-all.ref
+
+exit 0
