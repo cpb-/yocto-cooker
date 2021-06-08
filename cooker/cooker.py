@@ -194,6 +194,11 @@ class BuildConfiguration:
 
 
     def target(self):
+        if self.target_ is None:
+            for build in self.ancestors_ + [ self ]:
+                if build.target_ is not None:
+                    return build.target_
+
         return self.target_
 
 
