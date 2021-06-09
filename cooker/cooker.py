@@ -179,7 +179,12 @@ class BuildConfiguration:
         BuildConfiguration.ALL[name] = self
 
     def target(self):
-        return self.target_
+        if not self.buildable():
+            return None
+
+        for build in [self] + self.ancestors_[::-1]:
+            if build.target_:
+                return build.target_
 
     def name(self):
         return self.name_
@@ -188,12 +193,10 @@ class BuildConfiguration:
         return self.config_.build_dir('build-' + self.name_)
 
     def buildable(self):
-        if not self.name_.startswith('.'):
-            for build in self.ancestors_ + [self]:
-                if build.target_ is not None:
-                    return True
+        if self.name_.startswith('.'):  # template
+            return False
 
-        return False
+        return any(build.target_ for build in self.ancestors_ + [self])
 
     def layers(self):
         layers = []
