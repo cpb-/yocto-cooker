@@ -1,12 +1,13 @@
 {
     "sources" : [
-        { "method": "git", "url": "git@github.com:openembedded/meta-openembedded.git" },
-        { "method": "git", "url": "ssh://git@github.com/openembedded/meta-openembedded.git" },
-        { "method": "git", "url": "http://github.com/openembedded/meta-openembedded.git" },
-        { "method": "git", "url": "git://github.com/openembedded/meta-openembedded.git" }
+        { "method": "git", "url": "git@github.com:openembedded/meta-1.git" },
+        { "method": "git", "url": "ssh://git@github.com/openembedded/meta-2.git" },
+        { "method": "git", "url": "http://github.com/openembedded/meta-3.git" },
+        { "method": "git", "url": "git://github.com/openembedded/meta-4.git" },
+        { "method": "git", "url": "git://github.com/openembedded/meta-5.git", "dir": "meta-5"},
+        { "method": "git", "url": "git@github.com:openembedded/meta-6.git", "dir":  "meta-6"}
     ],
 
     "builds" : {
     }
 }
-

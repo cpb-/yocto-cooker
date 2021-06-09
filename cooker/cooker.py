@@ -306,10 +306,27 @@ class CookerCommands:
         for source in self.menu['sources']:
             self.update_source(source)
 
+    def local_dir_from_source(self, source):
+        if 'dir' in source:
+            local_dir = source['dir']
+        else:
+            local_dir = None
+            if 'url' in source:
+                try:
+                    if '://' in source['url']:
+                        url = urlparse(source['url'])
+                        local_dir = url.path[1:]
+                    elif ':' in source['url']:  # must be short URL
+                        _, local_dir = source['url'].split(':', 2)
+                    else:
+                        raise ValueError('invalid source URL given')
+                except Exception as e:
+                    fatal_error('url-parse-error', source['url'], e)
+
+        return os.path.realpath(self.config.layer_dir(local_dir)), source['url']
+
     def update_source(self, source):
         method = 'git'
-        remote_dir = ''
-        local_dir = ''
 
         if 'method' in source:
             method = source['method']
@@ -317,19 +334,7 @@ class CookerCommands:
         if method == 'ignore':
             return
 
-        if 'dir' in source:
-            local_dir = source['dir']
-
-        if 'url' in source:
-            try:
-                url = urlparse(source['url'])
-                remote_dir = url.geturl()
-                if local_dir == '':
-                    local_dir = url.path[1:]
-            except Exception as e:
-                fatal_error('url-parse-error', source['url'], e)
-
-        local_dir = os.path.realpath(self.config.layer_dir(local_dir))
+        local_dir, remote_dir = self.local_dir_from_source(source)
 
         if not os.path.isdir(local_dir):
             self.update_directory_initial(method, remote_dir, local_dir)
@@ -448,7 +453,14 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'meta-poky/conf\n')
         CookerCall.os.file_close(file)
 
-    def show(self, builds, layers, conf, tree, build_arg):
+    def show(self, builds, layers, conf, tree, build_arg, sources):
+
+        # show source dirs
+        if sources:
+            for source in self.menu['sources']:
+                l, r = self.local_dir_from_source(source)
+                info('source URL:', r)
+                info('  locally: ', l)
 
         # check if selected builds exist
         for build in builds:
@@ -607,16 +619,18 @@ class CookerCall:
 
         # `show` command
         show = subparsers.add_parser('show', help='show builds and targets information')
-        show.add_argument('-l', '--layers', help='list layers per build-configuration', action='store_true',
-                          default=False)
-        show.add_argument('-c', '--conf', help='list local.conf-entries per build-configuration', action='store_true',
-                          default=False)
-        show.add_argument('-t', '--tree', help='list all build-configurations as a parent-child-tree',
+        show.add_argument('-a', '--all', help='show all information about the build-configurations',
                           action='store_true', default=False)
         show.add_argument('-b', '--build',
                           help='show poky-command-line to enter the build-dir and initialize the environment',
                           action='store_true', default=False)
-        show.add_argument('-a', '--all', help='show all information about the build-configurations',
+        show.add_argument('-c', '--conf', help='list local.conf-entries per build-configuration', action='store_true',
+                          default=False)
+        show.add_argument('-l', '--layers', help='list layers per build-configuration', action='store_true',
+                          default=False)
+        show.add_argument('-t', '--tree', help='list all build-configurations as a parent-child-tree',
+                          action='store_true', default=False)
+        show.add_argument('-s', '--sources', help='list all sources local and remote directories',
                           action='store_true', default=False)
         show.add_argument('builds', help='show information of the given builds', nargs='*')
         show.set_defaults(func=self.show)
@@ -749,7 +763,8 @@ class CookerCall:
                            self.clargs.layers or self.clargs.all,
                            self.clargs.conf or self.clargs.all,
                            self.clargs.tree or self.clargs.all,
-                           self.clargs.build or self.clargs.all)
+                           self.clargs.build or self.clargs.all,
+                           self.clargs.sources or self.clargs.all)
 
     def build(self):
         if self.menu is None:
