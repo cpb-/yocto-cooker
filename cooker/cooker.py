@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
 
+from typing import List
+
 __version__ = '1.0.1'
 
 
@@ -55,6 +57,9 @@ class OsCalls:
     def directory_exists(self, dirname):
         return os.path.isdir(dirname)
 
+    def replace_process(self, shell: str, args: List[str]):
+        return os.execv(shell, args)
+
 
 class DryRunOsCalls:
 
@@ -84,6 +89,10 @@ class DryRunOsCalls:
         return True
 
     def directory_exists(self, dirname):
+        return True
+
+    def replace_process(self, shell: str, args: List[str]):
+        print('exec {} {}', shell, ' '.join(args))
         return True
 
 
@@ -510,7 +519,7 @@ class CookerCommands:
     def build(self, builds, sdk):
         debug('Building build-configurations')
 
-        for build in self.filter_build_configs(builds):
+        for build in self.get_buildable_builds(builds):
             self.build_target(build, sdk)
 
     def build_target(self, build, sdk):
@@ -527,7 +536,7 @@ class CookerCommands:
     def clean(self, recipe, builds):
         debug('cleaning {}'.format(recipe))
 
-        for build in self.filter_build_configs(builds):
+        for build in self.get_buildable_builds(builds):
             self.clean_build_config(recipe, build)
 
     def clean_build_config(self, recipe, build):
@@ -537,37 +546,46 @@ class CookerCommands:
         except Exception as e:
             fatal_error('clean for', build.name(), 'failed', e)
 
-    def filter_build_configs(self, builds):
+    def get_buildable_builds(self, builds: List[str]):
+        """ gets buildable build-objects from a build-name-list or all of them if list is empty. """
 
-        filtered_build_configs = []
+        buildable_builds = []
 
-        if builds:  # filter out unwanted configs.
-            for build in builds:
-                if build not in BuildConfiguration.ALL:
-                    fatal_error('undefined build:', build)
+        for build in builds:
+            if build not in BuildConfiguration.ALL:
+                fatal_error('undefined build:', build)
 
-                if not BuildConfiguration.ALL[build].target():
-                    fatal_error('build has no target:', build)
+            if not BuildConfiguration.ALL[build].target():
+                fatal_error('build has no target:', build)
 
-                filtered_build_configs.append(BuildConfiguration.ALL[build])
+            buildable_builds.append(BuildConfiguration.ALL[build])
 
         else:  # use all builds which have targets
-            filtered_build_configs = [x for x in BuildConfiguration.ALL.values() if x.target()]
+            buildable_builds = [x for x in BuildConfiguration.ALL.values() if x.target()]
 
-        return filtered_build_configs
+        return buildable_builds
 
     def run_bitbake(self, build_config, bb_task, bb_target):
-
         directory = build_config.dir()
 
         init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
         if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
-        command_line = 'env bash -c "source {} {} && bitbake {}  {}"'.format(init_script, directory, bb_task, bb_target)
+        command_line = 'env bash -c "source {} {} && bitbake {} {}"'.format(init_script, directory, bb_task, bb_target)
         debug('    Executing : "{}"'.format(command_line))
         if CookerCall.os.execute_command(command_line) != 0:
             fatal_error('execution of "{}" failed'.format(command_line))
+
+    def shell(self, build_names: List[str]):
+        build_dir = self.get_buildable_builds(build_names)[0].dir()
+        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        shell = os.environ.get('SHELL', '/bin/sh')
+
+        debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)
+
+        if not CookerCall.os.replace_process(shell, [shell, '-c', ". {} {}; {}".format(init_script, build_dir, shell)]):
+            fatal_error('could not run interactive shell for {} with {}', build_names[0], shell)
 
 
 class CookerCall:
@@ -643,6 +661,11 @@ class CookerCall:
         build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         build_parser.add_argument('builds', help='build-configuration to build', nargs='*')
         build_parser.set_defaults(func=self.build)
+
+        # `shell` command
+        shell_parser = subparsers.add_parser('shell', help='run an interactive shell ($SHELL) for the given build')
+        shell_parser.add_argument('build', help='build-configuration to use', nargs=1)
+        shell_parser.set_defaults(func=self.shell)
 
         # `clean` command
         clean_parser = subparsers.add_parser('clean', help='clean a previously build recipe')
@@ -774,6 +797,12 @@ class CookerCall:
             fatal_error('build needs a menu')
 
         self.commands.build(self.clargs.builds, self.clargs.sdk)
+
+    def shell(self):
+        if self.menu is None:
+            fatal_error('shell needs a menu')
+
+        self.commands.shell(self.clargs.build)
 
     def clean(self):
         if self.menu is None:
