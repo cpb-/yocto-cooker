@@ -92,7 +92,7 @@ class DryRunOsCalls:
         return True
 
     def replace_process(self, shell: str, args: List[str]):
-        print('exec {} {}', shell, ' '.join(args))
+        print('exec {} {}'.format(shell, ' '.join(args)))
         return True
 
 
