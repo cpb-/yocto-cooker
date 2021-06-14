@@ -1,0 +1,42 @@
+{
+	"notes" : [
+		"This is a specific menu for upcoming RISC-V boards.",
+		"For the moment we only run on Qemu emulation."
+	],
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "hardknott", "rev": "hardknott-3.3.1" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "rev": "189cdf43" },
+		{ "url": "https://github.com/riscv/meta-riscv.git", "dir": "meta-riscv", "rev": "276941d9" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe",
+		"meta-riscv"
+	],
+
+	"local.conf" : [
+		"INHERIT += 'extrausers'     ",
+		"EXTRA_USERS_PARAMS += 'useradd  -P v  risc;'  ",
+		"EXTRA_USERS_PARAMS += 'usermod  -P linux  root;'  "
+	],
+
+	"builds" : {
+
+		"qemu": {
+
+			"notes" : [
+				"A simple image for Qemu Risc-V."
+			],
+
+			"target" : "core-image-full-cmdline",
+
+			"local.conf": [
+				"MACHINE = 'qemuriscv64' "
+			]
+		}
+	}
+}
+
