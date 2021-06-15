@@ -67,3 +67,29 @@ cat > menu.json <<-EOF
 EOF
 cooker init -f menu.json
 cooker build
+
+
+# `cooker build --keepgoing` calls `bitbake -k`
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "target-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cat > bitbake <<-EOF
+	#! /bin/sh
+	echo "\$@" >> bitbake.log
+	exit 0
+EOF
+rm -f bitbake.log
+cooker build --keepgoing
+textInFile bitbake.log "k core-image-base" 1
