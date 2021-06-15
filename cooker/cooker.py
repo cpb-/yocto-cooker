@@ -591,6 +591,16 @@ class CookerCommands:
         if not CookerCall.os.replace_process(shell, [shell, '-c', ". {} {}; {}".format(init_script, build_dir, shell)]):
             fatal_error('could not run interactive shell for {} with {}', build_names[0], shell)
 
+    def source(self, builds):
+        for build in self.get_buildable_builds(builds):
+            self.source_build_config(build)
+
+    def source_build_config(self, build):
+        try:
+            info('Downloading sources for {}'.format(build.name()))
+            self.run_bitbake(build, "--runall=fetch", build.target())
+        except Exception as e:
+            fatal_error('Downloading sources for', build.name(), 'failed', e)
 
 class CookerCall:
     """
@@ -672,6 +682,11 @@ class CookerCall:
         shell_parser = subparsers.add_parser('shell', help='run an interactive shell ($SHELL) for the given build')
         shell_parser.add_argument('build', help='build-configuration to use', nargs=1)
         shell_parser.set_defaults(func=self.shell)
+
+        # `source` command
+        source_parser = subparsers.add_parser('source', help='download all sources needed for offline-build')
+        source_parser.add_argument('builds', help='build-configurations concerned', nargs='*')
+        source_parser.set_defaults(func=self.source)
 
         # `clean` command
         clean_parser = subparsers.add_parser('clean', help='clean a previously build recipe')
@@ -809,6 +824,12 @@ class CookerCall:
             fatal_error('shell needs a menu')
 
         self.commands.shell(self.clargs.build)
+
+    def source(self):
+        if self.menu is None:
+            fatal_error('source needs a menu')
+
+        self.commands.source(self.clargs.builds)
 
     def clean(self):
         if self.menu is None:
