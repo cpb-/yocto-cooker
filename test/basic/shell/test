@@ -5,6 +5,7 @@ cooker init $S/menu-01.json
 
 rm -f output.txt
 cooker --dry-run shell pi2-base >output.txt
+cooker --dry-run shell qemu >>output.txt
 
 sed -i "s|$(pwd)||g" output.txt
 

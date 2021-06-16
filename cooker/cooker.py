@@ -549,21 +549,19 @@ class CookerCommands:
     def get_buildable_builds(self, builds: List[str]):
         """ gets buildable build-objects from a build-name-list or all of them if list is empty. """
 
-        buildable_builds = []
+        if builds:
+            buildables = []
+            for build in builds:
+                if build not in BuildConfiguration.ALL:
+                    fatal_error('undefined build:', build)
 
-        for build in builds:
-            if build not in BuildConfiguration.ALL:
-                fatal_error('undefined build:', build)
+                if not BuildConfiguration.ALL[build].target():
+                    fatal_error('build has no target:', build)
 
-            if not BuildConfiguration.ALL[build].target():
-                fatal_error('build has no target:', build)
-
-            buildable_builds.append(BuildConfiguration.ALL[build])
-
+                buildables += [BuildConfiguration.ALL[build]]
+            return buildables
         else:  # use all builds which have targets
-            buildable_builds = [x for x in BuildConfiguration.ALL.values() if x.target()]
-
-        return buildable_builds
+            return [x for x in BuildConfiguration.ALL.values() if x.target()]
 
     def run_bitbake(self, build_config, bb_task, bb_target):
         directory = build_config.dir()
