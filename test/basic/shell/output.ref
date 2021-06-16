@@ -1,1 +1,2 @@
 exec /bin/sh /bin/sh -c . /layers/poky/oe-init-build-env /builds/build-pi2-base; /bin/sh
+exec /bin/sh /bin/sh -c . /layers/poky/oe-init-build-env /builds/build-qemu; /bin/sh
