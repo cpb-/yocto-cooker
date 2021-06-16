@@ -516,19 +516,22 @@ class CookerCommands:
                 if build.ancestors_:
                     info('builds ancestors:', [n.name() for n in build.ancestors_])
 
-    def build(self, builds, sdk, keepgoing):
+    def build(self, builds, sdk, keepgoing, download):
         debug('Building build-configurations')
 
         for build in self.get_buildable_builds(builds):
-            self.build_target(build, sdk, keepgoing)
+            self.build_target(build, sdk, keepgoing, download)
 
-    def build_target(self, build, sdk, keepgoing):
+    def build_target(self, build, sdk, keepgoing, download):
         try:
             info('Building {} ({})'.format(build.name(), build.target()))
             bb_task = ""
 
             if keepgoing:
                 bb_task = "-k"
+
+            if download:
+                bb_task += " --runall=fetch"
 
             self.run_bitbake(build, bb_task, build.target())
             if sdk:
@@ -617,6 +620,7 @@ class CookerCall:
 
         # `cook` command (`init` + `update` + `generate`)
         cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
+        cook_parser.add_argument('-d', '--download', action='store_true', help='download all sources needed for offline-build')
         cook_parser.add_argument('-k', '--keepgoing', action='store_true', help='Continue as much as possible after an error')
         cook_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
@@ -661,6 +665,7 @@ class CookerCall:
 
         # `build` command
         build_parser = subparsers.add_parser('build', help='build one or more configurations')
+        build_parser.add_argument('-d', '--download', action='store_true', help='download all sources needed for offline-build')
         build_parser.add_argument('-k', '--keepgoing', action='store_true', help='Continue as much as possible after an error')
         build_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
         build_parser.add_argument('builds', help='build-configuration to build', nargs='*')
@@ -777,7 +782,7 @@ class CookerCall:
         self.commands.init(self.clargs.menu[0].name)
         self.commands.update()
         self.commands.generate()
-        self.commands.build(self.clargs.builds, self.clargs.sdk, self.clargs.keepgoing)
+        self.commands.build(self.clargs.builds, self.clargs.sdk, self.clargs.keepgoing, self.clargs.download)
 
     def generate(self):
         if self.menu is None:
@@ -800,7 +805,7 @@ class CookerCall:
         if self.menu is None:
             fatal_error('build needs a menu')
 
-        self.commands.build(self.clargs.builds, self.clargs.sdk, self.clargs.keepgoing)
+        self.commands.build(self.clargs.builds, self.clargs.sdk, self.clargs.keepgoing, self.clargs.download)
 
     def shell(self):
         if self.menu is None:
