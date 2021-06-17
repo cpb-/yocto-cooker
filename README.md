@@ -78,10 +78,13 @@ In fact, `cooker cook` is equivalent to a collection of low-level commands:
 - `cooker generate`: prepare the build-dir and configuration files (`local.conf`,
   `bblayers.conf`, `template.conf`) needed by Yocto Project.
 
-- `cooker build [--sdk] [<build-configs>...]` runs `bitbake` to produce the given
+- `cooker build [-d] [-k] [-s] [<build-configs>...]` runs `bitbake` to produce the given
   build-configs. If no build-config is indicated on the command line, `cooker`
-  builds all the build-configs of the menu file. With the `--sdk` option on the
-  command line, `cooker` will also build the cross-compiler toolchain and headers.
+  builds all the build-configs of the menu file. With the `-d` (or `--download`)
+  option, `cooker` will only download all the needed files without doing any real
+  compilation. With the `-k` (or `--keepgoing`) option, `cooker` will continue its
+  work as long as possiible when encountering an error. With the `-s` (or `--sdk`)
+  option, `cooker` will also build the cross-compiler toolchain and headers.
 
 Each time you do some changes in the menu file, you may need to call:
 
@@ -97,6 +100,11 @@ Another useful sub-command is:
 - `cooker clean <recipe> [<build-configs>...]` that will erase all files produced
 during the compilation of a recipe (and also the shared-state-cache associated
 files).
+
+- `cooker shell <build-config>` provides you a new shell into the build directory
+  with all the environment variables set. Some typical uses could be to
+  run `bitbake -c menuconfig virtual/kernel` or `runqemu qemuarm` for instance.
+  Simply `exit` the shell to return back to your previous working directory.
 
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
