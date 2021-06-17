@@ -93,3 +93,28 @@ EOF
 rm -f bitbake.log
 cooker build --keepgoing
 textInFile bitbake.log "k core-image-base" 1
+
+# `cooker build --download` calls `bitbake --runall=fetch`
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "builds": {
+	        "target-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cat > bitbake <<-EOF
+	#! /bin/sh
+	echo "\$@" >> bitbake.log
+	exit 0
+EOF
+rm -f bitbake.log
+cooker build --download
+textInFile bitbake.log "runall=fetch core-image-base" 1
