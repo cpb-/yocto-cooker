@@ -94,7 +94,6 @@ rm -f bitbake.log
 cooker build --keepgoing
 textInFile bitbake.log "k core-image-base" 1
 
-
 # `cooker build --download` calls `bitbake --runall=fetch`
 cat > menu.json <<-EOF
 	{
