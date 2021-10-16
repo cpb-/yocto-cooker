@@ -235,7 +235,6 @@ The menu file follows the JSON syntax and contains three main parts:
 - `local.conf`: a list of lines to be used in the configuration files of all
  build-configs (more on this below).
 
-
 ### Sources
 
 The `sources` section is an array of methods to get the layers.
@@ -320,6 +319,23 @@ the whole JSON line.
 You can add a `notes` section (array of free strings ignored by `cooker`) to
 insert your own comments at the root-level of the menu or in the `builds`
 section.
+
+### Advanced use
+
+If you intend to build for a custom system outside of Poky scheme (for example
+the Arago Project), you may need to call a initialization script different from
+`poky/oe-init-build-env`. In this case, you can specify it with the
+`init-build-script` attribute:
+
+```
+    "sources": [ ... ],
+    "layers" : [ ... ],
+    "init-build-script" : "my-layer/build-env-setup-script",
+    "builds" : [ ... ],
+```
+
+When this attribute is not specified, the default init script is the usual
+`poky/oe-init-build-env`.
 
 ## Internal tests
 

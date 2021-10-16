@@ -289,13 +289,15 @@ def resolve_parents():
 
 
 class CookerCommands:
-    """ The class aggregates all functions representing a low-lever cooker-command """
+    """ The class aggregates all functions representing a low-level cooker-command """
 
-    DEFAULT_INIT_BUILD_SCRIPT = 'poky/oe-init-build-env'
+    build_script = 'poky/oe-init-build-env'
 
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
+        if self.menu is not None:
+            self.build_script = self.menu.setdefault('init-build-script', self.build_script)
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -507,7 +509,7 @@ class CookerCommands:
             if build_arg:
                 if build.target():
                     info('  .',
-                         os.path.relpath(self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
+                         os.path.relpath(self.config.layer_dir(CookerCommands.build_script), os.getcwd()),
                          os.path.relpath(build.dir(), os.getcwd()))
                 else:
                     info('build', build.name(), 'has no target')
@@ -573,7 +575,7 @@ class CookerCommands:
     def run_bitbake(self, build_config, bb_task, bb_target):
         directory = build_config.dir()
 
-        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        init_script = self.config.layer_dir(CookerCommands.build_script)
         if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
@@ -584,7 +586,7 @@ class CookerCommands:
 
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
-        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        init_script = self.config.layer_dir(CookerCommands.build_script)
         shell = os.environ.get('SHELL', '/bin/sh')
 
         debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)

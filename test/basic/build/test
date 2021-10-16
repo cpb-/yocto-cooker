@@ -13,6 +13,7 @@ cat > menu.json <<-EOF
 EOF
 cooker init menu.json
 cooker build
+
 # `cooker build` fails without Poky `oe-init-build-env` script.
 rm -f layers/poky/oe-init-build-env
 cat > menu.json <<-EOF
@@ -40,6 +41,28 @@ cat > bitbake <<-EOF
 EOF
 chmod +x bitbake
 PATH=.:$PATH
+
+# `cooker build` succeeds with a custom init-build script
+mkdir -p layers/alternative
+touch layers/alternative/init-build-env
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "layers": [],
+	    "init-build-script": "alternative/init-build-script",
+	    "builds": {
+	        "target-1": {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+rm -rf layers/alternative
 
 
 # `cooker build` succeeds when no target is buildable.
