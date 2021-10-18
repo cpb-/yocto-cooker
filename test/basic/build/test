@@ -33,8 +33,6 @@ EOF
 cooker init -f menu.json
 expect_fail cooker build
 
-mkdir -p layers/poky
-touch layers/poky/oe-init-build-env
 cat > bitbake <<-EOF
 	#! /bin/sh
 	exit 0
@@ -49,7 +47,7 @@ cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "layers": [],
-	    "init-build-script": "alternative/init-build-script",
+	    "init-build-script": "alternative/init-build-env",
 	    "builds": {
 	        "target-1": {
 	            "target": "core-image-base",
@@ -64,6 +62,8 @@ cooker init -f menu.json
 cooker build
 rm -rf layers/alternative
 
+mkdir -p layers/poky
+touch layers/poky/oe-init-build-env
 
 # `cooker build` succeeds when no target is buildable.
 cat > menu.json <<-EOF

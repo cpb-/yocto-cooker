@@ -291,13 +291,11 @@ def resolve_parents():
 class CookerCommands:
     """ The class aggregates all functions representing a low-level cooker-command """
 
-    build_script = 'poky/oe-init-build-env'
-
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
         if self.menu is not None:
-            self.build_script = self.menu.setdefault('init-build-script', self.build_script)
+            CookerCommands.build_script = self.menu.setdefault('init-build-script', 'poky/oe-init-build-env')
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
