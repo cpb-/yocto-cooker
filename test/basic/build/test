@@ -40,28 +40,6 @@ EOF
 chmod +x bitbake
 PATH=.:$PATH
 
-# `cooker build` succeeds with a custom init-build script
-mkdir -p layers/alternative
-touch layers/alternative/init-build-env
-cat > menu.json <<-EOF
-	{
-	    "sources": [],
-	    "layers": [],
-	    "init-build-script": "alternative/init-build-env",
-	    "builds": {
-	        "target-1": {
-	            "target": "core-image-base",
-	            "local.conf": [
-	                "MACHINE = qemu-x86"
-	            ]
-	        }
-	    }
-	}
-EOF
-cooker init -f menu.json
-cooker build
-rm -rf layers/alternative
-
 mkdir -p layers/poky
 touch layers/poky/oe-init-build-env
 
@@ -91,6 +69,90 @@ EOF
 cooker init -f menu.json
 cooker build
 
+
+# `cooker init` fails when base-distro is unknown
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "wingardium leviosa",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+expect_fail cooker init -f menu.json
+
+
+# `cooker build` succeeds with Poky base-distro
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "poky",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
+
+# `cooker build` fails with Arago base-distro and no env-init script
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "arago",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+expect_fail cooker build
+
+
+
+mkdir -p layers/openembedded-core
+touch layers/openembedded-core/oe-init-build-env
+
+# `cooker build` succeeds with Arago base-distro
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "arago",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
+rm -rf layers/openembedded-core
 
 # `cooker build --keepgoing` calls `bitbake -k`
 cat > menu.json <<-EOF

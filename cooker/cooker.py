@@ -288,14 +288,55 @@ def resolve_parents():
               .format(build.name(), [n.name() for n in build.ancestors_]))
 
 
+class BaseDistribution:
+    """ This class gathers the specific parameters for a given Yocto distro """
+
+    POKY_DISTRO_NAME = "poky"
+    POKY_BUILD_SCRIPT = "poky/oe-init-build-env"
+    POKY_TEMPLATE_CONF = "meta-poky/conf"
+    POKY_LAYER_CONF_NAME = "POKY_BBLAYERS_CONF_VERSION"
+    POKY_LAYER_CONF_VERSION = "2"
+    POKY_LOCAL_CONF_VERSION = "1"
+    POKY_PACKAGE_FORMAT = "package_rpm"
+
+    ARAGO_DISTRO_NAME = "arago"
+    ARAGO_BUILD_SCRIPT = "openembedded-core/oe-init-build-env"
+    ARAGO_TEMPLATE_CONF = "meta/conf"
+    ARAGO_LAYER_CONF_NAME = "LCONF_VERSION"
+    ARAGO_LAYER_CONF_VERSION = "7"
+    ARAGO_LOCAL_CONF_VERSION = "1"
+    ARAGO_PACKAGE_FORMAT = "package_ipk"
+
+    def __init__(self, menu):
+        self.name = BaseDistribution.POKY_DISTRO_NAME
+        if menu is not None:
+            self.name = menu.setdefault('base-distribution', BaseDistribution.POKY_DISTRO_NAME)
+
+        if self.name == BaseDistribution.POKY_DISTRO_NAME:
+            self.build_script = BaseDistribution.POKY_BUILD_SCRIPT
+            self.template_conf = BaseDistribution.POKY_TEMPLATE_CONF
+            self.layer_conf_name = BaseDistribution.POKY_LAYER_CONF_NAME
+            self.layer_conf_version = BaseDistribution.POKY_LAYER_CONF_VERSION
+            self.local_conf_version = BaseDistribution.POKY_LOCAL_CONF_VERSION
+            self.package_format = BaseDistribution.POKY_PACKAGE_FORMAT
+
+        elif self.name == BaseDistribution.ARAGO_DISTRO_NAME:
+            self.build_script = BaseDistribution.ARAGO_BUILD_SCRIPT
+            self.template_conf = BaseDistribution.ARAGO_TEMPLATE_CONF
+            self.layer_conf_name = BaseDistribution.ARAGO_LAYER_CONF_NAME
+            self.layer_conf_version = BaseDistribution.ARAGO_LAYER_CONF_VERSION
+            self.local_conf_version = BaseDistribution.ARAGO_LOCAL_CONF_VERSION
+            self.package_format = BaseDistribution.ARAGO_PACKAGE_FORMAT
+        else:
+            fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file near your menu.'.format(self.name))
+
 class CookerCommands:
     """ The class aggregates all functions representing a low-level cooker-command """
 
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
-        if self.menu is not None:
-            CookerCommands.build_script = self.menu.setdefault('init-build-script', 'poky/oe-init-build-env')
+        self.distro = BaseDistribution(menu)
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -435,8 +476,8 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
         for line in build.local_conf():
             CookerCall.os.file_write(file, line)
-        CookerCall.os.file_write(file, 'DISTRO ?= "poky"')
-        CookerCall.os.file_write(file, 'PACKAGE_CLASSES ?= "package_rpm"')
+        CookerCall.os.file_write(file, 'DISTRO ?= "{}"'.format(self.distro.name))
+        CookerCall.os.file_write(file, 'PACKAGE_CLASSES ?= "{}"'.format(self.distro.package_format))
         CookerCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
@@ -446,12 +487,12 @@ class CookerCommands:
         CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
-        CookerCall.os.file_write(file, 'CONF_VERSION = "1"')
+        CookerCall.os.file_write(file, 'CONF_VERSION = "{}"'.format(self.distro.local_conf_version))
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
         CookerCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by cooker.\n\n')
-        CookerCall.os.file_write(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
+        CookerCall.os.file_write(file, '{} = "{}"'.format(self.distro.layer_conf_name, self.distro.layer_conf_version))
         CookerCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
         CookerCall.os.file_write(file, 'BBFILES ?= ""')
         CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
@@ -462,7 +503,7 @@ class CookerCommands:
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
-        CookerCall.os.file_write(file, 'meta-poky/conf\n')
+        CookerCall.os.file_write(file, '{}\n'.format(self.distro.template_conf))
         CookerCall.os.file_close(file)
 
     def show(self, builds, layers, conf, tree, build_arg, sources):
@@ -507,7 +548,7 @@ class CookerCommands:
             if build_arg:
                 if build.target():
                     info('  .',
-                         os.path.relpath(self.config.layer_dir(CookerCommands.build_script), os.getcwd()),
+                         os.path.relpath(self.config.layer_dir(self.distro.build_script), os.getcwd()),
                          os.path.relpath(build.dir(), os.getcwd()))
                 else:
                     info('build', build.name(), 'has no target')
@@ -573,7 +614,7 @@ class CookerCommands:
     def run_bitbake(self, build_config, bb_task, bb_target):
         directory = build_config.dir()
 
-        init_script = self.config.layer_dir(CookerCommands.build_script)
+        init_script = self.config.layer_dir(self.distro.build_script)
         if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
@@ -584,7 +625,7 @@ class CookerCommands:
 
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
-        init_script = self.config.layer_dir(CookerCommands.build_script)
+        init_script = self.config.layer_dir(self.distro.build_script)
         shell = os.environ.get('SHELL', '/bin/sh')
 
         debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)

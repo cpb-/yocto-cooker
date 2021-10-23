@@ -83,7 +83,7 @@
         "local.conf": {
             "$ref": "#/definitions/local.conf"
         },
-        "init-build-script": {
+        "base-distribution": {
             "$ref": "#/definitions/build-parameter"
         },
 
