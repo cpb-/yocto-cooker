@@ -316,13 +316,13 @@ class CookerCommands:
         self.config = config
         self.menu = menu
         if menu is not None:
-            distros_list = {
+            distros = {
                 'poky': PokyDistro,
                 'arago': AragoDistro,
             }
             name = menu.setdefault('base-distribution', 'poky')
             try:
-                self.distro = distros_list[name.lower()]
+                self.distro = distros[name.lower()]
             except:
                 fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
 
