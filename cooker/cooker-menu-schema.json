@@ -25,7 +25,7 @@
                 "uniqueItems": true
             }
         },
-        "build-parameter": {
+        "not-empty-string": {
             "type": "string",
             "minLength": 1,
             "uniqueItems": true
@@ -84,7 +84,7 @@
             "$ref": "#/definitions/local.conf"
         },
         "base-distribution": {
-            "$ref": "#/definitions/build-parameter"
+            "$ref": "#/definitions/not-empty-string"
         },
 
         "builds": {
