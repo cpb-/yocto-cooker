@@ -74,7 +74,7 @@ cooker build
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
-	    "base-distribution": "wingardium leviosa",
+	    "base-distribution": "wingardium-leviosa",
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
@@ -94,6 +94,26 @@ cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "base-distribution": "poky",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
+
+# `cooker build` accepts 'Poky' (capitalized)
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "Poky",
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
@@ -138,6 +158,25 @@ cat > menu.json <<-EOF
 	{
 	    "sources": [],
 	    "base-distribution": "arago",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
+# `cooker build` accepts 'Arago' (capitalized)
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "Arago",
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
