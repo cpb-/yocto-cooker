@@ -324,7 +324,7 @@ class CookerCommands:
             try:
                 self.distro = distros_list[name.lower()]
             except:
-                fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file near your menu.'.format(name))
+                fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
