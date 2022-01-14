@@ -563,12 +563,12 @@ class CookerCommands:
                     fatal_error('undefined build:', build)
 
                 if not BuildConfiguration.ALL[build].target():
-                    fatal_error('build has no target:', build)
+                    fatal_error('build', build, 'is not buildable')
 
                 buildables += [BuildConfiguration.ALL[build]]
             return buildables
         else:  # use all builds which have targets
-            return [x for x in BuildConfiguration.ALL.values() if x.target()]
+            return [x for x in BuildConfiguration.ALL.values() if x.buildable()]
 
     def run_bitbake(self, build_config, bb_task, bb_target):
         directory = build_config.dir()
