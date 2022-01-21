@@ -78,7 +78,7 @@ class DryRunOsCalls:
         return 0
 
     def file_write(self, file, string):
-        print('\t{}'.format(string))
+        print('\t{}'.format(string.replace('$', '\$')))
         sys.stdout.flush()
 
     def file_close(self, file):
