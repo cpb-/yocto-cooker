@@ -606,7 +606,7 @@ class CookerCall:
     os = OsCalls()
 
     def __init__(self):
-        parser = argparse.ArgumentParser(prog='Cooker')
+        parser = argparse.ArgumentParser(prog='cooker')
 
         parser.add_argument('--debug', action='store_true', help='activate debug printing')
         parser.add_argument('--version', action='store_true', help='cooker version')
