@@ -446,7 +446,7 @@ class CookerCommands:
         CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
-        CookerCall.os.file_write(file, 'CONF_VERSION = "1"')
+        CookerCall.os.file_write(file, 'CONF_VERSION = "2"')
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
