@@ -288,14 +288,43 @@ def resolve_parents():
               .format(build.name(), [n.name() for n in build.ancestors_]))
 
 
-class CookerCommands:
-    """ The class aggregates all functions representing a low-lever cooker-command """
+class PokyDistro:
 
-    DEFAULT_INIT_BUILD_SCRIPT = 'poky/oe-init-build-env'
+    DISTRO_NAME = "poky"
+    BUILD_SCRIPT = "poky/oe-init-build-env"
+    TEMPLATE_CONF = "meta-poky/conf"
+    LAYER_CONF_NAME = "POKY_BBLAYERS_CONF_VERSION"
+    LAYER_CONF_VERSION = "2"
+    LOCAL_CONF_VERSION = "1"
+    PACKAGE_FORMAT = "package_rpm"
+
+class AragoDistro:
+
+    DISTRO_NAME = "arago"
+    BUILD_SCRIPT = "openembedded-core/oe-init-build-env"
+    TEMPLATE_CONF = "meta/conf"
+    LAYER_CONF_NAME = "LCONF_VERSION"
+    LAYER_CONF_VERSION = "7"
+    LOCAL_CONF_VERSION = "1"
+    PACKAGE_FORMAT = "package_ipk"
+
+
+class CookerCommands:
+    """ The class aggregates all functions representing a low-level cooker-command """
 
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
+        if menu is not None:
+            distros = {
+                'poky': PokyDistro,
+                'arago': AragoDistro,
+            }
+            name = menu.setdefault('base-distribution', 'poky')
+            try:
+                self.distro = distros[name.lower()]
+            except:
+                fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -435,8 +464,8 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
         for line in build.local_conf():
             CookerCall.os.file_write(file, line)
-        CookerCall.os.file_write(file, 'DISTRO ?= "poky"')
-        CookerCall.os.file_write(file, 'PACKAGE_CLASSES ?= "package_rpm"')
+        CookerCall.os.file_write(file, 'DISTRO ?= "{}"'.format(self.distro.DISTRO_NAME))
+        CookerCall.os.file_write(file, 'PACKAGE_CLASSES ?= "{}"'.format(self.distro.PACKAGE_FORMAT))
         CookerCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,${TMPDIR},1G,100K \\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
@@ -446,12 +475,12 @@ class CookerCommands:
         CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
-        CookerCall.os.file_write(file, 'CONF_VERSION = "1"')
+        CookerCall.os.file_write(file, 'CONF_VERSION = "{}"'.format(self.distro.LOCAL_CONF_VERSION))
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
         CookerCall.os.file_write(file, '# DO NOT EDIT! - This file is automatically created by cooker.\n\n')
-        CookerCall.os.file_write(file, 'POKY_BBLAYERS_CONF_VERSION = "2"')
+        CookerCall.os.file_write(file, '{} = "{}"'.format(self.distro.LAYER_CONF_NAME, self.distro.LAYER_CONF_VERSION))
         CookerCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
         CookerCall.os.file_write(file, 'BBFILES ?= ""')
         CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
@@ -462,7 +491,7 @@ class CookerCommands:
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
-        CookerCall.os.file_write(file, 'meta-poky/conf\n')
+        CookerCall.os.file_write(file, '{}\n'.format(self.distro.TEMPLATE_CONF))
         CookerCall.os.file_close(file)
 
     def show(self, builds, layers, conf, tree, build_arg, sources):
@@ -507,7 +536,7 @@ class CookerCommands:
             if build_arg:
                 if build.target():
                     info('  .',
-                         os.path.relpath(self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
+                         os.path.relpath(self.config.layer_dir(self.distro.BUILD_SCRIPT), os.getcwd()),
                          os.path.relpath(build.dir(), os.getcwd()))
                 else:
                     info('build', build.name(), 'has no target')
@@ -573,7 +602,7 @@ class CookerCommands:
     def run_bitbake(self, build_config, bb_task, bb_target):
         directory = build_config.dir()
 
-        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        init_script = self.config.layer_dir(self.distro.BUILD_SCRIPT)
         if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
@@ -584,7 +613,7 @@ class CookerCommands:
 
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
-        init_script = self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT)
+        init_script = self.config.layer_dir(self.distro.BUILD_SCRIPT)
         shell = os.environ.get('SHELL', '/bin/sh')
 
         debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)

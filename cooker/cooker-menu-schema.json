@@ -24,6 +24,11 @@
                 "minLength": 1,
                 "uniqueItems": true
             }
+        },
+        "not-empty-string": {
+            "type": "string",
+            "minLength": 1,
+            "uniqueItems": true
         }
     },
 
@@ -77,6 +82,9 @@
 
         "local.conf": {
             "$ref": "#/definitions/local.conf"
+        },
+        "base-distribution": {
+            "$ref": "#/definitions/not-empty-string"
         },
 
         "builds": {
