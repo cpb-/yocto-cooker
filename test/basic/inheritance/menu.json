@@ -36,6 +36,27 @@
                 "MACHINE = three"
             ],
             "target": "target3"
+        },
+        ".virtual-multi": {
+            "inherit": ["base"],
+            "target": ["virtual-multi-target-1", "virtual-multi-target-2"]
+        },
+	"target4" : {
+            "inherit": [".virtual-multi"],
+            "layers": [
+                "meta-target4-1",
+                "meta-target4-2"
+            ],
+            "local.conf": [
+                "MACHINE = four"
+            ]
+        },
+	"target5" : {
+            "inherit": [".virtual-multi"],
+            "local.conf": [
+                "MACHINE = five"
+            ],
+            "target": "target5"
         }
     }
 }

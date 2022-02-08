@@ -32,6 +32,15 @@ cooker generate
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1
 
+# multiple targets
+cooker init -f $S/multiple-targets.json
+cooker generate
+
+dirsExist . builds 1
+dirsExist builds build-one-multiple 1
+dirsExist builds build-two-multiple 1
+dirsExist builds build-three-multiple 1
+
 # inherited target
 cooker init -f $S/build-template-menu.json
 cooker generate

@@ -5,6 +5,13 @@
 #   - BASE = base
 # build .virtual-base has no target
 # builds ancestors: ['root', 'base']
+# build: .virtual-multi
+#  used layers
+#   - meta-base (/layers/meta-base)
+#  local.conf entries
+#   - BASE = base
+# build .virtual-multi has no target
+# builds ancestors: ['root', 'base']
 # build: base
 #  used layers
 #   - meta-base (/layers/meta-base)
@@ -16,7 +23,7 @@
 #  used layers
 #  local.conf entries
 # build root has no target
-# build: target1 (bakes virtual-base-target)
+# build: target1 (bakes ['virtual-base-target'])
 #  used layers
 #   - meta-base (/layers/meta-base)
 #   - meta-target1-1 (/layers/meta-target1-1)
@@ -34,7 +41,7 @@
 #   - MACHINE = two
 # build target2 has no target
 # builds ancestors: ['root', 'base']
-# build: target3 (bakes target3)
+# build: target3 (bakes ['target3'])
 #  used layers
 #   - meta-base (/layers/meta-base)
 #  local.conf entries
@@ -42,3 +49,21 @@
 #   - MACHINE = three
 #   . layers/poky/oe-init-build-env builds/build-target3
 # builds ancestors: ['root', 'base', '.virtual-base']
+# build: target4 (bakes ['virtual-multi-target-1', 'virtual-multi-target-2'])
+#  used layers
+#   - meta-base (/layers/meta-base)
+#   - meta-target4-1 (/layers/meta-target4-1)
+#   - meta-target4-2 (/layers/meta-target4-2)
+#  local.conf entries
+#   - BASE = base
+#   - MACHINE = four
+#   . layers/poky/oe-init-build-env builds/build-target4
+# builds ancestors: ['root', 'base', '.virtual-multi']
+# build: target5 (bakes ['target5'])
+#  used layers
+#   - meta-base (/layers/meta-base)
+#  local.conf entries
+#   - BASE = base
+#   - MACHINE = five
+#   . layers/poky/oe-init-build-env builds/build-target5
+# builds ancestors: ['root', 'base', '.virtual-multi']

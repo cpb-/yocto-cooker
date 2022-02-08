@@ -1,4 +1,4 @@
-# build: fourth (bakes fourth-bitbake)
+# build: fourth (bakes ['fourth-bitbake'])
 #  used layers
 #   - root/1 (/layers/root/1)
 #   - root/2 (/layers/root/2)

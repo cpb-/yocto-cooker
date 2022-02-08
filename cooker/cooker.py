@@ -179,7 +179,13 @@ class BuildConfiguration:
         self.config_ = config
         self.layers_ = layers
         self.local_conf_ = local_conf
-        self.target_ = target
+        if type(target) == list:
+            self.targets_ = target
+        elif target:
+            self.targets_ = []
+            self.targets_.append(target)
+        else:
+            self.targets_ = []
         self.inherit_ = inherit
 
         self.parents_ = []  # first level parents
@@ -187,13 +193,13 @@ class BuildConfiguration:
 
         BuildConfiguration.ALL[name] = self
 
-    def target(self):
+    def targets(self):
         if not self.buildable():
             return None
 
         for build in [self] + self.ancestors_[::-1]:
-            if build.target_:
-                return build.target_
+            if len(build.targets_) > 0:
+                return build.targets_
 
     def name(self):
         return self.name_
@@ -205,7 +211,7 @@ class BuildConfiguration:
         if self.name_.startswith('.'):  # template
             return False
 
-        return any(build.target_ for build in self.ancestors_ + [self])
+        return any(build.targets_ for build in self.ancestors_ + [self])
 
     def layers(self):
         layers = []
@@ -487,8 +493,8 @@ class CookerCommands:
         for build_name in sorted(builds):
             build = BuildConfiguration.ALL[build_name]
 
-            if build.target():
-                build_info = ' (bakes {})'.format(build.target())
+            if build.targets():
+                build_info = ' (bakes {})'.format(build.targets())
             else:
                 build_info = ''
 
@@ -505,7 +511,7 @@ class CookerCommands:
                     info('  - {}'.format(entry))
 
             if build_arg:
-                if build.target():
+                if build.targets():
                     info('  .',
                          os.path.relpath(self.config.layer_dir(CookerCommands.DEFAULT_INIT_BUILD_SCRIPT), os.getcwd()),
                          os.path.relpath(build.dir(), os.getcwd()))
@@ -520,25 +526,26 @@ class CookerCommands:
         debug('Building build-configurations')
 
         for build in self.get_buildable_builds(builds):
-            self.build_target(build, sdk, keepgoing, download)
+            self.build_targets(build, sdk, keepgoing, download)
 
-    def build_target(self, build, sdk, keepgoing, download):
-        try:
-            info('Building {} ({})'.format(build.name(), build.target()))
-            bb_task = ""
+    def build_targets(self, build, sdk, keepgoing, download):
+        for target in build.targets():
+            try:
+                info('Building {} ({})'.format(build.name(), target))
+                bb_task = ""
 
-            if keepgoing:
-                bb_task = "-k"
+                if keepgoing:
+                    bb_task = "-k"
 
-            if download:
-                bb_task += " --runall=fetch"
+                if download:
+                    bb_task += " --runall=fetch"
 
-            self.run_bitbake(build, bb_task, build.target())
-            if sdk:
-                self.run_bitbake(build, "-c populate_sdk", build.target())
+                self.run_bitbake(build, bb_task, target)
+                if sdk:
+                    self.run_bitbake(build, "-c populate_sdk", target)
 
-        except Exception as e:
-            fatal_error('build for', build.name(), 'failed', e)
+            except Exception as e:
+                fatal_error('build for', build.name(), 'failed', e)
 
     def clean(self, recipe, builds):
         debug('cleaning {}'.format(recipe))
@@ -562,7 +569,7 @@ class CookerCommands:
                 if build not in BuildConfiguration.ALL:
                     fatal_error('undefined build:', build)
 
-                if not BuildConfiguration.ALL[build].target():
+                if not BuildConfiguration.ALL[build].targets():
                     fatal_error('build', build, 'is not buildable')
 
                 buildables += [BuildConfiguration.ALL[build]]
