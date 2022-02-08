@@ -1,10 +1,22 @@
+# build: delta (bakes ['delta-bitbake-1', 'delta-bitbake-2'])
+#  used layers
+#   - root/1 (/layers/root/1)
+#   - root/2 (/layers/root/2)
+#   - 2/1 (/layers/2/1)
+#   - 2/2 (/layers/2/2)
+#   - G/1 (/layers/G/1)
+#   - G/2 (/layers/G/2)
+#   - 1/1 (/layers/1/1)
+#   - 1/2 (/layers/1/2)
+#   - D/1 (/layers/D/1)
+#   - D/2 (/layers/D/2)
 # build: first
 #  used layers
 #   - root/1 (/layers/root/1)
 #   - root/2 (/layers/root/2)
 #   - 1/1 (/layers/1/1)
 #   - 1/2 (/layers/1/2)
-# build: fourth (bakes fourth-bitbake)
+# build: fourth (bakes ['fourth-bitbake'])
 #  used layers
 #   - root/1 (/layers/root/1)
 #   - root/2 (/layers/root/2)
@@ -16,6 +28,14 @@
 #   - 1/2 (/layers/1/2)
 #   - 4/1 (/layers/4/1)
 #   - 4/2 (/layers/4/2)
+# build: gamma (bakes ['gamma-bitbake-1', 'gamma-bitbake-2'])
+#  used layers
+#   - root/1 (/layers/root/1)
+#   - root/2 (/layers/root/2)
+#   - 2/1 (/layers/2/1)
+#   - 2/2 (/layers/2/2)
+#   - G/1 (/layers/G/1)
+#   - G/2 (/layers/G/2)
 # build: root
 #  used layers
 #   - root/1 (/layers/root/1)
@@ -26,7 +46,7 @@
 #   - root/2 (/layers/root/2)
 #   - 2/1 (/layers/2/1)
 #   - 2/2 (/layers/2/2)
-# build: third (bakes third-bitbake)
+# build: third (bakes ['third-bitbake'])
 #  used layers
 #   - root/1 (/layers/root/1)
 #   - root/2 (/layers/root/2)

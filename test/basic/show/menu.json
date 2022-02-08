@@ -22,6 +22,18 @@
             "layers": [ "4/1", "4/2"],
             "inherit": ["third", "first"],
             "target": "fourth-bitbake"
+        },
+        "gamma": {
+            "local.conf": [ "gamma=gamma" ],
+            "layers": [ "G/1", "G/2"],
+            "inherit": ["second"],
+            "target": ["gamma-bitbake-1", "gamma-bitbake-2"]
+        },
+        "delta": {
+            "local.conf": [ "delta=delta" ],
+            "layers": [ "D/1", "D/2"],
+            "inherit": ["gamma", "first"],
+            "target": ["delta-bitbake-1", "delta-bitbake-2"]
         }
     }
 }

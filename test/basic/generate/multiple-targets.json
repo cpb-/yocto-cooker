@@ -1,0 +1,27 @@
+{
+    "sources": [],
+    "layers": [
+        "generic/layer1",
+        "generic/layer2"
+    ],
+    "builds": {
+        "one-multiple": {
+            "target": ["bitbake-target"],
+            "layers": [
+                "first/layer1"
+            ]
+        },
+        "two-multiple": {
+            "target": ["bitbake-target", "core-image-base"],
+            "layers": [
+                "first/layer1"
+            ]
+        },
+        "three-multiple": {
+            "target": ["bitbake-target", "core-image-base", "aaa"],
+            "layers": [
+                "first/layer1"
+            ]
+        }
+    }
+}
