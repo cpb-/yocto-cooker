@@ -493,7 +493,7 @@ class CookerCommands:
             build = BuildConfiguration.ALL[build_name]
 
             if build.targets():
-                build_info = ' (bakes {})'.format(build.targets())
+                build_info = ' (bakes {})'.format(', '.join(build.targets()))
             else:
                 build_info = ''
 

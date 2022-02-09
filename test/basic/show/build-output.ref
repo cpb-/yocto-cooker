@@ -1,14 +1,14 @@
-# build: delta (bakes ['delta-bitbake-1', 'delta-bitbake-2'])
+# build: delta (bakes delta-bitbake-1, delta-bitbake-2)
 #   . layers/poky/oe-init-build-env builds/build-delta
 # build: first
 # build first has no target
-# build: fourth (bakes ['fourth-bitbake'])
+# build: fourth (bakes fourth-bitbake)
 #   . layers/poky/oe-init-build-env builds/build-fourth
-# build: gamma (bakes ['gamma-bitbake-1', 'gamma-bitbake-2'])
+# build: gamma (bakes gamma-bitbake-1, gamma-bitbake-2)
 #   . layers/poky/oe-init-build-env builds/build-gamma
 # build: root
 # build root has no target
 # build: second
 # build second has no target
-# build: third (bakes ['third-bitbake'])
+# build: third (bakes third-bitbake)
 #   . layers/poky/oe-init-build-env builds/build-third
