@@ -4,7 +4,6 @@ expect_fail cooker --dry-run 2> error.txt
 linesInFile error.txt 2
 rm -f error.txt
 
-
 # Mock `bitbake`
 cat > bitbake <<-EOF
         #! /bin/sh
@@ -13,7 +12,6 @@ EOF
 chmod +x bitbake
 
 # Mock `git`
-
 cat > git <<-EOF
 	#! /bin/sh
 	exit 0

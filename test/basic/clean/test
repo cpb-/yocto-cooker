@@ -37,6 +37,7 @@ cooker init -f menu.json
 
 # `cooker clean recipe` fails without Poky `oe-init-build-env` script.
 rm -f layers/poky/oe-init-build-env
+rm -f layers/poky/meta-poky
 
 expect_fail cooker clean recipe
 
@@ -49,6 +50,12 @@ cat > bitbake <<-EOF
 EOF
 chmod +x bitbake
 PATH=.:$PATH
+
+# Add `local.conf.sample` file
+mkdir -p layers/poky/meta-poky/conf
+cat > layers/poky/meta-poky/conf/local.conf.sample <<- EOF
+  CONF_VERSION = "1"
+EOF
 
 # `cooker clean recipe` succeeds when bitbake succeeds.
 export bitbake_result=0
@@ -79,7 +86,7 @@ cooker generate
 
 cooker clean recipe
 
-# `cooker clean recipe buid-config` fails when build-config doesn't exist.
+# `cooker clean recipe build-config` fails when build-config doesn't exist.
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
