@@ -10,6 +10,14 @@
                 "uniqueItems": true
             }
         },
+        "targets": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "minLength": 1,
+                "uniqueItems": true
+            }
+        },
         "notes": {
             "type": "array",
             "items": {
@@ -103,8 +111,15 @@
                         },
 
                         "target": {
-                            "type": "string",
-                            "minLength": 1
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "minLength": 1
+                                },
+                                {
+                                    "$ref": "#/definitions/targets"
+                                }
+                            ]
                         },
 
                         "layers": {

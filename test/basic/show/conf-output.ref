@@ -1,3 +1,10 @@
+# build: delta (bakes delta-bitbake-1, delta-bitbake-2)
+#  local.conf entries
+#   - root=root
+#   - second=second
+#   - gamma=gamma
+#   - first=first
+#   - delta=delta
 # build: first
 #  local.conf entries
 #   - root=root
@@ -9,6 +16,11 @@
 #   - third=third
 #   - first=first
 #   - fourth=fourth
+# build: gamma (bakes gamma-bitbake-1, gamma-bitbake-2)
+#  local.conf entries
+#   - root=root
+#   - second=second
+#   - gamma=gamma
 # build: root
 #  local.conf entries
 #   - root=root

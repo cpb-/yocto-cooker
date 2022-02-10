@@ -1,7 +1,11 @@
+# build: delta (bakes delta-bitbake-1, delta-bitbake-2)
+# builds ancestors: ['root', 'second', 'gamma', 'first']
 # build: first
 # builds ancestors: ['root']
 # build: fourth (bakes fourth-bitbake)
 # builds ancestors: ['root', 'second', 'third', 'first']
+# build: gamma (bakes gamma-bitbake-1, gamma-bitbake-2)
+# builds ancestors: ['root', 'second']
 # build: root
 # build: second
 # builds ancestors: ['root']
