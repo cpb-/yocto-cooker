@@ -39,7 +39,7 @@ cat > /builds/build-pi2-base/conf/local.conf <<-EOF
 		ABORT,\${DL_DIR},100M,1K \
 		ABORT,\${SSTATE_DIR},100M,1K \
 		ABORT,/tmp,10M,1K"
-	CONF_VERSION = "1"
+	CONF_VERSION ?= "1"
 EOF
 cat > /builds/build-pi2-base/conf/bblayers.conf <<-EOF
 	# DO NOT EDIT! - This file is automatically created by cooker.

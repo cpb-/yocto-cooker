@@ -1,9 +1,9 @@
-# fail is no init done
-! cooker generate
+# fail if no init done
+expect_fail cooker generate
 
 
 # empty menu, nothing is generated
-cooker init $S/empty-menu.json
+cooker init -f $S/empty-menu.json
 cooker generate
 
 filesExist . builds 0
@@ -22,13 +22,25 @@ dirsExist builds build-first 1
 # bblayers as expected
 diff builds/build-first/conf/bblayers.conf $S/one-target-first-bblayers.conf
 
+# local.conf as expected
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 1
 textInFile builds/build-first/conf/local.conf 'DL_DIR = "\${TOPDIR}/../../downloads"' 1
 textInFile builds/build-first/conf/local.conf 'SSTATE_DIR = "\${TOPDIR}/../../sstate-cache"' 1
 
+# Default value for CONF_VERSION is 1
+textInFile builds/build-first/conf/local.conf 'CONF_VERSION \?= "1"' 1
+# regenerate with CONF_VERSION = 2
+mkdir -p layers/poky/meta-poky/conf
+cat > layers/poky/meta-poky/conf/local.conf.sample <<- EOF
+  CONF_VERSION = "2"
+EOF
+cooker generate
+textInFile builds/build-first/conf/local.conf 'CONF_VERSION \?= "2"' 1
+
 # regenerate after layers-dir-change
 cooker init -f -l layers_dir $S/menu.json
 cooker generate
+
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 0
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers_dir"' 1
 
