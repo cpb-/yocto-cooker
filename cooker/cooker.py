@@ -3,8 +3,9 @@
 
 import argparse
 import json
-import sys
 import os
+import re
+import sys
 from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
@@ -454,12 +455,11 @@ class CookerCommands:
 
     def read_local_conf_version(self):
         try:
-            self.distro.local_conf_version = "{}".format(self.distro.DEFAULT_CONF_VERSION)
+            self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
             file = open(self.config.layer_dir() + self.distro.BASE_DIRECTORY + "/" + self.distro.TEMPLATE_CONF + "/local.conf.sample")
-            for line in file.readlines():
+            for line in file:
                 if line.lstrip().startswith("CONF_VERSION"):
-                    idx = line.rfind("=")
-                    self.distro.local_conf_version = int(line[idx+1:].replace('"', ''))
+                    self.local_conf_version = re.search(r'\d+', line).group(0)
                     return
         except:
             return
@@ -496,7 +496,7 @@ class CookerCommands:
         CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
         CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
-        CookerCall.os.file_write(file, 'CONF_VERSION ?= "{}"'.format(self.distro.local_conf_version))
+        CookerCall.os.file_write(file, 'CONF_VERSION ?= "{}"'.format(self.local_conf_version))
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'bblayers.conf'))
