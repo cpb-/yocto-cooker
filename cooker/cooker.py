@@ -636,7 +636,7 @@ class CookerCommands:
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
         init_script = self.config.layer_dir(self.distro.BASE_DIRECTORY + "/" + self.distro.BUILD_SCRIPT)
-        shell = os.environ.get('SHELL', '/bin/sh')
+        shell = os.environ.get('SHELL', '/bin/bash')
 
         debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)
 
