@@ -101,12 +101,13 @@ class DryRunOsCalls:
         return True
 
     def subprocess_run(self, args, cwd):
-        print("cd " + cwd)
+        if cwd is not None:
+            print("cd " + cwd)
         for arg in args:
             print(arg, end=" ")
         print()
         sys.stdout.flush()
-        return subprocess.CompletedProcess(args, 0)
+        return subprocess.CompletedProcess(args, 0, stderr="")
         return cp
 
 
