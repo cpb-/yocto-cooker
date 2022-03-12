@@ -74,4 +74,4 @@ cat > /builds/build-pi2-base/conf/templateconf.cfg <<-EOF
 
 EOF
 # Building pi2-base (core-image-base)
-env bash -c "source /layers/poky/oe-init-build-env /builds/build-pi2-base && bitbake  core-image-base"
+source /layers/poky/oe-init-build-env /builds/build-pi2-base && bitbake  core-image-base 
