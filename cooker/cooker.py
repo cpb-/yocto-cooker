@@ -649,7 +649,7 @@ class CookerCommands:
 
         complete = CookerCall.os.subprocess_run([command_line], None, shell=True, capture_output=False)
         if (complete.returncode != 0):
-            fatal_error('Execution of {} failed: {}'.format(command_line, complete.stderr.decode('ascii')))
+            fatal_error('Execution of {} failed.'.format(command_line))
 
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
