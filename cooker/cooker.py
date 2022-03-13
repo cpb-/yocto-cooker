@@ -59,8 +59,8 @@ class OsCalls:
     def replace_process(self, shell: str, args: List[str]):
         return os.execv(shell, args)
 
-    def subprocess_run(self, args, cwd, capture_output=True, shell=False, executable=None):
-        return subprocess.run(args, capture_output=capture_output, cwd=cwd, shell=shell, executable=executable)
+    def subprocess_run(self, args, cwd, capture_output=True, shell=False):
+        return subprocess.run(args, capture_output=capture_output, cwd=cwd, shell=shell)
 
 
 class DryRunOsCalls:
