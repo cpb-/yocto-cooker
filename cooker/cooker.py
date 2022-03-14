@@ -59,8 +59,8 @@ class OsCalls:
     def replace_process(self, shell: str, args: List[str]):
         return os.execv(shell, args)
 
-    def subprocess_run(self, args, cwd, capture_output=True, shell=False):
-        return subprocess.run(args, capture_output=capture_output, cwd=cwd, shell=shell)
+    def subprocess_run(self, args, cwd, capture_output=True):
+        return subprocess.run(args, capture_output=capture_output, cwd=cwd)
 
 
 class DryRunOsCalls:
@@ -92,7 +92,7 @@ class DryRunOsCalls:
         print('exec {} {}'.format(shell, ' '.join(args)))
         return True
 
-    def subprocess_run(self, args, cwd,  capture_output=True, shell=False):
+    def subprocess_run(self, args, cwd,  capture_output=True):
         if cwd is not None:
             print("cd " + cwd)
         print(' '.join(args))
@@ -645,7 +645,7 @@ class CookerCommands:
 
         command_line = 'source {} {} && bitbake {} {}'.format(init_script, directory, bb_task, bb_target)
 
-        complete = CookerCall.os.subprocess_run(["env", "bash", "-c", command_line], None, shell=False, capture_output=False)
+        complete = CookerCall.os.subprocess_run(["env", "bash", "-c", command_line], None, capture_output=False)
         if (complete.returncode != 0):
             fatal_error('Execution of {} failed.'.format(command_line))
 
