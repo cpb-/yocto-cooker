@@ -408,7 +408,7 @@ class CookerCommands:
         if method == 'git':
 
             complete = CookerCall.os.subprocess_run(["git", "clone", "--recurse-submodules", remote_dir, local_dir], None)
-            if (complete.returncode != 0):
+            if complete.returncode != 0:
                 fatal_error('Unable to clone {}: {}'.format(remote_dir, complete.stderr.decode('ascii')))
 
     def update_directory(self, method, local_dir, has_remote, branch, rev):
@@ -428,7 +428,7 @@ class CookerCommands:
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
                         complete = CookerCall.os.subprocess_run(["git", "pull"], local_dir)
-                        if (complete.returncode != 0):
+                        if complete.returncode != 0:
                             fatal_error('Unable to pull updates for {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
                 else:
@@ -436,27 +436,27 @@ class CookerCommands:
                     info('Updating source {}... '.format(local_dir))
 
                     complete = CookerCall.os.subprocess_run(["git", "checkout", branch], local_dir)
-                    if (complete.returncode != 0):
+                    if complete.returncode != 0:
                         fatal_error('Unable to checkout branch {} for {}: {}'.format(branch, local_dir, complete.stderr.decode('ascii')))
 
                     if has_remote:
                         complete = CookerCall.os.subprocess_run(["git", "pull"], local_dir)
-                        if (complete.returncode != 0):
+                        if complete.returncode != 0:
                             fatal_error('Unable to pull updates for {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
             else:
                 info('Updating source {}... '.format(local_dir))
 
                 complete = CookerCall.os.subprocess_run(["git", "fetch"], local_dir)
-                if (complete.returncode != 0):
+                if complete.returncode != 0:
                     fatal_error('Unable to fetch {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
                 complete = CookerCall.os.subprocess_run(["git", "checkout", rev], local_dir)
-                if (complete.returncode != 0):
+                if complete.returncode != 0:
                     fatal_error('Unable to checkout rev {} for {}: {}'.format(rev, local_dir, complete.stderr.decode('ascii')))
 
             complete = CookerCall.os.subprocess_run(["git", "submodule", "update", "--recursive", "--init"], local_dir)
-            if (complete.returncode != 0):
+            if complete.returncode != 0:
                 fatal_error('Unable to update submodules in {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
     def generate(self):
@@ -646,7 +646,7 @@ class CookerCommands:
         command_line = 'source {} {} && bitbake {} {}'.format(init_script, directory, bb_task, bb_target)
 
         complete = CookerCall.os.subprocess_run(["env", "bash", "-c", command_line], None, capture_output=False)
-        if (complete.returncode != 0):
+        if complete.returncode != 0:
             fatal_error('Execution of {} failed.'.format(command_line))
 
     def shell(self, build_names: List[str]):
