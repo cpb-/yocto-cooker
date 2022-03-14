@@ -9,6 +9,7 @@ import sys
 from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
+import subprocess
 
 from typing import List
 
@@ -37,9 +38,6 @@ def fatal_error(*args):
 
 class OsCalls:
 
-    def execute_command(self, command):
-        return os.system(command)
-
     def create_directory(self, directory):
         os.makedirs(directory, exist_ok=True)
 
@@ -61,13 +59,11 @@ class OsCalls:
     def replace_process(self, shell: str, args: List[str]):
         return os.execv(shell, args)
 
+    def subprocess_run(self, args, cwd, capture_output=True):
+        return subprocess.run(args, capture_output=capture_output, cwd=cwd)
+
 
 class DryRunOsCalls:
-
-    def execute_command(self, command):
-        print(command)
-        sys.stdout.flush()
-        return 0
 
     def create_directory(self, directory):
         print('mkdir {}'.format(directory))
@@ -95,6 +91,13 @@ class DryRunOsCalls:
     def replace_process(self, shell: str, args: List[str]):
         print('exec {} {}'.format(shell, ' '.join(args)))
         return True
+
+    def subprocess_run(self, args, cwd,  capture_output=True):
+        if cwd is not None:
+            print("cd " + cwd)
+        print(' '.join(args))
+        sys.stdout.flush()
+        return subprocess.CompletedProcess(args, 0, stderr="")
 
 
 class Config:
@@ -403,9 +406,10 @@ class CookerCommands:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            if CookerCall.os.execute_command(
-                    'git clone --recurse-submodules {} {} {}'.format(remote_dir, local_dir, redirect)) != 0:
-                fatal_error('Unable to clone', remote_dir)
+
+            complete = CookerCall.os.subprocess_run(["git", "clone", "--recurse-submodules", remote_dir, local_dir], None)
+            if complete.returncode != 0:
+                fatal_error('Unable to clone {}: {}'.format(remote_dir, complete.stderr.decode('ascii')))
 
     def update_directory(self, method, local_dir, has_remote, branch, rev):
         if CookerCall.VERBOSE:
@@ -423,26 +427,37 @@ class CookerCommands:
 
                     info('Trying to update source {}... '.format(local_dir))
                     if has_remote:
-                        if CookerCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
-                            fatal_error('Unable to pull updates for {}'.format(local_dir))
+                        complete = CookerCall.os.subprocess_run(["git", "pull"], local_dir)
+                        if complete.returncode != 0:
+                            fatal_error('Unable to pull updates for {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
+
                 else:
                     warn('source "{}" has no "rev" field, the build will not be reproducible!'.format(local_dir))
                     info('Updating source {}... '.format(local_dir))
-                    if CookerCall.os.execute_command('cd ' + local_dir + '; git checkout ' + branch + redirect) != 0:
-                        fatal_error('Unable to checkout branch {} for {}'.format(branch, local_dir))
+
+                    complete = CookerCall.os.subprocess_run(["git", "checkout", branch], local_dir)
+                    if complete.returncode != 0:
+                        fatal_error('Unable to checkout branch {} for {}: {}'.format(branch, local_dir, complete.stderr.decode('ascii')))
+
                     if has_remote:
-                        if CookerCall.os.execute_command('cd ' + local_dir + '; git pull' + redirect) != 0:
-                            fatal_error('Unable to pull updates for {}'.format(local_dir))
+                        complete = CookerCall.os.subprocess_run(["git", "pull"], local_dir)
+                        if complete.returncode != 0:
+                            fatal_error('Unable to pull updates for {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
             else:
                 info('Updating source {}... '.format(local_dir))
-                if CookerCall.os.execute_command(
-                        'cd ' + local_dir + '; git fetch; git checkout ' + rev + redirect) != 0:
-                    fatal_error('Unable to checkout rev {} for {}'.format(rev, local_dir))
 
-            if CookerCall.os.execute_command(
-                    'cd ' + local_dir + '; git submodule update --recursive --init ' + redirect) != 0:
-                fatal_error('Unable to update submodules in ' + local_dir)
+                complete = CookerCall.os.subprocess_run(["git", "fetch"], local_dir)
+                if complete.returncode != 0:
+                    fatal_error('Unable to fetch {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
+
+                complete = CookerCall.os.subprocess_run(["git", "checkout", rev], local_dir)
+                if complete.returncode != 0:
+                    fatal_error('Unable to checkout rev {} for {}: {}'.format(rev, local_dir, complete.stderr.decode('ascii')))
+
+            complete = CookerCall.os.subprocess_run(["git", "submodule", "update", "--recursive", "--init"], local_dir)
+            if complete.returncode != 0:
+                fatal_error('Unable to update submodules in {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
     def generate(self):
         info('Generating dirs for all build-configurations')
@@ -628,10 +643,11 @@ class CookerCommands:
         if not CookerCall.os.file_exists(init_script):
             fatal_error('init-script', init_script, 'not found')
 
-        command_line = 'env bash -c "source {} {} && bitbake {} {}"'.format(init_script, directory, bb_task, bb_target)
-        debug('    Executing : "{}"'.format(command_line))
-        if CookerCall.os.execute_command(command_line) != 0:
-            fatal_error('execution of "{}" failed'.format(command_line))
+        command_line = 'source {} {} && bitbake {} {}'.format(init_script, directory, bb_task, bb_target)
+
+        complete = CookerCall.os.subprocess_run(["env", "bash", "-c", command_line], None, capture_output=False)
+        if complete.returncode != 0:
+            fatal_error('Execution of {} failed.'.format(command_line))
 
     def shell(self, build_names: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()

@@ -1,19 +1,31 @@
 # Update layers in project directory
 # Downloading source from  git://git.yoctoproject.org/poky
-git clone --recurse-submodules git://git.yoctoproject.org/poky /layers/poky  >/dev/null 2>&1
+git clone --recurse-submodules git://git.yoctoproject.org/poky /layers/poky
 # Updating source /layers/poky... 
-cd /layers/poky; git fetch; git checkout 5531ffc5668c2f24b9018a7b7174b5c77315a1cf >/dev/null 2>&1
-cd /layers/poky; git submodule update --recursive --init  >/dev/null 2>&1
+cd /layers/poky
+git fetch
+cd /layers/poky
+git checkout 5531ffc5668c2f24b9018a7b7174b5c77315a1cf
+cd /layers/poky
+git submodule update --recursive --init
 # Downloading source from  git://git.openembedded.org/meta-openembedded
-git clone --recurse-submodules git://git.openembedded.org/meta-openembedded /layers/meta-openembedded  >/dev/null 2>&1
+git clone --recurse-submodules git://git.openembedded.org/meta-openembedded /layers/meta-openembedded
 # Updating source /layers/meta-openembedded... 
-cd /layers/meta-openembedded; git fetch; git checkout 9e60d30669a2ad0598e9abf0cd15ee06b523986b >/dev/null 2>&1
-cd /layers/meta-openembedded; git submodule update --recursive --init  >/dev/null 2>&1
+cd /layers/meta-openembedded
+git fetch
+cd /layers/meta-openembedded
+git checkout 9e60d30669a2ad0598e9abf0cd15ee06b523986b
+cd /layers/meta-openembedded
+git submodule update --recursive --init
 # Downloading source from  git://git.yoctoproject.org/meta-raspberrypi
-git clone --recurse-submodules git://git.yoctoproject.org/meta-raspberrypi /layers/meta-raspberrypi  >/dev/null 2>&1
+git clone --recurse-submodules git://git.yoctoproject.org/meta-raspberrypi /layers/meta-raspberrypi
 # Updating source /layers/meta-raspberrypi... 
-cd /layers/meta-raspberrypi; git fetch; git checkout 0e05098853eea77032bff9cf81955679edd2f35d >/dev/null 2>&1
-cd /layers/meta-raspberrypi; git submodule update --recursive --init  >/dev/null 2>&1
+cd /layers/meta-raspberrypi
+git fetch
+cd /layers/meta-raspberrypi
+git checkout 0e05098853eea77032bff9cf81955679edd2f35d
+cd /layers/meta-raspberrypi
+git submodule update --recursive --init
 # Generating dirs for all build-configurations
 mkdir /builds/build-pi2-base
 mkdir /builds/build-pi2-base/conf
@@ -62,4 +74,4 @@ cat > /builds/build-pi2-base/conf/templateconf.cfg <<-EOF
 
 EOF
 # Building pi2-base (core-image-base)
-env bash -c "source /layers/poky/oe-init-build-env /builds/build-pi2-base && bitbake  core-image-base"
+env bash -c source /layers/poky/oe-init-build-env /builds/build-pi2-base && bitbake  core-image-base
