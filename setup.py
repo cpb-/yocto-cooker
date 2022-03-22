@@ -1,5 +1,5 @@
 __title__ = 'cooker'
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __email__ = 'christophe.blaess@logilin.fr, p@yai.se'
 __license__ = "GPL"
