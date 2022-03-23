@@ -52,7 +52,7 @@
                     },
 
                     "url": {
-                        "oneOf": [
+                        "anyOf": [
                             {
                                 "type": "string",
                                 "pattern": "^(https?|ssh|git)://.*$"

@@ -5,7 +5,8 @@
         { "method": "git", "url": "http://github.com/openembedded/meta-3.git" },
         { "method": "git", "url": "git://github.com/openembedded/meta-4.git" },
         { "method": "git", "url": "git://github.com/openembedded/meta-5.git", "dir": "meta-5"},
-        { "method": "git", "url": "git@github.com:openembedded/meta-6.git", "dir":  "meta-6"}
+        { "method": "git", "url": "git@github.com:openembedded/meta-6.git", "dir":  "meta-6"},
+        { "method": "git", "url": "ssh://git@gitlab.fdimatelec.fr:1086/mirrors/openembedded/meta-openembedded.git", "dir": "issue-113" }
     ],
 
     "builds" : {

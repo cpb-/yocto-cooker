@@ -9,5 +9,6 @@ textInFile $T/output $T/layers/openembedded/meta-3.git 1
 textInFile $T/output $T/layers/openembedded/meta-4.git 1
 textInFile $T/output $T/layers/meta-5 1
 textInFile $T/output $T/layers/meta-6 1
+textInFile $T/output $T/layers/issue-113 1
 
 exit 0
