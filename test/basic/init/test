@@ -37,11 +37,12 @@ cooker init $S/menu.json
 fileExists .cookerconfig
 
 # The `.cookerconfig` file is correct.
-linesInFile .cookerconfig 5
+linesInFile .cookerconfig 6
 textInFile .cookerconfig '/menu.json",' 1
 textInFile .cookerconfig '"layer-dir": "layers",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
+textInFile .cookerconfig '"sstate-dir": "sstate-cache"' 1
 
 # `cooker init` fails if `.cookerconfig` file already exist.
 expect_fail cooker init $S/menu.json
@@ -59,9 +60,9 @@ expect_fail cooker init -f $S/unknown-menu.json
 textInFile .cookerconfig '/menu-copy.json",' 1
 
 # With `-l` option `cooker init` overwrite the `layer-dir` parameter in `.cookerconfig`
-cooker init -fl layers_dir $S/menu.json
-linesInFile .cookerconfig 5
+cooker init -fl layers_dir -s sstate_dir $S/menu.json
+linesInFile .cookerconfig 6
 textInFile .cookerconfig '"layer-dir": "layers_dir",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
-
+textInFile .cookerconfig '"sstate-dir": "sstate_dir"' 1
