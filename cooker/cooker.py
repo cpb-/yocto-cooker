@@ -111,6 +111,7 @@ class Config:
             'layer-dir': 'layers',
             'build-dir': 'builds',
             'dl-dir': 'downloads',
+            'sstate-dir': 'sstate-cache',
         }
         self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
 
@@ -162,6 +163,12 @@ class Config:
 
     def dl_dir(self):
         return os.path.join(self.project_root(), self.cfg['dl-dir'])
+
+    def set_sstate_dir(self, path):
+        self.cfg['sstate-dir'] = os.path.relpath(path, self.project_root())
+
+    def sstate_dir(self, name=''):
+        return os.path.join(self.project_root(), self.cfg['sstate-dir'], name)
 
     def menu(self):
         return self.cfg['menu']
@@ -337,7 +344,7 @@ class CookerCommands:
             except:
                 fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
 
-    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None):
+    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
         self.config.set_menu(menu_name)
 
@@ -349,6 +356,9 @@ class CookerCommands:
 
         if dl_dir:
             self.config.set_dl_dir(dl_dir)
+
+        if sstate_dir:
+            self.config.set_sstate_dir(sstate_dir)
 
         self.config.save()
 
@@ -488,7 +498,7 @@ class CookerCommands:
         CookerCall.os.create_directory(conf_path)
         dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), build.dir())
 
-        sstate_dir = os.path.join(self.config.project_root(), 'sstate-cache')
+        sstate_dir = self.config.sstate_dir()
         sstate_dir = '${TOPDIR}/' + os.path.relpath(sstate_dir, build.dir())
         layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
@@ -701,6 +711,7 @@ class CookerCall:
         init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned')
         init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
         init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
+        init_parser.add_argument('-s', '--sstate-dir', help='path where shared state cached will be saved')
         init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
@@ -836,7 +847,8 @@ class CookerCall:
         self.commands.init(self.clargs.menu[0].name,
                            self.clargs.layer_dir,
                            self.clargs.build_dir,
-                           self.clargs.dl_dir)
+                           self.clargs.dl_dir,
+                           self.clargs.sstate_dir)
 
     def update(self):
         """ entry point for 'update' """
