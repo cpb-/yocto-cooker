@@ -498,7 +498,7 @@ class CookerCommands:
         CookerCall.os.create_directory(conf_path)
         dl_dir = '${TOPDIR}/' + os.path.relpath(self.config.dl_dir(), build.dir())
 
-        sstate_dir = '${TOPDIR}/' + os.path.relpath( self.config.sstate_dir(), build.dir())
+        sstate_dir = '${TOPDIR}/' + os.path.relpath(self.config.sstate_dir(), build.dir())
         layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'local.conf'))
