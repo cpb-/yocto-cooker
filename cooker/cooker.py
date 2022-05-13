@@ -60,7 +60,9 @@ class OsCalls:
         return os.execv(shell, args)
 
     def subprocess_run(self, args, cwd, capture_output=True):
-        return subprocess.run(args, capture_output=capture_output, cwd=cwd)
+        if sys.version_info[0] > 3 or sys.version_info[1] > 6:
+            return subprocess.run(args, capture_output=capture_output, cwd=cwd)
+        return subprocess.run(args, stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=cwd)
 
 
 class DryRunOsCalls:
