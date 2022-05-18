@@ -1,0 +1,63 @@
+{
+	"notes" : [
+		"This is a specific menu for Paris Embedded Meetup on 2022-05-18."
+	],
+
+	"sources" : [
+		{ "url": "git://git.yoctoproject.org/poky", "branch": "kirkstone", "rev": "yocto-4.0" },
+		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "kirkstone", "rev": "166ef8dbb14ad98b2094a77fcf352f6c63d5abf2" },
+		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "kirkstone", "rev": "0135a02ea577bd39dd552236ead2c5894d89da1d" }
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"local.conf" : [
+		"INHERIT += 'extrausers'     ",
+		"EXTRA_USERS_PARAMS += 'useradd  -p \\$6\\$EgKhmsjy7i.IVvp7\\$MzmfOPHyMKGkWlRbKy4jwopHy.KcXWI679KAJ8J1m8WwhO165ovCMtir7QOhH4VEBU/qDWyfWmtY2bZMnIpzi1 meetup;'  ",
+		"EXTRA_USERS_PARAMS += 'usermod  -p \\$6\\$sZ28naF0CFeotdlU\\$E46zRZnJNLRF2S9h5/e.T5ecUtOdxGi2.9oU2hI7/ZLhD7OUJWSwG6W8fvyKpA9t/Af3RpP.fIvl89HWukex40  root;'  ",
+		"BB_NUMBER_THREADS = '4'                             ",
+		"PARALLEL_MAKE = '-j 2'                              "
+	],
+
+	"builds" : {
+
+		"pi3": {
+
+			"notes" : [
+				"A simple image for Raspberry Pi 3."
+			],
+
+			"target" : "core-image-base",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE = 'raspberrypi3' ",
+				"ENABLE_UART = '1' ",
+				"CMDLINE:append = 'quiet' "
+			]
+		},
+
+		"qemu": {
+
+                        "notes" : [
+                                "A simple image for Qemu Arm."
+                        ],
+
+                        "target" : "core-image-base",
+
+                        "local.conf": [
+                                "MACHINE = 'qemuarm' "
+                        ]
+		}
+
+	}
+}
+
