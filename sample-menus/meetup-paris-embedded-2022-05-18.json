@@ -18,8 +18,8 @@
 
 	"local.conf" : [
 		"INHERIT += 'extrausers'     ",
-		"EXTRA_USERS_PARAMS += 'useradd  -p \\$6\\$EgKhmsjy7i.IVvp7\\$MzmfOPHyMKGkWlRbKy4jwopHy.KcXWI679KAJ8J1m8WwhO165ovCMtir7QOhH4VEBU/qDWyfWmtY2bZMnIpzi1 meetup;'  ",
-		"EXTRA_USERS_PARAMS += 'usermod  -p \\$6\\$sZ28naF0CFeotdlU\\$E46zRZnJNLRF2S9h5/e.T5ecUtOdxGi2.9oU2hI7/ZLhD7OUJWSwG6W8fvyKpA9t/Af3RpP.fIvl89HWukex40  root;'  ",
+		"EXTRA_USERS_PARAMS += 'useradd  -p c4xYEV.En.4Gg meetup;'  ",
+		"EXTRA_USERS_PARAMS += 'usermod  -p VwL97VCAx1Qhs root;'  ",
 		"BB_NUMBER_THREADS = '4'                             ",
 		"PARALLEL_MAKE = '-j 2'                              "
 	],
