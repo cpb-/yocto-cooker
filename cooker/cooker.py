@@ -507,6 +507,7 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'COOKER_LAYER_DIR = "{}"'.format(layer_dir))
         CookerCall.os.file_write(file, 'DL_DIR = "{}"'.format(dl_dir))
         CookerCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
+        CookerCall.os.file_write(file, 'COOKER_BUILD_NAME = "{}"'.format(build.name()))
         for line in build.local_conf():
             CookerCall.os.file_write(file, line)
         CookerCall.os.file_write(file, 'DISTRO ?= "{}"'.format(self.distro.DISTRO_NAME))

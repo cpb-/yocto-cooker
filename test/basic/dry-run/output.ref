@@ -36,6 +36,7 @@ cat > /builds/build-pi2-base/conf/local.conf <<-EOF
 	COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"
 	DL_DIR = "\${TOPDIR}/../../downloads"
 	SSTATE_DIR = "\${TOPDIR}/../../sstate-cache"
+	COOKER_BUILD_NAME = "pi2-base"
 	MACHINE = 'raspberrypi2'
 	ENABLE_UART = '1'
 	INHERIT += 'extrausers'
