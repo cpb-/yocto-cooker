@@ -26,6 +26,7 @@ diff builds/build-first/conf/bblayers.conf $S/one-target-first-bblayers.conf
 textInFile builds/build-first/conf/local.conf 'COOKER_LAYER_DIR = "\${TOPDIR}/../../layers"' 1
 textInFile builds/build-first/conf/local.conf 'DL_DIR = "\${TOPDIR}/../../downloads"' 1
 textInFile builds/build-first/conf/local.conf 'SSTATE_DIR = "\${TOPDIR}/../../sstate-cache"' 1
+textInFile builds/build-first/conf/local.conf 'COOKER_BUILD_NAME = "first"' 1
 
 # Default value for CONF_VERSION is 1
 textInFile builds/build-first/conf/local.conf 'CONF_VERSION \?= "1"' 1
