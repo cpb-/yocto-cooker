@@ -519,7 +519,7 @@ class CookerCommands:
         self.read_bitbake_version()
         halt_verb = "HALT"
         if self.bitbake_major_version < 2:
-        	halt_verb = "ABORT"
+            halt_verb = "ABORT"
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'local.conf'))
 
