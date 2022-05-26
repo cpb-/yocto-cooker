@@ -314,6 +314,8 @@ class PokyDistro:
     LAYER_CONF_NAME = "POKY_BBLAYERS_CONF_VERSION"
     LAYER_CONF_VERSION = "2"
     PACKAGE_FORMAT = "package_rpm"
+    DEFAULT_BITBAKE_MAJOR_VERSION = 2
+    BITBAKE_INIT_FILE = "bitbake/lib/bb/__init__.py"
 
 class AragoDistro:
 
@@ -325,6 +327,8 @@ class AragoDistro:
     LAYER_CONF_NAME = "LCONF_VERSION"
     LAYER_CONF_VERSION = "7"
     PACKAGE_FORMAT = "package_ipk"
+    DEFAULT_BITBAKE_MAJOR_VERSION = 1
+    BITBAKE_INIT_FILE = "sources/bitbake/lib/"
 
 
 class CookerCommands:
@@ -489,6 +493,17 @@ class CookerCommands:
         except:
             return
 
+    def read_bitbake_version(self):
+        try:
+            self.bitbake_major_version = int(self.distro.DEFAULT_BITBAKE_MAJOR_VERSION)
+            file = open(self.config.layer_dir() + self.distro.BASE_DIRECTORY + "/" + self.distro.BITBAKE_INIT_FILE)
+            for line in file:
+                if '__version__' in line:
+                    self.bitbake_major_version = int(line.split('=')[1].strip(' "').split('.')[0])
+                    return
+        except:
+            return
+
     def prepare_build_directory(self, build):
         debug('Preparing directory:', build.dir())
 
@@ -500,6 +515,11 @@ class CookerCommands:
 
         sstate_dir = '${TOPDIR}/' + os.path.relpath(self.config.sstate_dir(), build.dir())
         layer_dir = os.path.join('${TOPDIR}', os.path.relpath(self.config.layer_dir(), build.dir()))
+
+        self.read_bitbake_version()
+        halt_verb = "HALT"
+        if self.bitbake_major_version < 2:
+        	halt_verb = "ABORT"
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'local.conf'))
 
@@ -517,10 +537,10 @@ class CookerCommands:
         CookerCall.os.file_write(file, '\tSTOPTASKS,${DL_DIR},1G,100K \\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,${SSTATE_DIR},1G,100K \\')
         CookerCall.os.file_write(file, '\tSTOPTASKS,/tmp,100M,100K \\')
-        CookerCall.os.file_write(file, '\tABORT,${TMPDIR},100M,1K \\')
-        CookerCall.os.file_write(file, '\tABORT,${DL_DIR},100M,1K \\')
-        CookerCall.os.file_write(file, '\tABORT,${SSTATE_DIR},100M,1K \\')
-        CookerCall.os.file_write(file, '\tABORT,/tmp,10M,1K"')
+        CookerCall.os.file_write(file, '\t' + halt_verb + ',${TMPDIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\t' + halt_verb + ',${DL_DIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\t' + halt_verb + ',${SSTATE_DIR},100M,1K \\')
+        CookerCall.os.file_write(file, '\t' + halt_verb + ',/tmp,10M,1K"')
         CookerCall.os.file_write(file, 'CONF_VERSION ?= "{}"'.format(self.local_conf_version))
         CookerCall.os.file_close(file)
 
