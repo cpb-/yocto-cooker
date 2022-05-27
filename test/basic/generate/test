@@ -1,7 +1,6 @@
 # fail if no init done
 expect_fail cooker generate
 
-
 # empty menu, nothing is generated
 cooker init -f $S/empty-menu.json
 cooker generate
@@ -37,6 +36,24 @@ cat > layers/poky/meta-poky/conf/local.conf.sample <<- EOF
 EOF
 cooker generate
 textInFile builds/build-first/conf/local.conf 'CONF_VERSION \?= "2"' 1
+
+# Default action for ending bitbake is 'HALT'
+mkdir -p layers/poky/bitbake/lib/bb/
+> layers/poky/bitbake/lib/bb/__init__.py
+cooker generate
+textInFile builds/build-first/conf/local.conf 'HALT' 4
+# With Bitbake version 1 the ending action was 'ABORT'
+cat > layers/poky/bitbake/lib/bb/__init__.py <<- EOF2
+__version__ = "1.52.0"
+EOF2
+cooker generate
+textInFile builds/build-first/conf/local.conf 'ABORT' 4
+# Since Bitbake version 2 it is 'HALT'.
+cat > layers/poky/bitbake/lib/bb/__init__.py <<- EOF2
+__version__ = "2.0.0"
+EOF2
+cooker generate
+textInFile builds/build-first/conf/local.conf 'HALT' 4
 
 # regenerate after layers-dir-change
 cooker init -f -l layers_dir $S/menu.json
