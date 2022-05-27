@@ -483,8 +483,8 @@ class CookerCommands:
                 self.prepare_build_directory(build)
 
     def read_local_conf_version(self):
+        self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
         try:
-            self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
             file = open(self.config.layer_dir() + self.distro.BASE_DIRECTORY + "/" + self.distro.TEMPLATE_CONF + "/local.conf.sample")
             for line in file:
                 if line.lstrip().startswith("CONF_VERSION"):
@@ -494,8 +494,8 @@ class CookerCommands:
             return
 
     def read_bitbake_version(self):
+        self.bitbake_major_version = int(self.distro.DEFAULT_BITBAKE_MAJOR_VERSION)
         try:
-            self.bitbake_major_version = int(self.distro.DEFAULT_BITBAKE_MAJOR_VERSION)
             file = open(self.config.layer_dir() + self.distro.BASE_DIRECTORY + "/" + self.distro.BITBAKE_INIT_FILE)
             for line in file:
                 if '__version__' in line:
