@@ -327,8 +327,8 @@ class AragoDistro:
     LAYER_CONF_NAME = "LCONF_VERSION"
     LAYER_CONF_VERSION = "7"
     PACKAGE_FORMAT = "package_ipk"
-    DEFAULT_BITBAKE_MAJOR_VERSION = 1
-    BITBAKE_INIT_FILE = "sources/bitbake/lib/"
+    DEFAULT_BITBAKE_MAJOR_VERSION = 2
+    BITBAKE_INIT_FILE = "sources/bitbake/lib/__init__.py"
 
 
 class CookerCommands:
