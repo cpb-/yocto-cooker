@@ -102,17 +102,19 @@ class DryRunOsCalls:
 
 class Config:
     DEFAULT_CONFIG_FILENAME = '.cookerconfig'
+    DEFAULT_CONFIG = {
+        'menu': '',
+        'layer-dir': 'layers',
+        'build-dir': 'builds',
+        'dl-dir': 'downloads',
+        'sstate-dir': 'sstate-cache',
+        'cooker-config-version': 1
+    }
+    CURRENT_CONFIG_VERSION = 1
 
     def __init__(self):
         debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
 
-        self.cfg = {
-            'menu': '',
-            'layer-dir': 'layers',
-            'build-dir': 'builds',
-            'dl-dir': 'downloads',
-            'sstate-dir': 'sstate-cache',
-        }
         self.filename = os.path.join(os.getcwd(), self.DEFAULT_CONFIG_FILENAME)
 
         path = os.getcwd().split(os.sep)
@@ -126,18 +128,47 @@ class Config:
 
                 self.filename = filename
 
+                found = False
                 try:
                     with open(self.filename) as json_file:
                         self.cfg = json.load(json_file)
-                    return
+
+                    found = True
+
                 except Exception as e:
                     fatal_error('configuration load error', e)
+
+                if found:
+                    self.check_and_migrate_config()
+                    return
 
                 break
 
             path.pop()  # cd ..
 
+        self.cfg = self.DEFAULT_CONFIG.copy()
+
         debug('No config-file found. Will be using', self.filename)
+
+    def check_and_migrate_config(self):
+        config_version = self.cfg.get('cooker-config-version', 0)
+        if config_version == self.CURRENT_CONFIG_VERSION:
+            return
+
+        debug(f'migrating cookerconfig from {config_version} to {self.CURRENT_CONFIG_VERSION}')
+
+        ## here we add changes incrementally from one version to another (do not elif)
+
+        # from 0 to 1 we added the sstate-dir
+        if config_version == 0:
+            if 'sstate-dir' not in self.cfg:  # intermediate version where sstate-dir was added
+                self.cfg['sstate-dir'] = self.DEFAULT_CONFIG['sstate-dir']
+            config_version = 1
+
+        # cooker-config-version is updated
+        self.cfg['cooker-config-version'] = config_version
+
+        self.save()
 
     def project_root(self):
         return os.path.dirname(self.filename)

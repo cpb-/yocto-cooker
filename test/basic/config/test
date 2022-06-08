@@ -1,0 +1,15 @@
+cp -f $S/cookerconfig-version-0 .cookerconfig
+cp -f $S/menu.json menu.json
+
+textInFile .cookerconfig 'sstate-dir' 0
+cooker generate
+textInFile .cookerconfig 'sstate-dir' 1
+textInFile .cookerconfig '"cooker-config-version": 1' 1
+
+cp -f $S/cookerconfig-version-1 .cookerconfig
+
+textInFile .cookerconfig '"sstate-dir": "my-sstate-dir"' 1
+textInFile .cookerconfig '"cooker-config-version": 1' 0
+cooker generate
+textInFile .cookerconfig '"sstate-dir": "my-sstate-dir"' 1
+textInFile .cookerconfig '"cooker-config-version": 1' 1

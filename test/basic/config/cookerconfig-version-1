@@ -1,0 +1,7 @@
+{
+    "menu": "menu.json",
+    "layer-dir": "layers",
+    "build-dir": "builds",
+    "sstate-dir": "my-sstate-dir",
+    "dl-dir": "downloads"
+}
