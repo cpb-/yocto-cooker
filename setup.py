@@ -36,7 +36,7 @@ setup(
     },
 
     install_requires=[
-        "jsonschema == 3.2.0",
+        "jsonschema >= 3.2.0",
         "urllib3 >= 1.22"
     ],
 
