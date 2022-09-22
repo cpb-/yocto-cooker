@@ -13,6 +13,8 @@ add_custom_target(GenerateSourceRepoDir
 add_custom_target(GenerateSourceRepo
     ALL
     COMMAND ${GIT_EXECUTABLE} init
+    COMMAND ${GIT_EXECUTABLE} config --local user.name 'test'
+    COMMAND ${GIT_EXECUTABLE} config --local user.email 'test@exemple.com'
     COMMAND touch file1.txt
     COMMAND ${GIT_EXECUTABLE} add file1.txt
     COMMAND ${GIT_EXECUTABLE} commit -m 'initial commit'
