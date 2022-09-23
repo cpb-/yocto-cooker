@@ -140,6 +140,7 @@ class Config:
 
                 if found:
                     self.check_and_migrate_config()
+                    self.path = "/".join(path)
                     return
 
                 break
@@ -147,6 +148,7 @@ class Config:
             path.pop()  # cd ..
 
         self.cfg = self.DEFAULT_CONFIG.copy()
+        self.path = ""
 
         debug('No config-file found. Will be using', self.filename)
 
@@ -174,7 +176,10 @@ class Config:
         return os.path.dirname(self.filename)
 
     def set_menu(self, menu_file):
-        self.cfg['menu'] = os.path.realpath(menu_file)
+        if menu_file.startswith('/'):
+            self.cfg['menu'] = os.path.realpath(menu_file)
+        else:
+            self.cfg['menu'] = os.path.relpath(menu_file, self.path)
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -202,7 +207,11 @@ class Config:
         return os.path.join(self.project_root(), self.cfg['sstate-dir'], name)
 
     def menu(self):
-        return self.cfg['menu']
+        menu_path = self.cfg['menu']
+        if menu_path.startswith('/'):
+            return menu_path
+        else:
+            return self.path + "/" + menu_path
 
     def save(self):
         debug('Saving configuration file')

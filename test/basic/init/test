@@ -38,12 +38,21 @@ fileExists .cookerconfig
 
 # The `.cookerconfig` file is correct.
 linesInFile .cookerconfig 7
-textInFile .cookerconfig '/menu.json",' 1
+textInFile .cookerconfig $S'/menu.json",' 1
 textInFile .cookerconfig '"layer-dir": "layers",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
 textInFile .cookerconfig '"sstate-dir": "sstate-cache"' 1
 textInFile .cookerconfig '"cooker-config-version": 1' 1
+rm .cookerconfig
+
+# Initializing with a relative path succeeds
+rel_path="$(realpath --relative-to=. $S/menu.json)"
+cooker init $rel_path
+fileExists .cookerconfig
+
+# The menu path in the `.cookerconfig` file is correct.
+textInFile .cookerconfig $rel_path'",' 1
 
 # `cooker init` fails if `.cookerconfig` file already exist.
 expect_fail cooker init $S/menu.json
