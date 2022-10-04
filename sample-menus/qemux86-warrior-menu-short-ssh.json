@@ -28,9 +28,7 @@
 			],
 
 			"local.conf": [
-				"MACHINE                    = 'qemux86'            ",
-				"INHERIT                   += 'extrausers'              ",
-				"EXTRA_USERS_PARAMS_append = 'usermod -P root  root;' "
+				"MACHINE                    = 'qemux86'            "
 			]
 		}
 	}

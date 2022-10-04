@@ -21,10 +21,7 @@
 		"beaglebone-console": {
 
 			"notes": [
-				" The default `core-image-base` image with some minor   ",
-				" tweaks:                                               ",
-				"  - the root password is 'ROOT' (change it below),     ",
-				"  - a normal 'pi' user (password 'PI') is present.     ",
+				" The default `core-image-base` image.                  ",
 				"                                                       ",
 				" The image to write to your SD-card is:                ",
 				" builds/build-beaglebone-console/tmp/deploy/images/beaglebone-yocto/core-image-base-beaglebone-yocto.wic"
@@ -37,10 +34,7 @@
 
 			"local.conf": [
 				"MACHINE                    = 'beaglebone-yocto'        ",
-				"ENABLE_UART                = '1'                       ",
-				"INHERIT                   += 'extrausers'              ",
-				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT root;'   ",
-				"EXTRA_USERS_PARAMS_append  = 'useradd -P BB   bb;'     "
+				"ENABLE_UART                = '1'                       "
 			]
 		}
 	}

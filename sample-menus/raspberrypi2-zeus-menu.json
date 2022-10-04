@@ -34,9 +34,7 @@
 
 			"local.conf": [
 				"MACHINE = 'raspberrypi2'",
-				"ENABLE_UART = '1'",
-				"INHERIT += 'extrausers'",
-				"EXTRA_USERS_PARAMS_append = 'usermod -P root root;'"
+				"ENABLE_UART = '1'"
 			]
 		}
 	}

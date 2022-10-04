@@ -42,9 +42,6 @@
 			"local.conf": [
 				"MACHINE                    = 'raspberrypi4'            ",
 				"ENABLE_UART                = '1'                       ",
-				"INHERIT                   += 'extrausers'              ",
-				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT  root;'  ",
-				"EXTRA_USERS_PARAMS_append  = 'useradd -P PI    pi;'    ",
 				"EXTRA_IMAGE_FEATURES      += 'read-only-rootfs'        "
 			]
 		},
@@ -69,9 +66,6 @@
 			"local.conf": [
 				"MACHINE                    = 'raspberrypi4'           ",
 				"ENABLE_UART                = '1'                      ",
-				"INHERIT                   += 'extrausers'             ",
-				"EXTRA_USERS_PARAMS_append  = 'usermod -P ROOT  root;' ",
-				"EXTRA_USERS_PARAMS_append  = 'useradd -P PI    pi;'   ",
 				"EXTRA_IMAGE_FEATURES      += 'read-only-rootfs'       "
 			]
 		}
