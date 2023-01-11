@@ -349,7 +349,7 @@ class PokyDistro:
     DISTRO_NAME = "poky"
     BASE_DIRECTORY = "poky"
     BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = "meta-poky/conf"
+    TEMPLATE_CONF = ("meta-poky/conf", "meta-poky/conf/templates/default")
     DEFAULT_CONF_VERSION = "1"
     LAYER_CONF_NAME = "POKY_BBLAYERS_CONF_VERSION"
     LAYER_CONF_VERSION = "2"
@@ -362,7 +362,7 @@ class AragoDistro:
     DISTRO_NAME = "arago"
     BASE_DIRECTORY = "openembedded-core"
     BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = "meta/conf"
+    TEMPLATE_CONF = ("meta/conf",)
     DEFAULT_CONF_VERSION = "1"
     LAYER_CONF_NAME = "LCONF_VERSION"
     LAYER_CONF_VERSION = "7"
@@ -522,10 +522,47 @@ class CookerCommands:
             if build.buildable():
                 self.prepare_build_directory(build)
 
+    def generate_distro_base_dir_path(self):
+        """
+        This method generates the full path to the distro base directory
+        """
+        return os.path.join(self.config.layer_dir(), self.distro.BASE_DIRECTORY)
+
+    def get_template_conf_path(self):
+        """
+        This method returns the relative path to the directory containing the local.conf.sample file
+        """
+        for template_conf in self.distro.TEMPLATE_CONF:
+            full_path = os.path.join(
+                self.generate_distro_base_dir_path(),
+                template_conf,
+                "local.conf.sample"
+            )
+            if os.path.exists(full_path):
+                return template_conf
+        return
+
+    def get_template_conf_full_path(self):
+        """
+        This method returns the full path to the directory containing the local.conf.sample file
+        """
+        template_conf_path = self.get_template_conf_path()
+        if template_conf_path is None:
+            # Raises an Error when we don't find the local.conf.sample in template conf dir
+            raise FileNotFoundError(f"Can't find local.conf.sample file in any of the following folders: {' '.join(self.distro.TEMPLATE_CONF)}")
+        else:
+            full_path = os.path.join(
+                self.generate_distro_base_dir_path(),
+                template_conf_path,
+                "local.conf.sample"
+            )
+            return full_path
+        return
+
     def read_local_conf_version(self):
         self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
         try:
-            file = open(self.config.layer_dir() + self.distro.BASE_DIRECTORY + "/" + self.distro.TEMPLATE_CONF + "/local.conf.sample")
+            file = open(self.get_template_conf_full_path())
             for line in file:
                 if line.lstrip().startswith("CONF_VERSION"):
                     self.local_conf_version = re.search(r'\d+', line).group(0)
@@ -597,7 +634,7 @@ class CookerCommands:
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, 'templateconf.cfg'))
-        CookerCall.os.file_write(file, '{}\n'.format(self.distro.TEMPLATE_CONF))
+        CookerCall.os.file_write(file, '{}\n'.format(self.get_template_conf_path()))
         CookerCall.os.file_close(file)
 
     def show(self, builds, layers, conf, tree, build_arg, sources):
