@@ -81,3 +81,41 @@ dirsExist . builds 1
 dirsExist builds build-first-inherited 1
 # .template must not be generated
 dirsExist builds build-.template 0
+
+##################################
+# Test versions < langdale (4.1) #
+##################################
+# Erase layers directory if exists
+rm -rf layers
+# Delete cooker configuration
+rm -f .cookerconfig
+# Simulate poky local.conf.sample file for versions < langdale
+mkdir -p layers/poky/meta-poky/conf
+touch layers/poky/meta-poky/conf/local.conf.sample
+
+cooker init -f $S/menu.json
+cooker generate
+
+# Test that inside templateconf.cfg the path should be "meta-poky/conf"
+# and not "None" when poky version is < langdale
+textInFile builds/build-first/conf/templateconf.cfg 'None' 0
+textInFile builds/build-first/conf/templateconf.cfg 'meta-poky/conf' 1
+
+###################################
+# Test versions >= langdale (4.1) #
+###################################
+# Erase layers directory if exists
+rm -rf layers
+# Delete cooker configuration
+rm -f .cookerconfig
+# Simulate poky local.conf.sample file for versions >= langdale
+mkdir -p layers/poky/meta-poky/conf/templates/default
+touch layers/poky/meta-poky/conf/templates/default/local.conf.sample
+
+cooker init -f $S/menu.json
+cooker generate
+
+# Test that inside templateconf.cfg the path should be "meta-poky/conf/templates/default"
+# and not "None" when poky version is >= langdale
+textInFile builds/build-first/conf/templateconf.cfg 'None' 0
+textInFile builds/build-first/conf/templateconf.cfg 'meta-poky/conf/templates/default' 1
