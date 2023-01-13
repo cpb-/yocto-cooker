@@ -71,7 +71,7 @@ cat > /builds/build-pi2-base/conf/bblayers.conf <<-EOF
 
 EOF
 cat > /builds/build-pi2-base/conf/templateconf.cfg <<-EOF
-	meta-poky/conf
+	None
 
 EOF
 # Building pi2-base (core-image-base)
