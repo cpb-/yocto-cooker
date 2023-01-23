@@ -387,6 +387,9 @@ class CookerCommands:
                 self.distro = distros[name.lower()]
             except:
                 fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
+            
+            # Update distro if custom distro is defined in menu
+            self.update_override_distro()
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -766,6 +769,14 @@ class CookerCommands:
         if not CookerCall.os.replace_process(shell, [shell, '-c', ". {} {}; {}".format(init_script, build_dir, shell)]):
             fatal_error('could not run interactive shell for {} with {}', build_names[0], shell)
 
+    def update_override_distro(self):
+        """ update distro values from menu file if exists """
+        override_distro = self.menu.get("override_distro", {})
+        if override_distro:
+            self.distro.BASE_DIRECTORY = override_distro.get("base_directory", self.distro.BASE_DIRECTORY)
+            self.distro.BUILD_SCRIPT = override_distro.get("build_script", self.distro.BUILD_SCRIPT)
+            # Template conf must be a tuple
+            self.distro.TEMPLATE_CONF = (override_distro.get("template_conf", self.distro.TEMPLATE_CONF),)
 
 class CookerCall:
     """
