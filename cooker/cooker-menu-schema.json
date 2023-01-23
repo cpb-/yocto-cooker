@@ -141,6 +141,25 @@
 
         "notes": {
             "$ref": "#/definitions/notes"
+        },
+
+        "override_distro": {
+            "type": "object",
+            "properties": {
+                "base_directory": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "build_script": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "template_conf": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            },
+            "additionalProperties": false
         }
     },
     "required": ["sources", "builds"],
