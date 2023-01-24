@@ -1,0 +1,21 @@
+{
+    "sources": [],
+    "layers": [
+        "generic/layer1",
+        "generic/layer2"
+    ],
+    "override_distro": {
+        "base_directory": "poky",
+        "build_script": "oe-init-build-env",
+        "template_conf": "../meta-yocto/meta-poky/conf/templates/default"
+    },
+    "builds": {
+        "override": {
+            "target": "bitbake-target",
+            "layers": [
+                "override/layer1",
+                "override/layer2"
+            ]
+        }
+    }
+}
