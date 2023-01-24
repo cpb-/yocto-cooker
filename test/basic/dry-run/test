@@ -27,6 +27,33 @@ sed -i "s|$(pwd)||g" output
 
 diff $S/output.ref output
 
+########################
+# Test override distro #
+########################
+# Erase layers directory if exists
+rm -rf layers
+
+# Simulate layers directory for override distro
+mkdir -p layers/poky/
+mkdir -p layers/meta-yocto/meta-poky/conf/templates/default
+touch layers/meta-yocto/meta-poky/conf/templates/default/local.conf.sample
+
+# Call cooker cook with a menu that contains an override distro
+cooker --dry-run cook $S/override-menu.json > output.txt
+
+# Remove personal path from output
+sed -i "s|$(pwd)||g" output.txt
+
+# Test if inside the output.txt has the correct path for build_script
+# build_script should be base_directory + "/" + build_script
+textInFile output.txt 'poky/oe-init-build-env' 1
+
+# Test if inside the output.txt has the correct path for template_conf
+textInFile output.txt '../meta-yocto/meta-poky/conf/templates/default' 1
+
+# Clean up
+rm -f output.txt
+
 exit 0
 
 
