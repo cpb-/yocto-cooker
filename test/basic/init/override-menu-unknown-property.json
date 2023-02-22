@@ -1,0 +1,11 @@
+{
+    "sources": [],
+    "layers": [],
+    "override_distro": {
+        "base_directory": "poky",
+        "build_script": "oe-init-build-env",
+        "template_conf": "../meta-yocto/meta-poky/conf/templates/default",
+        "unknown_property": "unknown-value"
+    },
+    "builds": {}
+}

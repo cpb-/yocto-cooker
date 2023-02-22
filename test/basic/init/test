@@ -76,3 +76,13 @@ textInFile .cookerconfig '"layer-dir": "layers_dir",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
 textInFile .cookerconfig '"sstate-dir": "sstate_dir"' 1
+
+########################
+# Test override distro #
+########################
+
+# Test should fail when an invalid property is used in override_distro
+expect_fail cooker init -f $S/override-menu-invalid-property.json
+
+# Test should fail when an unkown property is used in override_distro
+expect_fail cooker init -f $S/override-menu-unknown-property.json
