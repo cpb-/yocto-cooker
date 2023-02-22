@@ -1,0 +1,10 @@
+{
+    "sources": [],
+    "layers": [],
+    "override_distro": {
+        "base_directory": "poky",
+        "build_script": {},
+        "template_conf": "../meta-yocto/meta-poky/conf/templates/default"
+    },
+    "builds": {}
+}
