@@ -445,16 +445,16 @@ class CookerCommands:
 
         local_dir, remote_dir = self.local_dir_from_source(source)
 
-        if not os.path.isdir(local_dir):
-            self.update_directory_initial(method, remote_dir, local_dir)
-
         branch = source.setdefault('branch', '')
         rev = source.setdefault('rev', '')
+
+        if not os.path.isdir(local_dir):
+            self.update_directory_initial(method, local_dir, remote_dir, branch, rev)
 
         if CookerCall.os.directory_exists(local_dir):
             self.update_directory(method, local_dir, remote_dir != '', branch, rev)
 
-    def update_directory_initial(self, method, remote_dir, local_dir):
+    def update_directory_initial(self, method, local_dir, remote_dir, branch, rev):
         info('Downloading source from ', remote_dir)
 
         if CookerCall.VERBOSE:
@@ -463,8 +463,15 @@ class CookerCommands:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
+            refs = CookerCall.os.subprocess_run(["git", "ls-remote", remote_dir ], None).stdout.decode("utf-8")
 
-            complete = CookerCall.os.subprocess_run(["git", "clone", "--recurse-submodules", remote_dir, local_dir], None)
+            command = ["git", "clone", "--recurse-submodules", remote_dir, local_dir]
+            if re.search("refs/tags/" + rev + "$", refs, re.MULTILINE):
+                command.extend(["--branch", rev])
+            elif branch != '':
+                command.extend(["--branch", branch])
+
+            complete = CookerCall.os.subprocess_run(command, None)
             if complete.returncode != 0:
                 fatal_error('Unable to clone {}: {}'.format(remote_dir, complete.stderr.decode('ascii')))
 
