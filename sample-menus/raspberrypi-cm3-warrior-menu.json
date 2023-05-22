@@ -60,12 +60,7 @@
 				"MACHINE          = 'raspberrypi-cm3'  ",
 
 				"ENABLE_UART      = '1'                ",
-				"RPI_USE_U_BOOT   = '1'                ",
-
-				"INHERIT += 'extrausers'   ",
-				"EXTRA_USERS_PARAMS_append = 'usermod -P root  root;' ",
-				"EXTRA_USERS_PARAMS_append = 'useradd -P pi    pi;'  "
-
+				"RPI_USE_U_BOOT   = '1'                "
 			]
 		}
 	}

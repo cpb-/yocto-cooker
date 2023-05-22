@@ -18,6 +18,11 @@
 	],
 
 	"local.conf" : [
+		"INHERIT += 'extrausers'     ",
+		"# `risc` password: `v` ",
+		"EXTRA_USERS_PARAMS_append  = \"useradd -p \\$5\\$FZf5SWAWvASrbUWA\\$s.RUVnPXk5WE.ousaVAWSGI/wCnlsyHyrWmgxoEHUu4  risc;\"     ",
+		"# `root` password: `linux` ",
+		"EXTRA_USERS_PARAMS_append  = \"usermod -p \\$5\\$oWODdN2qVYVBB5Nl\\$NrH9rY/8gxTkbdEbNzBK9Iu5KLlSppkOhooF8sP2mo/  root;\"     "
 	],
 
 	"builds" : {

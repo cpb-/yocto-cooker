@@ -17,9 +17,6 @@
 	],
 
 	"local.conf" : [
-		"INHERIT += 'extrausers'     ",
-		"EXTRA_USERS_PARAMS += 'useradd  -P today  lee2;'  ",
-		"EXTRA_USERS_PARAMS += 'usermod  -P linux  root;'  "
 	],
 
 	"builds" : {

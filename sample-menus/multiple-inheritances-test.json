@@ -23,10 +23,7 @@
 
 			"local.conf": [
 				"ENABLE_UART               = '1'                          ",
-				"EXTRA_IMAGE_FEATURES     += 'read-only-rootfs'           ",
-				"INHERIT                  += 'extrausers'                 ",
-				"EXTRA_USERS_PARAMS_append = 'useradd -P rpi  rpi;'       ",
-				"EXTRA_USERS_PARAMS_append = 'usermod -P root root;'      "
+				"EXTRA_IMAGE_FEATURES     += 'read-only-rootfs'           ".
 			]
 		},
 

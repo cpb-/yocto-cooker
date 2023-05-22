@@ -34,10 +34,7 @@
 
 			"local.conf": [
 				"MACHINE = 'raspberrypi2'",
-				"ENABLE_UART = '1'",
-				"INHERIT += 'extrausers'",
-				"IMAGE_FSTYPES = 'tar.bz2 ext3 wic.bz2 wic.bmap rpi-sdimg'",
-				"EXTRA_USERS_PARAMS_append = 'usermod -P root root;'"
+				"ENABLE_UART = '1'"
 			]
 		}
 	}
