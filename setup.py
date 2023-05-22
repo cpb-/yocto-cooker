@@ -37,7 +37,8 @@ setup(
 
     install_requires=[
         "jsonschema >= 3.2.0",
-        "urllib3 >= 1.22"
+        "urllib3 >= 1.22",
+        "pyjson5 >= 1.6.2"
     ],
 
     project_urls={

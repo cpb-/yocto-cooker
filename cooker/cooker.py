@@ -2,7 +2,7 @@
 """ cooker.py: meta build tool for Yocto Project based Linux embedded systems."""
 
 import argparse
-import json
+import pyjson5
 import os
 import re
 import sys
@@ -131,7 +131,7 @@ class Config:
                 found = False
                 try:
                     with open(self.filename) as json_file:
-                        self.cfg = json.load(json_file)
+                        self.cfg = pyjson5.load(json_file)
 
                     found = True
 
@@ -216,7 +216,7 @@ class Config:
     def save(self):
         debug('Saving configuration file')
         with open(self.filename, 'w') as json_file:
-            json.dump(self.cfg, json_file, indent=4)
+            pyjson5.dump(self.cfg, json_file, indent=4)
 
     def empty(self):
         return not self.cfg['menu']
@@ -914,11 +914,11 @@ class CookerCall:
         self.menu = None
         if menu_file:
             try:
-                self.menu = json.load(menu_file)
+                self.menu = pyjson5.load(menu_file)
             except Exception as e:
                 fatal_error('menu load error:', e)
 
-            schema = json.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+            schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
             try:
                 jsonschema.validate(self.menu, schema)
             except Exception as e:
