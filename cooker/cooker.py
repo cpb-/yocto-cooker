@@ -463,7 +463,11 @@ class CookerCommands:
             redirect = ' >/dev/null 2>&1'
 
         if method == 'git':
-            refs = CookerCall.os.subprocess_run(["git", "ls-remote", remote_dir ], None).stdout.decode("utf-8")
+            complete = CookerCall.os.subprocess_run(["git", "ls-remote", remote_dir ], None)
+            if complete.stdout is not None:
+                refs = complete.stdout.decode("utf-8")
+            else:
+                refs=""
 
             command = ["git", "clone", "--recurse-submodules", remote_dir, local_dir]
             if re.search("refs/tags/" + rev + "$", refs, re.MULTILINE):
