@@ -1,6 +1,7 @@
 # Update layers in project directory
 # Downloading source from  git://git.yoctoproject.org/poky
-git clone --recurse-submodules git://git.yoctoproject.org/poky /layers/poky
+git ls-remote git://git.yoctoproject.org/poky
+git clone --recurse-submodules git://git.yoctoproject.org/poky /layers/poky --branch zeus
 # Updating source /layers/poky... 
 cd /layers/poky
 git fetch
@@ -9,7 +10,8 @@ git checkout 5531ffc5668c2f24b9018a7b7174b5c77315a1cf
 cd /layers/poky
 git submodule update --recursive --init
 # Downloading source from  git://git.openembedded.org/meta-openembedded
-git clone --recurse-submodules git://git.openembedded.org/meta-openembedded /layers/meta-openembedded
+git ls-remote git://git.openembedded.org/meta-openembedded
+git clone --recurse-submodules git://git.openembedded.org/meta-openembedded /layers/meta-openembedded --branch zeus
 # Updating source /layers/meta-openembedded... 
 cd /layers/meta-openembedded
 git fetch
@@ -18,7 +20,8 @@ git checkout 9e60d30669a2ad0598e9abf0cd15ee06b523986b
 cd /layers/meta-openembedded
 git submodule update --recursive --init
 # Downloading source from  git://git.yoctoproject.org/meta-raspberrypi
-git clone --recurse-submodules git://git.yoctoproject.org/meta-raspberrypi /layers/meta-raspberrypi
+git ls-remote git://git.yoctoproject.org/meta-raspberrypi
+git clone --recurse-submodules git://git.yoctoproject.org/meta-raspberrypi /layers/meta-raspberrypi --branch zeus
 # Updating source /layers/meta-raspberrypi... 
 cd /layers/meta-raspberrypi
 git fetch
