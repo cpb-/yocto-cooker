@@ -3,6 +3,7 @@
 
 import argparse
 import pyjson5
+import json
 import os
 import re
 import sys
@@ -131,7 +132,7 @@ class Config:
                 found = False
                 try:
                     with open(self.filename) as json_file:
-                        self.cfg = pyjson5.load(json_file)
+                        self.cfg = json.load(json_file)
 
                     found = True
 
@@ -216,7 +217,7 @@ class Config:
     def save(self):
         debug('Saving configuration file')
         with open(self.filename, 'w') as json_file:
-            pyjson5.dump(self.cfg, json_file, indent=4)
+            json.dump(self.cfg, json_file, indent=4)
 
     def empty(self):
         return not self.cfg['menu']
