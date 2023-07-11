@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
 import subprocess
+import shlex
 
 from typing import List
 
@@ -771,15 +772,22 @@ class CookerCommands:
         if complete.returncode != 0:
             fatal_error('Execution of {} failed.'.format(command_line))
 
-    def shell(self, build_names: List[str]):
+    def shell(self, build_names: List[str], cmd: List[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
         init_script = self.config.layer_dir(self.distro.BASE_DIRECTORY + "/" + self.distro.BUILD_SCRIPT)
         shell = os.environ.get('SHELL', '/bin/bash')
 
-        debug('running interactive, poky-initialized shell {} {} {}', build_dir, init_script, shell)
+        if len(cmd) >= 1:
+            str_cmd = shlex.join(cmd)
+            debug('running "{}" in poky-initialized shell {} {} {}'.format(str_cmd, build_dir, init_script, shell))
+            full_command_line = 'source {} {} > /dev/null || exit 1; {}'.format(init_script, build_dir, str_cmd)
+            if not CookerCall.os.subprocess_run([shell, "-c", full_command_line], None, capture_output=False):
+                fatal_error('Execution of {} failed.'.format(full_command_line))
+        else:
+            debug('running interactive, poky-initialized shell {} {} {}'.format(build_dir, init_script, shell))
 
-        if not CookerCall.os.replace_process(shell, [shell, '-c', ". {} {}; {}".format(init_script, build_dir, shell)]):
-            fatal_error('could not run interactive shell for {} with {}', build_names[0], shell)
+            if not CookerCall.os.replace_process(shell, [shell, '-c', ". {} {}; {}".format(init_script, build_dir, shell)]):
+                fatal_error('could not run interactive shell for {} with {}'.format(build_names[0], shell))
 
     def update_override_distro(self):
         """ update distro values from menu file if exists """
@@ -872,6 +880,9 @@ class CookerCall:
         # `shell` command
         shell_parser = subparsers.add_parser('shell', help='run an interactive shell ($SHELL) for the given build')
         shell_parser.add_argument('build', help='build-configuration to use', nargs=1)
+        shell_parser.add_argument('cmd', help='execute a command in a poky-initialized shell.' +
+            ' Commands with arguments starting with "-" needs to be after "--".' +
+            ' Example: cooker shell <cooker-build> -- bitbake -c cve_check <package-name>', nargs='*')
         shell_parser.set_defaults(func=self.shell)
 
         # `clean` command
@@ -1010,7 +1021,7 @@ class CookerCall:
         if self.menu is None:
             fatal_error('shell needs a menu')
 
-        self.commands.shell(self.clargs.build)
+        self.commands.shell(self.clargs.build, self.clargs.cmd)
 
     def clean(self):
         if self.menu is None:
