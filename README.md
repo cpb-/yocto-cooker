@@ -105,6 +105,9 @@ files).
   with all the environment variables set. Some typical uses could be to
   run `bitbake -c menuconfig virtual/kernel` or `runqemu qemuarm` for instance.
   Simply `exit` the shell to return back to your previous working directory.
+  Alternatively, you can run `cooker shell <build-config> -- <command>` to run
+  the command in the environment.
+  For example : `cooker shell <build-config> -- runqemu nographics`.
 
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
