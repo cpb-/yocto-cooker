@@ -6,9 +6,10 @@ cooker init $S/menu-01.json
 rm -f output.txt
 cooker --dry-run shell pi2-base >output.txt
 cooker --dry-run shell qemu >>output.txt
+cooker --dry-run shell qemu echo test >>output.txt
+cooker --dry-run shell qemu echo "test with spaces and quotes \"" >>output.txt
 
 sed -i "s|$(pwd)||g" output.txt
-
 diff $S/output.ref output.txt
 
 exit 0
