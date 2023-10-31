@@ -15,7 +15,7 @@ import shlex
 
 from typing import List
 
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 
 def debug(*args):
@@ -389,7 +389,7 @@ class CookerCommands:
                 self.distro = distros[name.lower()]
             except:
                 fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
-            
+
             # Update distro if custom distro is defined in menu
             self.update_override_distro()
 
