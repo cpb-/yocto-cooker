@@ -1,0 +1,9 @@
+{
+    "menu": "menu.json",
+    "layer-dir": "layers",
+    "build-dir": "builds",
+    "sstate-dir": "my-sstate-dir",
+    "dl-dir": "downloads",
+    "additional_menus": [],
+    "cooker-config-version": 2
+}
