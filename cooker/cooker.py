@@ -529,6 +529,29 @@ class CookerCommands:
             if complete.returncode != 0:
                 fatal_error('Unable to update submodules in {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
 
+    def diff(self):
+        for source in self.menu['sources']:
+            local_dir, remote = self.local_dir_from_source(source)
+            source_name = os.path.basename(local_dir)
+            debug('check the diff of the source {}'.format(source_name))
+
+            if 'rev' not in source:
+                debug('no revision field in the menu file for source {}'.format(source_name))
+                continue
+
+            menu_rev = source['rev']
+
+            complete = CookerCall.os.subprocess_run(["git", "describe", "--abbrev=7", "--tags", "--always", "--dirty"], local_dir)
+            if complete.returncode != 0:
+                warn('unable to get the current revision of the local source {}'.format(local_dir))
+                debug(complete.stderr.decode('ascii'))
+                continue
+
+            local_rev = complete.stdout.strip().decode('ascii')
+            debug('menu revision: {}, local revision: {}'.format(menu_rev, local_rev))
+            if (menu_rev != local_rev):
+                print('{}: {} .. {}'.format(source_name, menu_rev, local_rev))
+
     def generate(self):
         info('Generating dirs for all build-configurations')
 
@@ -847,6 +870,10 @@ class CookerCall:
         update_parser = subparsers.add_parser('update', help='update source layers')
         update_parser.set_defaults(func=self.update)
 
+        # `diff` command
+        diff_parser = subparsers.add_parser('diff', help='show current revision changes of all sources')
+        diff_parser.set_defaults(func=self.diff)
+
         # `generate` command
         generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
         generate_parser.set_defaults(func=self.generate)
@@ -987,6 +1014,12 @@ class CookerCall:
             fatal_error('update needs a menu')
 
         self.commands.update()
+
+    def diff(self):
+        if self.menu is None:
+            fatal_error('diff needs a menu')
+
+        self.commands.diff()
 
     def cook(self):
         self.commands.init(self.clargs.menu[0].name)
