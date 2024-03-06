@@ -552,6 +552,109 @@ class CookerCommands:
             if (menu_rev != local_rev):
                 print('{}: {} .. {}'.format(source_name, menu_rev, local_rev))
 
+    def generate_build_config_from_menu(self, menu, build_name):
+        """
+        Generates the BuildConfiguration classes from the given menu version.
+        Resolve the parents and returns the BuildConfiguration class of the build.
+
+        Backup and restore the ALL BuildConfiguration class variable to avoid
+        overwriting the existing content.
+        """
+        backup = BuildConfiguration.ALL
+        BuildConfiguration.ALL = {}
+
+        BuildConfiguration('root',
+                           self.config,
+                           menu.setdefault('layers', []),
+                           menu.setdefault('local.conf', []),
+                           None,
+                           None)
+
+        for name, build in menu['builds'].items():
+            BuildConfiguration(name,
+                               self.config,
+                               build.setdefault('layers', []),
+                               build.setdefault('local.conf', []),
+                               build.setdefault('target', None),
+                               build.setdefault('inherit', ['root']))
+
+        resolve_parents()
+
+        build_config = BuildConfiguration.ALL[build_name]
+
+        BuildConfiguration.ALL = backup
+
+        return build_config
+
+    def get_sources_from_build_layers(self, menu, layers):
+        """
+        Returns a simplistic key/value entry ('source-name: revision') of the
+        sources from the layers used by the build.
+        """
+        layers_dir = list(dict.fromkeys(list(map(lambda p: p.split('/')[0], layers))))
+        return {os.path.basename(self.local_dir_from_source(s)[0]): s['rev']
+                for s in menu['sources']
+                if os.path.basename(self.local_dir_from_source(s)[0]) in layers_dir}
+
+    def load_and_validate_menu(self, menu_file, schema):
+        with open(menu_file, "r") as file:
+            try:
+                menu = pyjson5.load(file)
+            except Exception as e:
+                fatal_error('menu load error:', e)
+
+            try:
+                jsonschema.validate(menu, schema)
+            except Exception as e:
+                fatal_error('menu file {} validation failed:'.format(menu_file), e)
+
+        debug('menu file {} validation passed'.format(menu_file))
+        return menu
+
+    def log(self, build_name, menu_from_file, menu_to_file, history, log_format):
+        """
+        Generates a log of the build sources revision changes between two menu file version.
+        """
+        schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+        menu_from = self.load_and_validate_menu(menu_from_file, schema)
+        menu_to = self.menu
+
+        # Generates a BuildConfiguration class for the menu since the build layers
+        # can change between menu version. If 'menu to' is ommitted, use the
+        # current up-to-date BuildConfiguration class.
+
+        build_config_from = self.generate_build_config_from_menu(menu_from, build_name)
+        build_config_to = BuildConfiguration.ALL[build_name]
+
+        if menu_to_file is not None:
+            menu_to = self.load_and_validate_menu(menu_to_file, schema)
+            build_config_to = self.generate_build_config_from_menu(menu_to, build_name)
+
+        # Gets the sources used by the build from the list of layers.
+
+        sources_from = self.get_sources_from_build_layers(menu_from, build_config_from.layers())
+        sources_to = self.get_sources_from_build_layers(menu_to, build_config_to.layers())
+
+        # Filters the changes from sources. Local directory basename of the source
+        # as key, source revision as value.
+
+        changes = {}
+        changes['added'] = {s: sources_to[s] for s in sources_to if s not in sources_from}
+        changes['modified'] = {s: {'from': sources_from[s], 'to': sources_to[s]} for s in sources_to if s in sources_from and sources_to[s] != sources_from[s]}
+        changes['deleted'] = {s: sources_from[s] for s in sources_from if s not in sources_to}
+
+        # Append the git commit history for the filtered modified sources.
+
+        if history is not None:
+            for source, data in changes['modified'].items():
+                if source in history:
+                    complete = CookerCall.os.subprocess_run(["git", "log", "{}..{}".format(data['from'], data['to']), "--oneline", "--abbrev-commit"], self.config.layer_dir(source))
+                    if complete.returncode != 0:
+                        warn('unable to get the git history of the source {}'.format(source))
+                        debug(complete.stderr.decode('ascii'))
+                        continue
+                    data['history'] = complete.stdout.decode('ascii').splitlines()
+
     def generate(self):
         info('Generating dirs for all build-configurations')
 
@@ -874,6 +977,15 @@ class CookerCall:
         diff_parser = subparsers.add_parser('diff', help='show current revision changes of all sources')
         diff_parser.set_defaults(func=self.diff)
 
+        # `log` command
+        log_parser = subparsers.add_parser('log', help='prints the build sources revision differences between two menu version')
+        log_parser.add_argument('build', help='build for the log', nargs=1)
+        log_parser.add_argument('menu_from', help='previous menu file version', nargs=1, default=None)
+        log_parser.add_argument('menu_to', help='menu file to compare (default: current menu file)', nargs='?', default=None)
+        log_parser.add_argument('-H', '--history', help='list of layers to be detailed with the commit history', nargs='*')
+        log_parser.add_argument('-o', '--format', help='ouput log format: text, markdown, md (default: text)')
+        log_parser.set_defaults(func=self.log)
+
         # `generate` command
         generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
         generate_parser.set_defaults(func=self.generate)
@@ -1020,6 +1132,9 @@ class CookerCall:
             fatal_error('diff needs a menu')
 
         self.commands.diff()
+
+    def log(self):
+        self.commands.log(self.clargs.build[0], self.clargs.menu_from[0], self.clargs.menu_to, self.clargs.history, self.clargs.format)
 
     def cook(self):
         self.commands.init(self.clargs.menu[0].name)
