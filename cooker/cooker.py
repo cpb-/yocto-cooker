@@ -409,13 +409,13 @@ class LogFormat(ABC):
             self.print_deleted_item(source, data)
 
     def generate(self):
-        if len(self.changes['added']):
+        if self.changes['added']:
             self.print_added(self.changes['added'])
 
-        if len(self.changes['modified']):
+        if self.changes['modified']:
             self.print_modified(self.changes['modified'])
 
-        if len(self.changes['deleted']):
+        if self.changes['deleted']:
             self.print_deleted(self.changes['deleted'])
 
     def add_line(self, l=""):
@@ -641,6 +641,10 @@ class CookerCommands:
 
             menu_rev = source['rev']
 
+            if not CookerCall.os.directory_exists(local_dir):
+                warn('{} directory of source {} does not exist'.format(local_dir, source))
+                continue
+
             complete = CookerCall.os.subprocess_run(["git", "describe", "--abbrev=7", "--tags", "--always", "--dirty"], local_dir)
             if complete.returncode != 0:
                 warn('unable to get the current revision of the local source {}'.format(local_dir))
@@ -649,7 +653,7 @@ class CookerCommands:
 
             local_rev = complete.stdout.strip().decode('ascii')
             debug('menu revision: {}, local revision: {}'.format(menu_rev, local_rev))
-            if (menu_rev != local_rev):
+            if menu_rev != local_rev:
                 print('{}: {} .. {}'.format(source_name, menu_rev, local_rev))
 
     def generate_build_config_from_menu(self, menu, build_name):
@@ -692,9 +696,15 @@ class CookerCommands:
         sources from the layers used by the build.
         """
         layers_dir = list(dict.fromkeys(list(map(lambda p: p.split('/')[0], layers))))
-        return {os.path.basename(self.local_dir_from_source(s)[0]): s['rev']
-                for s in menu['sources']
-                if os.path.basename(self.local_dir_from_source(s)[0]) in layers_dir}
+        sources = {}
+
+        for s in menu['sources']:
+            key = os.path.basename(self.local_dir_from_source(s)[0])
+            value = s['rev']
+            if key in layers_dir:
+                sources[key] = value
+
+        return sources
 
     def load_and_validate_menu(self, menu_file, schema):
         with open(menu_file, "r") as file:
@@ -719,6 +729,9 @@ class CookerCommands:
         menu_from = self.load_and_validate_menu(menu_from_file, schema)
         menu_to = self.menu
 
+        if build_name not in menu_from['builds'] or build_name not in menu_to['builds']:
+            fatal_error('build `{}` does not exist in the menu file'.format(build_name))
+
         # Generates a BuildConfiguration class for the menu since the build layers
         # can change between menu version. If 'menu to' is ommitted, use the
         # current up-to-date BuildConfiguration class.
@@ -735,6 +748,9 @@ class CookerCommands:
         sources_from = self.get_sources_from_build_layers(menu_from, build_config_from.layers())
         sources_to = self.get_sources_from_build_layers(menu_to, build_config_to.layers())
 
+        debug('sources `from` menu: {}'.format(sources_from))
+        debug('sources `to` menu: {}'.format(sources_to))
+
         # Filters the changes from sources. Local directory basename of the source
         # as key, source revision as value.
 
@@ -747,7 +763,7 @@ class CookerCommands:
 
         if history is not None:
             for source, data in changes['modified'].items():
-                if source in history:
+                if source in history and CookerCall.os.directory_exists(self.config.layer_dir(source)):
                     complete = CookerCall.os.subprocess_run(["git", "log", "{}..{}".format(data['from'], data['to']), "--oneline", "--abbrev-commit"], self.config.layer_dir(source))
                     if complete.returncode != 0:
                         warn('unable to get the git history of the source {}'.format(source))
@@ -757,7 +773,7 @@ class CookerCommands:
 
         # Prints the formatted log output from the changes dict.
 
-        if log_format == 'md' or log_format == 'markdown':
+        if log_format in ['md', 'markdown']:
             log = LogMarkdownFormat(changes)
         else:
             log = LogTextFormat(changes)
