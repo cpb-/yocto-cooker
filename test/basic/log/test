@@ -1,0 +1,12 @@
+cooker init $S/menu.new.json
+
+# fail, X build does not exist
+expect_fail cooker log X $S/menu.old.json $S/menu.new.json
+
+# compare output log for build A
+cooker log A $S/menu.old.json $S/menu.new.json > $T/output-A.log
+cmp -s $S/output-A.log $T/output-A.log
+
+# compare output log for build B
+cooker log B $S/menu.old.json $S/menu.new.json > $T/output-B.log
+cmp -s $S/output-B.log $T/output-B.log

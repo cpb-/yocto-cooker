@@ -1,0 +1,45 @@
+{
+  "sources": [
+      {
+          "url": "git://git.yoctoproject.org/poky",
+          "branch": "dunfell",
+          "rev": "dunfell-23.0.13"
+      },
+      {
+          "url": "git://git.openembedded.org/meta-openembedded",
+          "branch": "dunfell",
+          "rev": "321dc39"
+      },
+      {
+          "url": "git://git.openembedded.org/meta-a",
+          "rev": "c560eae"
+      },
+      {
+          "url": "git://git.openembedded.org/meta-b",
+          "rev": "37f332a"
+      }
+  ],
+  "layers": [
+      "poky/meta",
+      "poky/meta-poky",
+      "poky/meta-yocto-bsp"
+  ],
+  "local.conf": [
+      "IMAGE_FEATURES += 'empty-root-password' "
+  ],
+  "builds": {
+      "A": {
+          "target": "core-image-base",
+          "layers": [
+              "meta-a"
+          ]
+      },
+      "B": {
+          "target": "core-image-base",
+          "layers": [
+              "meta-openembedded/meta-oe",
+              "meta-b"
+          ]
+      }
+  }
+}
