@@ -1100,11 +1100,11 @@ class CookerCall:
         update_parser.set_defaults(func=self.update)
 
         # `diff` command
-        diff_parser = subparsers.add_parser('diff', help='show current revision changes of all sources')
+        diff_parser = subparsers.add_parser('diff', help='show current revision differences of all sources')
         diff_parser.set_defaults(func=self.diff)
 
         # `log` command
-        log_parser = subparsers.add_parser('log', help='prints the build sources revision differences between two menu version')
+        log_parser = subparsers.add_parser('log', help='prints the changes of the build sources between two menu versions')
         log_parser.add_argument('build', help='build for the log', nargs=1)
         log_parser.add_argument('menu_from', help='previous menu file version', nargs=1, default=None)
         log_parser.add_argument('menu_to', help='menu file to compare (default: current menu file)', nargs='?', default=None)
