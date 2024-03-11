@@ -418,13 +418,14 @@ class LogFormat(ABC):
         if self.changes['deleted']:
             self.print_deleted(self.changes['deleted'])
 
-    def add_line(self, l=""):
+    def add_line(self, line=""):
         if self.output:
             self.output += "\n"
-        self.output += l
+        self.output += line
 
     def display(self):
         print(self.output)
+
 
 class LogTextFormat(LogFormat):
 
@@ -441,6 +442,7 @@ class LogTextFormat(LogFormat):
 
     def print_deleted_item(self, source, rev):
         self.add_line('D {}: {}'.format(source, rev))
+
 
 class LogMarkdownFormat(LogFormat):
 
@@ -472,6 +474,7 @@ class LogMarkdownFormat(LogFormat):
         self.add_line('## Deleted projects')
         super().print_deleted(changes)
         self.add_line()
+
 
 class CookerCommands:
     """ The class aggregates all functions representing a low-level cooker-command """
@@ -631,7 +634,7 @@ class CookerCommands:
 
     def diff(self):
         for source in self.menu['sources']:
-            local_dir, remote = self.local_dir_from_source(source)
+            local_dir = self.local_dir_from_source(source)[0]
             source_name = os.path.basename(local_dir)
             debug('check the diff of the source {}'.format(source_name))
 
@@ -642,7 +645,7 @@ class CookerCommands:
             menu_rev = source['rev']
 
             if not CookerCall.os.directory_exists(local_dir):
-                warn('{} directory of source {} does not exist'.format(local_dir, source))
+                warn('{} directory of source {} does not exist'.format(local_dir, source_name))
                 continue
 
             complete = CookerCall.os.subprocess_run(["git", "describe", "--abbrev=7", "--tags", "--always", "--dirty"], local_dir)
@@ -698,9 +701,9 @@ class CookerCommands:
         layers_dir = list(dict.fromkeys(list(map(lambda p: p.split('/')[0], layers))))
         sources = {}
 
-        for s in menu['sources']:
-            key = os.path.basename(self.local_dir_from_source(s)[0])
-            value = s['rev']
+        for source in menu['sources']:
+            key = os.path.basename(self.local_dir_from_source(source)[0])
+            value = source['rev']
             if key in layers_dir:
                 sources[key] = value
 
@@ -1049,6 +1052,7 @@ class CookerCommands:
             self.distro.BUILD_SCRIPT = override_distro.get("build_script", self.distro.BUILD_SCRIPT)
             # Template conf must be a tuple
             self.distro.TEMPLATE_CONF = (override_distro.get("template_conf", self.distro.TEMPLATE_CONF),)
+
 
 class CookerCall:
     """
