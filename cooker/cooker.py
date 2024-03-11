@@ -12,6 +12,7 @@ import jsonschema
 import pkg_resources
 import subprocess
 import shlex
+from abc import ABC, abstractmethod
 
 from typing import List
 
@@ -373,6 +374,108 @@ class AragoDistro:
     BITBAKE_INIT_FILE = "sources/bitbake/lib/__init__.py"
 
 
+class LogFormat(ABC):
+
+    def __init__(self, changes):
+        self.changes = changes
+        self.output = ""
+
+    @abstractmethod
+    def print_history(self, history):
+        pass
+
+    @abstractmethod
+    def print_added_item(self, source, rev):
+        pass
+
+    def print_modified_item(self, source, data):
+        if 'history' in data:
+            self.print_history(data['history'])
+
+    @abstractmethod
+    def print_deleted_item(self, source, rev):
+        pass
+
+    def print_added(self, changes):
+        for source, data in changes.items():
+            self.print_added_item(source, data)
+
+    def print_modified(self, changes):
+        for source, data in changes.items():
+            self.print_modified_item(source, data)
+
+    def print_deleted(self, changes):
+        for source, data in changes.items():
+            self.print_deleted_item(source, data)
+
+    def generate(self):
+        if self.changes['added']:
+            self.print_added(self.changes['added'])
+
+        if self.changes['modified']:
+            self.print_modified(self.changes['modified'])
+
+        if self.changes['deleted']:
+            self.print_deleted(self.changes['deleted'])
+
+    def add_line(self, line=""):
+        if self.output:
+            self.output += "\n"
+        self.output += line
+
+    def display(self):
+        print(self.output)
+
+
+class LogTextFormat(LogFormat):
+
+    def print_history(self, history):
+        for line in history:
+            self.add_line('  {}'.format(line))
+
+    def print_added_item(self, source, rev):
+        self.add_line('A {}: {}'.format(source, rev))
+
+    def print_modified_item(self, source, data):
+        self.add_line('M {}: {} .. {}'.format(source, data['from'], data['to']))
+        super().print_modified_item(source, data)
+
+    def print_deleted_item(self, source, rev):
+        self.add_line('D {}: {}'.format(source, rev))
+
+
+class LogMarkdownFormat(LogFormat):
+
+    def print_history(self, history):
+        for line in history:
+            self.add_line('  - {}'.format(line))
+
+    def print_added_item(self, source, rev):
+        self.add_line('- {} at revision {}'.format(source, rev))
+
+    def print_modified_item(self, source, data):
+        self.add_line('- {} changed from {} to {}'.format(source, data['from'], data['to']))
+        super().print_modified_item(source, data)
+
+    def print_deleted_item(self, source, rev):
+        self.add_line('- {} at revision {}'.format(source, rev))
+
+    def print_added(self, changes):
+        self.add_line('## Added projects')
+        super().print_added(changes)
+        self.add_line()
+
+    def print_modified(self, changes):
+        self.add_line('## Modified projects')
+        super().print_modified(changes)
+        self.add_line()
+
+    def print_deleted(self, changes):
+        self.add_line('## Deleted projects')
+        super().print_deleted(changes)
+        self.add_line()
+
+
 class CookerCommands:
     """ The class aggregates all functions representing a low-level cooker-command """
 
@@ -528,6 +631,158 @@ class CookerCommands:
             complete = CookerCall.os.subprocess_run(["git", "submodule", "update", "--recursive", "--init"], local_dir)
             if complete.returncode != 0:
                 fatal_error('Unable to update submodules in {}: {}'.format(local_dir, complete.stderr.decode('ascii')))
+
+    def diff(self):
+        for source in self.menu['sources']:
+            local_dir = self.local_dir_from_source(source)[0]
+            source_name = os.path.basename(local_dir)
+            debug('check the diff of the source {}'.format(source_name))
+
+            if 'rev' not in source:
+                debug('no revision field in the menu file for source {}'.format(source_name))
+                continue
+
+            menu_rev = source['rev']
+
+            if not CookerCall.os.directory_exists(local_dir):
+                warn('{} directory of source {} does not exist'.format(local_dir, source_name))
+                continue
+
+            complete = CookerCall.os.subprocess_run(["git", "describe", "--abbrev=7", "--tags", "--always", "--dirty"], local_dir)
+            if complete.returncode != 0:
+                warn('unable to get the current revision of the local source {}'.format(local_dir))
+                debug(complete.stderr.decode('ascii'))
+                continue
+
+            local_rev = complete.stdout.strip().decode('ascii')
+            debug('menu revision: {}, local revision: {}'.format(menu_rev, local_rev))
+            if menu_rev != local_rev:
+                print('{}: {} .. {}'.format(source_name, menu_rev, local_rev))
+
+    def generate_build_config_from_menu(self, menu, build_name):
+        """
+        Generates the BuildConfiguration classes from the given menu version.
+        Resolve the parents and returns the BuildConfiguration class of the build.
+
+        Backup and restore the ALL BuildConfiguration class variable to avoid
+        overwriting the existing content.
+        """
+        backup = BuildConfiguration.ALL
+        BuildConfiguration.ALL = {}
+
+        BuildConfiguration('root',
+                           self.config,
+                           menu.setdefault('layers', []),
+                           menu.setdefault('local.conf', []),
+                           None,
+                           None)
+
+        for name, build in menu['builds'].items():
+            BuildConfiguration(name,
+                               self.config,
+                               build.setdefault('layers', []),
+                               build.setdefault('local.conf', []),
+                               build.setdefault('target', None),
+                               build.setdefault('inherit', ['root']))
+
+        resolve_parents()
+
+        build_config = BuildConfiguration.ALL[build_name]
+
+        BuildConfiguration.ALL = backup
+
+        return build_config
+
+    def get_sources_from_build_layers(self, menu, layers):
+        """
+        Returns a simplistic key/value entry ('source-name: revision') of the
+        sources from the layers used by the build.
+        """
+        layers_dir = list(dict.fromkeys(list(map(lambda p: p.split('/')[0], layers))))
+        sources = {}
+
+        for source in menu['sources']:
+            key = os.path.basename(self.local_dir_from_source(source)[0])
+            value = source['rev']
+            if key in layers_dir:
+                sources[key] = value
+
+        return sources
+
+    def load_and_validate_menu(self, menu_file, schema):
+        with open(menu_file, "r") as file:
+            try:
+                menu = pyjson5.load(file)
+            except Exception as e:
+                fatal_error('menu load error:', e)
+
+            try:
+                jsonschema.validate(menu, schema)
+            except Exception as e:
+                fatal_error('menu file {} validation failed:'.format(menu_file), e)
+
+        debug('menu file {} validation passed'.format(menu_file))
+        return menu
+
+    def log(self, build_name, menu_from_file, menu_to_file, history, log_format):
+        """
+        Generates a log of the build sources revision changes between two menu file version.
+        """
+        schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+        menu_from = self.load_and_validate_menu(menu_from_file, schema)
+        menu_to = self.menu
+
+        if build_name not in menu_from['builds'] or build_name not in menu_to['builds']:
+            fatal_error('build `{}` does not exist in the menu file'.format(build_name))
+
+        # Generates a BuildConfiguration class for the menu since the build layers
+        # can change between menu version. If 'menu to' is ommitted, use the
+        # current up-to-date BuildConfiguration class.
+
+        build_config_from = self.generate_build_config_from_menu(menu_from, build_name)
+        build_config_to = BuildConfiguration.ALL[build_name]
+
+        if menu_to_file is not None:
+            menu_to = self.load_and_validate_menu(menu_to_file, schema)
+            build_config_to = self.generate_build_config_from_menu(menu_to, build_name)
+
+        # Gets the sources used by the build from the list of layers.
+
+        sources_from = self.get_sources_from_build_layers(menu_from, build_config_from.layers())
+        sources_to = self.get_sources_from_build_layers(menu_to, build_config_to.layers())
+
+        debug('sources `from` menu: {}'.format(sources_from))
+        debug('sources `to` menu: {}'.format(sources_to))
+
+        # Filters the changes from sources. Local directory basename of the source
+        # as key, source revision as value.
+
+        changes = {}
+        changes['added'] = {s: sources_to[s] for s in sources_to if s not in sources_from}
+        changes['modified'] = {s: {'from': sources_from[s], 'to': sources_to[s]} for s in sources_to if s in sources_from and sources_to[s] != sources_from[s]}
+        changes['deleted'] = {s: sources_from[s] for s in sources_from if s not in sources_to}
+
+        # Append the git commit history for the filtered modified sources.
+
+        if history is not None:
+            for source, data in changes['modified'].items():
+                if source in history and CookerCall.os.directory_exists(self.config.layer_dir(source)):
+                    complete = CookerCall.os.subprocess_run(["git", "log", "{}..{}".format(data['from'], data['to']), "--oneline", "--abbrev-commit"], self.config.layer_dir(source))
+                    if complete.returncode != 0:
+                        warn('unable to get the git history of the source {}'.format(source))
+                        debug(complete.stderr.decode('ascii'))
+                        continue
+                    data['history'] = complete.stdout.decode('ascii').splitlines()
+
+        # Prints the formatted log output from the changes dict.
+
+        if log_format in ['md', 'markdown']:
+            log = LogMarkdownFormat(changes)
+        else:
+            log = LogTextFormat(changes)
+
+        log.generate()
+        log.display()
 
     def generate(self):
         info('Generating dirs for all build-configurations')
@@ -798,6 +1053,7 @@ class CookerCommands:
             # Template conf must be a tuple
             self.distro.TEMPLATE_CONF = (override_distro.get("template_conf", self.distro.TEMPLATE_CONF),)
 
+
 class CookerCall:
     """
     CookerCall represents a call of the cooker-tool, handles all arguments, opens the config-file,
@@ -846,6 +1102,19 @@ class CookerCall:
         # `update` command
         update_parser = subparsers.add_parser('update', help='update source layers')
         update_parser.set_defaults(func=self.update)
+
+        # `diff` command
+        diff_parser = subparsers.add_parser('diff', help='show current revision differences of all sources')
+        diff_parser.set_defaults(func=self.diff)
+
+        # `log` command
+        log_parser = subparsers.add_parser('log', help='prints the changes of the build sources between two menu versions')
+        log_parser.add_argument('build', help='build for the log', nargs=1)
+        log_parser.add_argument('menu_from', help='previous menu file version', nargs=1, default=None)
+        log_parser.add_argument('menu_to', help='menu file to compare (default: current menu file)', nargs='?', default=None)
+        log_parser.add_argument('-H', '--history', help='list of layers to be detailed with the commit history', nargs='*')
+        log_parser.add_argument('-o', '--format', help='ouput log format: text, markdown, md (default: text)')
+        log_parser.set_defaults(func=self.log)
 
         # `generate` command
         generate_parser = subparsers.add_parser('generate', help='generate build-configuration')
@@ -987,6 +1256,15 @@ class CookerCall:
             fatal_error('update needs a menu')
 
         self.commands.update()
+
+    def diff(self):
+        if self.menu is None:
+            fatal_error('diff needs a menu')
+
+        self.commands.diff()
+
+    def log(self):
+        self.commands.log(self.clargs.build[0], self.clargs.menu_from[0], self.clargs.menu_to, self.clargs.history, self.clargs.format)
 
     def cook(self):
         self.commands.init(self.clargs.menu[0].name)

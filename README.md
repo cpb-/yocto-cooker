@@ -109,6 +109,16 @@ files).
   the command in the environment.
   For example : `cooker shell <build-config> -- runqemu nographics`.
 
+- `cooker diff` shows the current revision differences of all sources compared
+  to the referenced revision in the menu.
+
+- `cooker log <build-configs> <menu-from> [<menu-to>] [-H <history>] [-o <format>]`
+  prints the changes (added, modified, deleted) of the build sources between two
+  menu versions, `menu-from` and `menu-to` (default is the current menu file).
+  Expands the git commit history of a comma-separated modified source list with
+  the `-H | --history` option. Supported output format is `text` and `markdown`
+  (`md`).
+
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
 
