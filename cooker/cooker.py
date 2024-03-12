@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sys
+import importlib.util
 from urllib.parse import urlparse
 import jsonschema
 import pkg_resources
@@ -556,19 +557,8 @@ class CookerCommands:
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
-        if menu is not None:
-            distros = {
-                'poky': PokyDistro,
-                'arago': AragoDistro,
-            }
-            name = menu.setdefault('base-distribution', 'poky')
-            try:
-                self.distro = distros[name.lower()]
-            except:
-                fatal_error('base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.'.format(name))
 
-            # Update distro if custom distro is defined in menu
-            self.update_override_distro()
+        self.load_distro()
 
     def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None):
         """ cooker-command 'init': (re)set the configuration file """
@@ -587,6 +577,7 @@ class CookerCommands:
             self.config.set_sstate_dir(sstate_dir)
 
         self.config.save()
+        self.load_distro()
 
     def update(self):
         info('Update layers in project directory')
@@ -1140,6 +1131,38 @@ class CookerCommands:
             self.distro.BUILD_SCRIPT = override_distro.get("build_script", self.distro.BUILD_SCRIPT)
             # Template conf must be a tuple
             self.distro.TEMPLATE_CONF = (override_distro.get("template_conf", self.distro.TEMPLATE_CONF),)
+
+    def load_distro(self):
+        # Load the custom distro only after cooker config file is generated
+        # from init command (needs the menu location to find the distro file)
+
+        if not self.config.empty():
+            distros = {
+                'poky': PokyDistro,
+                'arago': AragoDistro,
+            }
+            name = self.menu.setdefault('base-distribution', 'poky').lower()
+
+            if name not in distros:
+                distro_dir = os.path.dirname(self.config.menu())
+                distro_file = os.path.join(distro_dir, '{}.py'.format(name))
+                distro_class_name = '{}Distro'.format(name.capitalize())
+                if CookerCall.os.file_exists(distro_file):
+                    distro_spec = importlib.util.spec_from_file_location("distro", distro_file)
+                    distro_module = importlib.util.module_from_spec(distro_spec)
+                    distro_spec.loader.exec_module(distro_module)
+                    try:
+                        distro_class = getattr(distro_module, distro_class_name)
+                    except AttributeError as e:
+                        fatal_error('distribution file `{}.py` does not contain a {} class'.format(name, distro_class_name))
+                    distros[name] = distro_class
+                else:
+                    fatal_error('base-distribution `{0}` is unknown, please add a `{0}.py` file next your menu.'.format(name))
+
+            self.distro = distros[name]
+
+            # Update distro if custom distro is defined in menu
+            self.update_override_distro()
 
 
 class CookerCall:
