@@ -91,8 +91,45 @@
         "local.conf": {
             "$ref": "#/definitions/local.conf"
         },
+
         "base-distribution": {
-            "$ref": "#/definitions/not-empty-string"
+            "type": "object",
+            "properties": {
+                "distro-name": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "base-directory": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "build-script": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "template-conf": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/not-empty-string"
+                    }
+                },
+                "default-conf-version": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "layer-conf-name": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "layer-conf-version": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "package-classes": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "default-bitbake-major-version": {
+                    "$ref": "#/definitions/not-empty-string"
+                },
+                "bitbake-init-file": {
+                    "$ref": "#/definitions/not-empty-string"
+                }
+            },
+            "additionalProperties": false
         },
 
         "builds": {
@@ -141,25 +178,6 @@
 
         "notes": {
             "$ref": "#/definitions/notes"
-        },
-
-        "override_distro": {
-            "type": "object",
-            "properties": {
-                "base_directory": {
-                    "type": "string",
-                    "minLength": 1
-                },
-                "build_script": {
-                    "type": "string",
-                    "minLength": 1
-                },
-                "template_conf": {
-                    "type": "string",
-                    "minLength": 1
-                }
-            },
-            "additionalProperties": false
         }
     },
     "required": ["sources", "builds"],
