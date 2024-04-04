@@ -381,32 +381,52 @@ class LogFormat(ABC):
         self.output = ""
 
     @abstractmethod
-    def print_history(self, history):
+    def print_history_item(self, line):
+        pass
+
+    def print_history(self, data):
+        for line in data['history']:
+            line_str = self.format_rev_history(line, data['to']['url'])
+            self.print_history_item(line_str)
+
+    @abstractmethod
+    def print_added_item(self, source, rev_str):
         pass
 
     @abstractmethod
-    def print_added_item(self, source, rev):
+    def print_modified_item(self, source, rev_str):
         pass
 
-    def print_modified_item(self, source, data):
-        if 'history' in data:
-            self.print_history(data['history'])
+    @abstractmethod
+    def print_deleted_item(self, source, rev_str):
+        pass
+
+    def format_rev_history(self, line, url):
+        return line
+
+    def format_rev_commit(self, data):
+        return '{}'.format(data['rev'][0:7])
 
     @abstractmethod
-    def print_deleted_item(self, source, rev):
+    def format_rev_commits(self, data):
         pass
 
     def print_added(self, changes):
         for source, data in changes.items():
-            self.print_added_item(source, data)
+            rev_str = self.format_rev_commit(data)
+            self.print_added_item(source, rev_str)
 
     def print_modified(self, changes):
         for source, data in changes.items():
-            self.print_modified_item(source, data)
+            rev_str = self.format_rev_commits(data)
+            self.print_modified_item(source, rev_str)
+            if 'history' in data:
+                self.print_history(data)
 
     def print_deleted(self, changes):
         for source, data in changes.items():
-            self.print_deleted_item(source, data)
+            rev_str = self.format_rev_commit(data)
+            self.print_deleted_item(source, rev_str)
 
     def generate(self):
         if self.changes['added']:
@@ -427,53 +447,107 @@ class LogFormat(ABC):
         print(self.output)
 
 
+class LogLinkedFormat(LogFormat):
+
+    GITHUB_URL = "https://github.com"
+    GITLAB_URL = "https://gitlab.com"
+    GIT_HL_URL = (GITHUB_URL, GITLAB_URL)
+
+    def format_rev_history(self, line, url):
+        if url.startswith(self.GIT_HL_URL):
+            index = line.find(' ')
+            rev = line[0:index]
+            text = line[index+1:]
+            return '[{0}]({1}/commit/{0}) {2}'.format(rev, url, text)
+        return super().format_rev_history(line, url)
+
+    def format_rev_commit(self, data):
+        if data['url'].startswith(self.GIT_HL_URL):
+            return '[{}]({}/commit/{})'.format(
+                data['rev'][0:7],
+                data['url'],
+                data['rev']
+            )
+        return super().format_rev_commit(data)
+
+
 class LogTextFormat(LogFormat):
 
-    def print_history(self, history):
-        for line in history:
-            self.add_line('  {}'.format(line))
+    def print_history_item(self, line):
+        self.add_line('  {}'.format(line))
 
-    def print_added_item(self, source, rev):
-        self.add_line('A {}: {}'.format(source, rev))
+    def format_rev_commits(self, data):
+        return '{} .. {}'.format(data['from']['rev'][0:7], data['to']['rev'][0:7])
 
-    def print_modified_item(self, source, data):
-        self.add_line('M {}: {} .. {}'.format(source, data['from'], data['to']))
-        super().print_modified_item(source, data)
+    def print_added_item(self, source, rev_str):
+        self.add_line('A {}: {}'.format(source, rev_str))
 
-    def print_deleted_item(self, source, rev):
-        self.add_line('D {}: {}'.format(source, rev))
+    def print_modified_item(self, source, rev_str):
+        self.add_line('M {}: {}'.format(source, rev_str))
+
+    def print_deleted_item(self, source, rev_str):
+        self.add_line('D {}: {}'.format(source, rev_str))
+
+
+class LogLinkedTextFormat(LogTextFormat, LogLinkedFormat):
+
+    def format_rev_commits(self, data):
+        if data['to']['url'].startswith(self.GIT_HL_URL):
+            return '[{} .. {}]({}/compare/{}..{})'.format(
+                data['from']['rev'][0:7],
+                data['to']['rev'][0:7],
+                data['to']['url'],
+                data['from']['rev'],
+                data['to']['rev'],
+            )
+        return super().format_rev_commits(data)
 
 
 class LogMarkdownFormat(LogFormat):
 
-    def print_history(self, history):
-        for line in history:
-            self.add_line('  - {}'.format(line))
+    def print_history_item(self, line):
+        self.add_line('  - {}'.format(line))
 
-    def print_added_item(self, source, rev):
-        self.add_line('- {} at revision {}'.format(source, rev))
+    def format_rev_commits(self, data):
+        return '{} to {}'.format(data['from']['rev'][0:7], data['to']['rev'][0:7])
 
-    def print_modified_item(self, source, data):
-        self.add_line('- {} changed from {} to {}'.format(source, data['from'], data['to']))
-        super().print_modified_item(source, data)
+    def print_added_item(self, source, rev_str):
+        self.add_line('- {} at revision {}'.format(source, rev_str))
 
-    def print_deleted_item(self, source, rev):
-        self.add_line('- {} at revision {}'.format(source, rev))
+    def print_modified_item(self, source, rev_str):
+        self.add_line('- {} changed from {}'.format(source, rev_str))
+
+    def print_deleted_item(self, source, rev_str):
+        self.add_line('- {} at revision {}'.format(source, rev_str))
 
     def print_added(self, changes):
-        self.add_line('## Added projects')
+        self.add_line('### Added projects')
         super().print_added(changes)
         self.add_line()
 
     def print_modified(self, changes):
-        self.add_line('## Modified projects')
+        self.add_line('### Modified projects')
         super().print_modified(changes)
         self.add_line()
 
     def print_deleted(self, changes):
-        self.add_line('## Deleted projects')
+        self.add_line('### Deleted projects')
         super().print_deleted(changes)
         self.add_line()
+
+
+class LogLinkedMarkdownFormat(LogMarkdownFormat, LogLinkedFormat):
+
+    def format_rev_commits(self, data):
+        if data['to']['url'].startswith(self.GIT_HL_URL):
+            return '[{} to {}]({}/compare/{}..{})'.format(
+                data['from']['rev'][0:7],
+                data['to']['rev'][0:7],
+                data['to']['url'],
+                data['from']['rev'],
+                data['to']['rev'],
+            )
+        return super().format_rev_commits(data)
 
 
 class CookerCommands:
@@ -695,17 +769,21 @@ class CookerCommands:
 
     def get_sources_from_build_layers(self, menu, layers):
         """
-        Returns a simplistic key/value entry ('source-name: revision') of the
-        sources from the layers used by the build.
+        Returns a key/data entry of the sources from the layers used by the build.
         """
         layers_dir = list(dict.fromkeys(list(map(lambda p: p.split('/')[0], layers))))
         sources = {}
 
         for source in menu['sources']:
-            key = os.path.basename(self.local_dir_from_source(source)[0])
-            value = source['rev']
+            local_dir, url = self.local_dir_from_source(source)
+            key = os.path.basename(local_dir)
+            data = {
+                'rev': source['rev'],
+                'url': url
+            }
+
             if key in layers_dir:
-                sources[key] = value
+                sources[key] = data
 
         return sources
 
@@ -755,7 +833,7 @@ class CookerCommands:
         debug('sources `to` menu: {}'.format(sources_to))
 
         # Filters the changes from sources. Local directory basename of the source
-        # as key, source revision as value.
+        # as key
 
         changes = {}
         changes['added'] = {s: sources_to[s] for s in sources_to if s not in sources_from}
@@ -767,7 +845,13 @@ class CookerCommands:
         if history is not None:
             for source, data in changes['modified'].items():
                 if source in history and CookerCall.os.directory_exists(self.config.layer_dir(source)):
-                    complete = CookerCall.os.subprocess_run(["git", "log", "{}..{}".format(data['from'], data['to']), "--oneline", "--abbrev-commit"], self.config.layer_dir(source))
+                    complete = CookerCall.os.subprocess_run([
+                        "git",
+                        "log",
+                        "{}..{}".format(data['from']['rev'], data['to']['rev']),
+                        "--oneline",
+                        "--abbrev-commit"
+                    ],self.config.layer_dir(source))
                     if complete.returncode != 0:
                         warn('unable to get the git history of the source {}'.format(source))
                         debug(complete.stderr.decode('ascii'))
@@ -778,6 +862,10 @@ class CookerCommands:
 
         if log_format in ['md', 'markdown']:
             log = LogMarkdownFormat(changes)
+        elif log_format in ['lmd', 'l-md', 'linked-md', 'linked-markdown']:
+            log = LogLinkedMarkdownFormat(changes)
+        elif log_format in ['ltxt', 'l-txt', 'linked-txt', 'l-text', 'linked-text']:
+            log = LogLinkedTextFormat(changes)
         else:
             log = LogTextFormat(changes)
 

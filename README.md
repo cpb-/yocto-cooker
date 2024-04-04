@@ -115,9 +115,12 @@ files).
 - `cooker log <build-configs> <menu-from> [<menu-to>] [-H <history>] [-o <format>]`
   prints the changes (added, modified, deleted) of the build sources between two
   menu versions, `menu-from` and `menu-to` (default is the current menu file).
-  Expands the git commit history of a comma-separated modified source list with
-  the `-H | --history` option. Supported output format is `text` and `markdown`
-  (`md`).
+  Expands the git commit history of a space-separated modified source list with
+  the `-H | --history` option. Supported output format are:
+    - `text` (default): raw format, easy to parse.
+    - `linked-text`, `ltxt`: raw format, supports commit links to github and gitlab.
+    - `markdown`, `md`: markdown format with added, modified and deleted sections.
+    - `linked-markdown`, `lmd`: markdown format, supports commit links to github and gitlab.
 
 Each sub-command has additional command line options, e.g. with `init` the
 download-dir can be set using the `-d` switch.
