@@ -70,11 +70,14 @@ cooker init -f menu.json
 cooker build
 
 
-# `cooker init` fails when base-distro is unknown
+# `cooker init` fails when a base-distro field is unknown
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
-	    "base-distribution": "wingardium-leviosa",
+	    "base-distribution": {
+	      "unknow-field": "foobar",
+	      "distro-name": "arago"
+	    },
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
@@ -89,51 +92,18 @@ EOF
 expect_fail cooker init -f menu.json
 
 
-# `cooker build` succeeds with Poky base-distro
-cat > menu.json <<-EOF
-	{
-	    "sources": [],
-	    "base-distribution": "poky",
-	    "layers": [],
-	    "builds": {
-	        "build-1" : {
-	            "target": "core-image-base",
-	            "local.conf": [
-	                "MACHINE = qemu-x86"
-	            ]
-	        }
-	    }
-	}
-EOF
-cooker init -f menu.json
-cooker build
-
-
-# `cooker build` accepts 'Poky' (capitalized)
-cat > menu.json <<-EOF
-	{
-	    "sources": [],
-	    "base-distribution": "Poky",
-	    "layers": [],
-	    "builds": {
-	        "build-1" : {
-	            "target": "core-image-base",
-	            "local.conf": [
-	                "MACHINE = qemu-x86"
-	            ]
-	        }
-	    }
-	}
-EOF
-cooker init -f menu.json
-cooker build
-
-
 # `cooker build` fails with Arago base-distro and no env-init script
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
-	    "base-distribution": "arago",
+	    "base-distribution": {
+	      "distro-name": "arago",
+	      "base-directory": "openembedded-core",
+	      "template-conf": ["meta/conf"],
+	      "layer-conf-name": "LCONF_VERSION",
+	      "layer-conf-version": "7",
+	      "package-classes": "package_ipk"
+	    },
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
@@ -157,7 +127,14 @@ touch layers/openembedded-core/oe-init-build-env
 cat > menu.json <<-EOF
 	{
 	    "sources": [],
-	    "base-distribution": "arago",
+	    "base-distribution": {
+	      "distro-name": "arago",
+	      "base-directory": "openembedded-core",
+	      "template-conf": ["meta/conf"],
+	      "layer-conf-name": "LCONF_VERSION",
+	      "layer-conf-version": "7",
+	      "package-classes": "package_ipk"
+	    },
 	    "layers": [],
 	    "builds": {
 	        "build-1" : {
@@ -172,24 +149,6 @@ EOF
 cooker init -f menu.json
 cooker build
 
-# `cooker build` accepts 'Arago' (capitalized)
-cat > menu.json <<-EOF
-	{
-	    "sources": [],
-	    "base-distribution": "Arago",
-	    "layers": [],
-	    "builds": {
-	        "build-1" : {
-	            "target": "core-image-base",
-	            "local.conf": [
-	                "MACHINE = qemu-x86"
-	            ]
-	        }
-	    }
-	}
-EOF
-cooker init -f menu.json
-cooker build
 
 rm -rf layers/openembedded-core
 

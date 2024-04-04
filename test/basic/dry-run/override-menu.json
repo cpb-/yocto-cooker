@@ -4,10 +4,10 @@
         "generic/layer1",
         "generic/layer2"
     ],
-    "override_distro": {
-        "base_directory": "poky",
-        "build_script": "oe-init-build-env",
-        "template_conf": "../meta-yocto/meta-poky/conf/templates/default"
+    "base-distribution": {
+        "base-directory": "poky",
+        "build-script": "oe-init-build-env",
+        "template-conf": ["../meta-yocto/meta-poky/conf/templates/default"]
     },
     "builds": {
         "override": {

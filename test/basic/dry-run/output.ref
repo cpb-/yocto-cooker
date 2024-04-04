@@ -45,7 +45,7 @@ cat > /builds/build-pi2-base/conf/local.conf <<-EOF
 	INHERIT += 'extrausers'
 	EXTRA_USERS_PARAMS_append = 'usermod -P root root;'
 	DISTRO ?= "poky"
-	PACKAGE_CLASSES ?= "package_rpm"
+	PACKAGE_CLASSES ??= "package_rpm"
 	BB_DISKMON_DIRS ??= "\
 		STOPTASKS,\${TMPDIR},1G,100K \
 		STOPTASKS,\${DL_DIR},1G,100K \
