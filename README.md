@@ -98,9 +98,8 @@ Then `cooker build` to restart the compilations.
 Another useful sub-command is:
 
 - `cooker clean <recipe> [<build-configs>...]` that will erase all files produced
-during the compilation of a recipe (and also the shared-state-cache associated
-files).
-
+  during the compilation of a recipe (and also the shared-state-cache associated
+  files).
 - `cooker shell <build-config>` provides you a new shell into the build directory
   with all the environment variables set. Some typical uses could be to
   run `bitbake -c menuconfig virtual/kernel` or `runqemu qemuarm` for instance.

@@ -1,4 +1,4 @@
-__title__ = 'cooker'
+__title__ = 'yocto-cooker'
 __version__ = '1.4.0'
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __email__ = 'christophe.blaess@logilin.fr, p@yai.se'
@@ -23,6 +23,7 @@ setup(
     url=__url__,
     license=__license__,
     long_description=_long_description,
+    long_description_content_type='text/markdown',
     package_data={'': ['cooker-menu-schema.json']},
 
     packages=[
