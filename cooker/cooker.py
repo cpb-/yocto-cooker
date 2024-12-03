@@ -15,6 +15,7 @@ import shlex
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import List
+import cooker
 
 __version__ = '1.4.0'
 
@@ -763,7 +764,9 @@ class CookerCommands:
         """
         Generates a log of the build sources revision changes between two menu file version.
         """
-        schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+        
+        schema_file = importlib.resources.files('cooker').joinpath('cooker-menu-schema.json').read_text()
+        schema = pyjson5.loads(schema_file)
         menu_from = self.load_and_validate_menu(menu_from_file, schema)
         menu_to = self.menu
 
