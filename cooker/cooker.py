@@ -2,22 +2,23 @@
 """cooker.py: meta build tool for Yocto Project based Linux embedded systems."""
 
 import argparse
-import pyjson5
+import importlib.resources
 import json
 import os
 import re
-import sys
-from urllib.parse import urlparse
-import jsonschema
-import importlib.resources
-import subprocess
 import shlex
+import subprocess
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import List
-import cooker
+from urllib.parse import urlparse
+
+import jsonschema
+import pyjson5
 
 __version__ = "1.4.0"
+BITBAKE_VERSION_MINIMUM = 2
 
 
 def debug(*args):
@@ -39,71 +40,89 @@ def fatal_error(*args):
     print("FATAL:", *args, file=sys.stderr)
     sys.exit(1)
 
+
 def merge_dicts(base, other):
     for k, v in other.items():
         if isinstance(v, Mapping):
             base[k] = merge_dicts(base.get(k, {}), v)
         elif isinstance(v, list) and isinstance(base.get(k), list):
-            base[k] = base[k] + v
+            base[k] += v
         else:
             base[k] = v
     return base
 
+
 class OsCalls:
-    def create_directory(self, directory):
+    @staticmethod
+    def create_directory(directory):
         os.makedirs(directory, exist_ok=True)
 
-    def file_open(self, filename):
-        return open(filename, "w")
+    @staticmethod
+    def file_open(filename):
+        return open(filename, "w", encoding="utf-8")
 
-    def file_write(self, file, string):
+    @staticmethod
+    def file_write(file, string):
         file.write("{}\n".format(string))
 
-    def file_close(self, file):
+    @staticmethod
+    def file_close(file):
         file.close()
 
-    def file_exists(self, filename):
+    @staticmethod
+    def file_exists(filename):
         return os.path.isfile(filename)
 
-    def directory_exists(self, dirname):
+    @staticmethod
+    def directory_exists(dirname):
         return os.path.isdir(dirname)
 
-    def replace_process(self, shell: str, args: List[str]):
+    @staticmethod
+    def replace_process(shell: str, args: List[str]):
         return os.execv(shell, args)
 
-    def subprocess_run(self, args, cwd, capture_output=True):
-        return subprocess.run(args, capture_output=capture_output, cwd=cwd)
+    @staticmethod
+    def subprocess_run(args, cwd, capture_output=True):
+        return subprocess.run(args, capture_output=capture_output, cwd=cwd, check=False)
 
 
 class DryRunOsCalls:
-    def create_directory(self, directory):
+    @staticmethod
+    def create_directory(directory):
         print("mkdir {}".format(directory))
         sys.stdout.flush()
 
-    def file_open(self, filename):
+    @staticmethod
+    def file_open(filename):
         print("cat > {} <<-EOF".format(filename))
         sys.stdout.flush()
         return 0
 
-    def file_write(self, file, string):
+    @staticmethod
+    def file_write(file, string):
         print("\t{}".format(string.replace("$", "\$")))
         sys.stdout.flush()
 
-    def file_close(self, file):
+    @staticmethod
+    def file_close(file):
         print("EOF")
         sys.stdout.flush()
 
-    def file_exists(self, filename):
+    @staticmethod
+    def file_exists(filename):
         return True
 
-    def directory_exists(self, dirname):
+    @staticmethod
+    def directory_exists(dirname):
         return True
 
-    def replace_process(self, shell: str, args: List[str]):
+    @staticmethod
+    def replace_process(shell: str, args: List[str]):
         print("exec {} {}".format(shell, " ".join(args)))
         return True
 
-    def subprocess_run(self, args, cwd, capture_output=True):
+    @staticmethod
+    def subprocess_run(args, cwd, capture_output=True):
         if cwd is not None:
             print("cd " + cwd)
         print(" ".join(args))
@@ -114,13 +133,13 @@ class DryRunOsCalls:
 class Config:
     DEFAULT_CONFIG_FILENAME = ".cookerconfig"
     DEFAULT_CONFIG = {
-        'menu': '',
-        'additional_menus': list(),
-        'layer-dir': 'layers',
-        'build-dir': 'builds',
-        'dl-dir': 'downloads',
-        'sstate-dir': 'sstate-cache',
-        'cooker-config-version': 2
+        "menu": "",
+        "additional_menus": list(),
+        "layer-dir": "layers",
+        "build-dir": "builds",
+        "dl-dir": "downloads",
+        "sstate-dir": "sstate-cache",
+        "cooker-config-version": 2,
     }
     CURRENT_CONFIG_VERSION = 2
 
@@ -142,7 +161,7 @@ class Config:
 
                 found = False
                 try:
-                    with open(self.filename) as json_file:
+                    with open(self.filename, encoding="utf-8") as json_file:
                         self.cfg = json.load(json_file)
 
                     found = True
@@ -170,10 +189,11 @@ class Config:
             return
 
         debug(
-            f"migrating cookerconfig from {config_version} to {self.CURRENT_CONFIG_VERSION}"
+            f"migrating cookerconfig from {config_version}"
+            + f" to {self.CURRENT_CONFIG_VERSION}"
         )
 
-        ## here we add changes incrementally from one version to another (do not elif)
+        # here we add changes incrementally from one version to another (do not elif)
 
         # from 0 to 1 we added the sstate-dir
         if config_version == 0:
@@ -184,8 +204,10 @@ class Config:
             config_version = 1
 
         if config_version == 1:
-            if 'additional_menus' not in self.cfg:  # intermediate version where sstate-dir was added
-                self.cfg['additional_menus'] = self.DEFAULT_CONFIG['additional_menus']
+            if (
+                "additional_menus" not in self.cfg
+            ):  # intermediate version where sstate-dir was added
+                self.cfg["additional_menus"] = self.DEFAULT_CONFIG["additional_menus"]
             config_version = 2
 
         # cooker-config-version is updated
@@ -203,12 +225,14 @@ class Config:
             self.cfg["menu"] = os.path.relpath(menu_file, self.path)
 
     def set_additional_menus(self, additional_menus):
-        self.cfg['additional_menus'] = list()
+        self.cfg["additional_menus"] = list()
         for menu_file in additional_menus:
-            if menu_file.startswith('/'):
-                self.cfg['additional_menus'].append(os.path.realpath(menu_file))
+            if menu_file.startswith("/"):
+                self.cfg["additional_menus"].append(os.path.realpath(menu_file))
             else:
-                self.cfg['additional_menus'].append(os.path.relpath(menu_file, self.path))
+                self.cfg["additional_menus"].append(
+                    os.path.relpath(menu_file, self.path)
+                )
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -244,10 +268,10 @@ class Config:
 
     def additional_menus(self):
         additional_menus_path = list()
-        if 'additional_menus' not in self.cfg:
+        if "additional_menus" not in self.cfg:
             return additional_menus_path
-        for menu_path in self.cfg['additional_menus']:
-            if menu_path.startswith('/'):
+        for menu_path in self.cfg["additional_menus"]:
+            if menu_path.startswith("/"):
                 additional_menus_path.append(menu_path)
             else:
                 additional_menus_path.append(self.path + "/" + menu_path)
@@ -255,7 +279,7 @@ class Config:
 
     def save(self):
         debug("Saving configuration file")
-        with open(self.filename, "w") as json_file:
+        with open(self.filename, "w", encoding="utf-8") as json_file:
             json.dump(self.cfg, json_file, indent=4)
 
     def empty(self):
@@ -265,12 +289,13 @@ class Config:
 class BuildConfiguration:
     ALL = {}
 
+    # ruff: noqa: PLR0913 PLR0917
     def __init__(self, name, config, layers, local_conf, target, inherit):
         self.name_ = name
         self.config_ = config
         self.layers_ = layers
         self.local_conf_ = local_conf
-        if type(target) == list:
+        if type(target) is list:
             self.targets_ = target
         elif target:
             self.targets_ = [target]
@@ -312,9 +337,8 @@ class BuildConfiguration:
                     layers.append(layer)
                 else:
                     debug(
-                        'ignored - duplicate layer for build "{}": "{}"'.format(
-                            build.name(), layer
-                        )
+                        f'ignored - duplicate layer for build "{build.name()}"'
+                        + f': "{layer}"'
                     )
 
         return layers
@@ -326,9 +350,8 @@ class BuildConfiguration:
             for new_line in build.local_conf_:
                 if new_line in lines:
                     debug(
-                        'ignored - duplicate line in local.conf for build "{}": "{}"'.format(
-                            build.name(), new_line
-                        )
+                        "ignored - duplicate line in local.conf for build"
+                        + f' "{build.name()}": "{new_line}"'
                     )
                 lines.append(new_line)
 
@@ -341,18 +364,15 @@ class BuildConfiguration:
             for parent_name in self.inherit_:
                 if parent_name not in BuildConfiguration.ALL:
                     fatal_error(
-                        'build "{}"\'s parent "{}" not found in builds-section'.format(
-                            self.name_, parent_name
-                        )
+                        f'build "{self.name}"\'s parent "{parent_name}"'
+                        + " not found in builds-section"
                     )
 
                 parent_instance = BuildConfiguration.ALL[parent_name]
 
                 if parent_instance == self:
                     fatal_error(
-                        '"{}" inherits from itself, that is impossible'.format(
-                            self.name_
-                        )
+                        f'"{self.name_}" inherits from itself, that is impossible'
                     )
 
                 debug(
@@ -382,9 +402,8 @@ class BuildConfiguration:
             for new_parent in new_parents:
                 if new_parent in parents:
                     debug(
-                        'build "{}" parent "{}" inherited multiple times - ignoring'.format(
-                            self.name(), new_parent.name()
-                        )
+                        f'build "{self.name}" parent "{new_parent.name()}" inherited'
+                        + " multiple times - ignoring"
                     )
                 else:
                     parents.append(new_parent)
@@ -535,6 +554,7 @@ class LogMarkdownFormat(LogFormat):
         self.add_line()
 
 
+# ruff: noqa: PLR0904
 class CookerCommands:
     """The class aggregates all functions representing a low-level cooker-command"""
 
@@ -549,18 +569,25 @@ class CookerCommands:
             name = menu.setdefault("base-distribution", "poky")
             try:
                 self.distro = distros[name.lower()]
-            except:
+            except KeyError:
                 fatal_error(
-                    "base-distribution {} is unknown, please add a `base-distribution.py` file next your menu.".format(
-                        name
-                    )
+                    f"base-distribution {name} is unknown, please add a"
+                    + " `base-distribution.py` file next your menu."
                 )
 
             # Update distro if custom distro is defined in menu
             self.update_override_distro()
 
-    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None, additional_menus=list()):
-        """ cooker-command 'init': (re)set the configuration file """
+    def init(
+        self,
+        menu_name,
+        layer_dir=None,
+        build_dir=None,
+        dl_dir=None,
+        sstate_dir=None,
+        additional_menus=None,
+    ):
+        """cooker-command 'init': (re)set the configuration file"""
         self.config.set_menu(menu_name)
         self.config.set_additional_menus(additional_menus)
 
@@ -575,6 +602,9 @@ class CookerCommands:
 
         if sstate_dir:
             self.config.set_sstate_dir(sstate_dir)
+
+        if additional_menus is None:
+            additional_menus = list()
 
         self.config.save()
 
@@ -621,16 +651,11 @@ class CookerCommands:
             self.update_directory_initial(method, local_dir, remote_dir, branch, rev)
 
         if CookerCall.os.directory_exists(local_dir):
-            self.update_directory(method, local_dir, remote_dir != "", branch, rev)
+            self.update_directory(method, local_dir, remote_dir, branch, rev)
 
-    def update_directory_initial(self, method, local_dir, remote_dir, branch, rev):
+    @staticmethod
+    def update_directory_initial(method, local_dir, remote_dir, branch, rev):
         info("Downloading source from ", remote_dir)
-
-        if CookerCall.VERBOSE:
-            redirect = ""
-        else:
-            redirect = " >/dev/null 2>&1"
-
         if method == "git":
             complete = CookerCall.os.subprocess_run(
                 ["git", "ls-remote", remote_dir], None
@@ -643,7 +668,7 @@ class CookerCommands:
             command = ["git", "clone", "--recurse-submodules", remote_dir, local_dir]
             if re.search("refs/tags/" + rev + "$", refs, re.MULTILINE):
                 command.extend(["--branch", rev])
-            elif branch != "":
+            elif branch:
                 command.extend(["--branch", branch])
 
             complete = CookerCall.os.subprocess_run(command, None)
@@ -654,93 +679,49 @@ class CookerCommands:
                     )
                 )
 
-    def update_directory(self, method, local_dir, has_remote, branch, rev):
-        if CookerCall.VERBOSE:
-            redirect = ""
-        else:
-            redirect = " >/dev/null 2>&1"
-
-        if method == "git":
-            if rev == "":
-                if branch == "":
-                    warn(
-                        'WARNING! source "{}" has no "rev" nor "branch" field, '.format(
-                            local_dir
-                        )
-                        + "the build will not be reproducible at all!"
-                    )
-
-                    info("Trying to update source {}... ".format(local_dir))
-                    if has_remote:
-                        complete = CookerCall.os.subprocess_run(
-                            ["git", "pull"], local_dir
-                        )
-                        if complete.returncode != 0:
-                            fatal_error(
-                                "Unable to pull updates for {}: {}".format(
-                                    local_dir, complete.stderr.decode("ascii")
-                                )
-                            )
-
-                else:
-                    warn(
-                        'source "{}" has no "rev" field, the build will not be reproducible!'.format(
-                            local_dir
-                        )
-                    )
-                    info("Updating source {}... ".format(local_dir))
-
-                    complete = CookerCall.os.subprocess_run(
-                        ["git", "checkout", branch], local_dir
-                    )
-                    if complete.returncode != 0:
-                        fatal_error(
-                            "Unable to checkout branch {} for {}: {}".format(
-                                branch, local_dir, complete.stderr.decode("ascii")
-                            )
-                        )
-
-                    if has_remote:
-                        complete = CookerCall.os.subprocess_run(
-                            ["git", "pull"], local_dir
-                        )
-                        if complete.returncode != 0:
-                            fatal_error(
-                                "Unable to pull updates for {}: {}".format(
-                                    local_dir, complete.stderr.decode("ascii")
-                                )
-                            )
-
-            else:
-                info("Updating source {}... ".format(local_dir))
-
-                complete = CookerCall.os.subprocess_run(["git", "fetch"], local_dir)
-                if complete.returncode != 0:
-                    fatal_error(
-                        "Unable to fetch {}: {}".format(
-                            local_dir, complete.stderr.decode("ascii")
-                        )
-                    )
-
-                complete = CookerCall.os.subprocess_run(
-                    ["git", "checkout", rev], local_dir
+    @staticmethod
+    def _run_git_command(cmd_list, directory):
+        complete = CookerCall.os.subprocess_run(cmd_list, directory)
+        if complete.returncode != 0:
+            fatal_error(
+                "Unable to run command: {} in {}: {}".format(
+                    " ".join(cmd_list), directory, complete.stderr.decode("ascii")
                 )
-                if complete.returncode != 0:
-                    fatal_error(
-                        "Unable to checkout rev {} for {}: {}".format(
-                            rev, local_dir, complete.stderr.decode("ascii")
-                        )
-                    )
-
-            complete = CookerCall.os.subprocess_run(
-                ["git", "submodule", "update", "--recursive", "--init"], local_dir
             )
-            if complete.returncode != 0:
-                fatal_error(
-                    "Unable to update submodules in {}: {}".format(
-                        local_dir, complete.stderr.decode("ascii")
-                    )
+
+    @staticmethod
+    def update_directory(method, local_dir, has_remote, branch, rev):
+        if method != "git":
+            return
+
+        if rev:
+            info("Updating source {}... ".format(local_dir))
+            CookerCommands._run_git_command(["git", "fetch"], local_dir)
+            CookerCommands._run_git_command(["git", "checkout", rev], local_dir)
+        elif branch:
+            warn(
+                f'source "{local_dir}" has no "rev" field, the build will not'
+                + " be reproducible!"
+            )
+            info("Updating source {}... ".format(local_dir))
+            CookerCommands._run_git_command(["git", "checkout", branch], local_dir)
+            if has_remote:
+                CookerCommands._run_git_command(["git", "pull"], local_dir)
+        else:
+            warn(
+                'WARNING! source "{}" has no "rev" nor "branch" field, '.format(
+                    local_dir
                 )
+                + "the build will not be reproducible at all!"
+            )
+
+            info("Trying to update source {}... ".format(local_dir))
+            if has_remote:
+                CookerCommands._run_git_command(["git", "pull"], local_dir)
+
+        CookerCommands._run_git_command(
+            ["git", "submodule", "update", "--recursive", "--init"], local_dir
+        )
 
     def diff(self):
         for source in self.menu["sources"]:
@@ -827,7 +808,7 @@ class CookerCommands:
         Returns a simplistic key/value entry ('source-name: revision') of the
         sources from the layers used by the build.
         """
-        layers_dir = list(dict.fromkeys(list(map(lambda p: p.split("/")[0], layers))))
+        layers_dir = list(dict.fromkeys([p.split("/")[0] for p in layers]))
         sources = {}
 
         for source in menu["sources"]:
@@ -838,8 +819,9 @@ class CookerCommands:
 
         return sources
 
-    def load_and_validate_menu(self, menu_file, schema):
-        with open(menu_file, "r") as file:
+    @staticmethod
+    def load_and_validate_menu(menu_file, schema):
+        with open(menu_file, "r", encoding="utf-8") as file:
             try:
                 menu = pyjson5.load(file)
             except Exception as e:
@@ -855,10 +837,15 @@ class CookerCommands:
 
     def log(self, build_name, menu_from_file, menu_to_file, history, log_format):
         """
-        Generates a log of the build sources revision changes between two menu file version.
+        Generates a log of the build sources revision changes between two menu file
+        version.
         """
-        
-        schema_file = importlib.resources.files('cooker').joinpath('cooker-menu-schema.json').read_text()
+
+        schema_file = (
+            importlib.resources.files("cooker")
+            .joinpath("cooker-menu-schema.json")
+            .read_text()
+        )
         schema = pyjson5.loads(schema_file)
         menu_from = self.load_and_validate_menu(menu_from_file, schema)
         menu_to = self.menu
@@ -934,7 +921,7 @@ class CookerCommands:
 
         # Prints the formatted log output from the changes dict.
 
-        if log_format in ["md", "markdown"]:
+        if log_format in {"md", "markdown"}:
             log = LogMarkdownFormat(changes)
         else:
             log = LogTextFormat(changes)
@@ -959,7 +946,8 @@ class CookerCommands:
 
     def get_template_conf_path(self):
         """
-        This method returns the relative path to the directory containing the local.conf.sample file
+        This method returns the relative path to the directory containing the
+        local.conf.sample file
         """
         for template_conf in self.distro.TEMPLATE_CONF:
             full_path = os.path.join(
@@ -971,13 +959,16 @@ class CookerCommands:
 
     def get_template_conf_full_path(self):
         """
-        This method returns the full path to the directory containing the local.conf.sample file
+        This method returns the full path to the directory containing the
+        local.conf.sample file
         """
         template_conf_path = self.get_template_conf_path()
         if template_conf_path is None:
-            # Raises an Error when we don't find the local.conf.sample in template conf dir
+            # Raises an Error when we don't find the local.conf.sample in template conf
+            # dir
             raise FileNotFoundError(
-                f"Can't find local.conf.sample file in any of the following folders: {' '.join(self.distro.TEMPLATE_CONF)}"
+                "Can't find local.conf.sample file in any of the following folders:"
+                + f" {' '.join(self.distro.TEMPLATE_CONF)}"
             )
         else:
             full_path = os.path.join(
@@ -991,12 +982,18 @@ class CookerCommands:
     def read_local_conf_version(self):
         self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
         try:
-            file = open(self.get_template_conf_full_path())
+            file = open(self.get_template_conf_full_path(), encoding="utf-8")
             for line in file:
                 if line.lstrip().startswith("CONF_VERSION"):
                     self.local_conf_version = re.search(r"\d+", line).group(0)
                     return
-        except:
+        except (
+            FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            AttributeError,
+            re.error,
+        ):
             return
 
     def read_bitbake_version(self):
@@ -1006,7 +1003,8 @@ class CookerCommands:
                 self.config.layer_dir()
                 + self.distro.BASE_DIRECTORY
                 + "/"
-                + self.distro.BITBAKE_INIT_FILE
+                + self.distro.BITBAKE_INIT_FILE,
+                encoding="utf-8",
             )
             for line in file:
                 if "__version__" in line:
@@ -1014,8 +1012,14 @@ class CookerCommands:
                         line.split("=")[1].strip(' "').split(".")[0]
                     )
                     return
-        except:
-            return
+        except (
+            FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            IndexError,
+            ValueError,
+        ):
+            pass
 
     def prepare_build_directory(self, build):
         debug("Preparing directory:", build.dir())
@@ -1035,7 +1039,7 @@ class CookerCommands:
 
         self.read_bitbake_version()
         halt_verb = "HALT"
-        if self.bitbake_major_version < 2:
+        if self.bitbake_major_version < BITBAKE_VERSION_MINIMUM:
             halt_verb = "ABORT"
 
         file = CookerCall.os.file_open(os.path.join(conf_path, "local.conf"))
@@ -1092,13 +1096,14 @@ class CookerCommands:
         CookerCall.os.file_write(file, "{}\n".format(self.get_template_conf_path()))
         CookerCall.os.file_close(file)
 
+    # ruff: noqa: C901 PLR0912
     def show(self, builds, layers, conf, tree, build_arg, sources):
         # show source dirs
         if sources:
             for source in self.menu["sources"]:
-                l, r = self.local_dir_from_source(source)
-                info("source URL:", r)
-                info("  locally: ", l)
+                local_dir, remote_url = self.local_dir_from_source(source)
+                info("source URL:", remote_url)
+                info("  locally: ", local_dir)
 
         # check if selected builds exist
         for build in builds:
@@ -1151,9 +1156,8 @@ class CookerCommands:
                 else:
                     info("build", build.name(), "has no target")
 
-            if tree:
-                if build.ancestors_:
-                    info("builds ancestors:", [n.name() for n in build.ancestors_])
+            if tree and build.ancestors_:
+                info("builds ancestors:", [n.name() for n in build.ancestors_])
 
     def build(self, builds, sdk, keepgoing, download):
         debug("Building build-configurations")
@@ -1193,8 +1197,10 @@ class CookerCommands:
         except Exception as e:
             fatal_error("clean for", build.name(), "failed", e)
 
-    def get_buildable_builds(self, builds: List[str]):
-        """gets buildable build-objects from a build-name-list or all of them if list is empty."""
+    @staticmethod
+    def get_buildable_builds(builds: List[str]):
+        """gets buildable build-objects from a build-name-list or all of them if list
+        is empty."""
 
         if builds:
             buildables = []
@@ -1285,8 +1291,9 @@ class CookerCommands:
 
 class CookerCall:
     """
-    CookerCall represents a call of the cooker-tool, handles all arguments, opens the config-file,
-    loads the menu, checks the menu and calls the appropriate low-level commands
+    CookerCall represents a call of the cooker-tool, handles all arguments, opens the
+    config-file, loads the menu, checks the menu and calls the appropriate low-level
+    commands
     """
 
     DEBUG = False
@@ -1295,6 +1302,7 @@ class CookerCall:
 
     os = OsCalls()
 
+    # ruff: noqa: C901 PLR0915 PLR0914
     def __init__(self):
         parser = argparse.ArgumentParser(prog="cooker")
 
@@ -1321,25 +1329,80 @@ class CookerCall:
         )
 
         # `cook` command (`init` + `update` + `generate`)
-        cook_parser = subparsers.add_parser('cook', help='prepare the directories and cook the menu')
-        cook_parser.add_argument('-d', '--download', action='store_true', help='download all sources needed for offline-build')
-        cook_parser.add_argument('-k', '--keepgoing', action='store_true', help='Continue as much as possible after an error')
-        cook_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-        cook_parser.add_argument('-m', '--menu', dest='additional_menus', help='filename of the JSON menu', type=argparse.FileType('r'), action='append', nargs=1)
-        cook_parser.add_argument('menu', help='filename of the base JSON menu', type=argparse.FileType('r'), nargs=1)
-        cook_parser.add_argument('builds', help='build-configuration to build', nargs='*')
+        cook_parser = subparsers.add_parser(
+            "cook", help="prepare the directories and cook the menu"
+        )
+        cook_parser.add_argument(
+            "-d",
+            "--download",
+            action="store_true",
+            help="download all sources needed for offline-build",
+        )
+        cook_parser.add_argument(
+            "-k",
+            "--keepgoing",
+            action="store_true",
+            help="Continue as much as possible after an error",
+        )
+        cook_parser.add_argument(
+            "-s", "--sdk", action="store_true", help="build also the SDK"
+        )
+        cook_parser.add_argument(
+            "-m",
+            "--menu",
+            dest="additional_menus",
+            help="filename of the JSON menu",
+            type=argparse.FileType("r"),
+            action="append",
+            nargs=1,
+        )
+        cook_parser.add_argument(
+            "menu",
+            help="filename of the base JSON menu",
+            type=argparse.FileType("r"),
+            nargs=1,
+        )
+        cook_parser.add_argument(
+            "builds", help="build-configuration to build", nargs="*"
+        )
         cook_parser.set_defaults(func=self.cook)
 
         # `init` command
-        init_parser = subparsers.add_parser('init', help='initialize the project-dir')
-        init_parser.add_argument('-f', '--force', help='re-init an existing project',
-                                 default=False, action='store_true')
-        init_parser.add_argument('-l', '--layer-dir', help='path where layers will saved/cloned')
-        init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
-        init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
-        init_parser.add_argument('-s', '--sstate-dir', help='path where shared state cached will be saved')
-        init_parser.add_argument('-m', '--menu', dest='additional_menus', help='filename of the JSON menu', type=argparse.FileType('r'), action='append', nargs=1)
-        init_parser.add_argument('menu', help='filename of the base JSON menu', type=argparse.FileType('r'), nargs=1)
+        init_parser = subparsers.add_parser("init", help="initialize the project-dir")
+        init_parser.add_argument(
+            "-f",
+            "--force",
+            help="re-init an existing project",
+            default=False,
+            action="store_true",
+        )
+        init_parser.add_argument(
+            "-l", "--layer-dir", help="path where layers will saved/cloned"
+        )
+        init_parser.add_argument(
+            "-b", "--build-dir", help="path where the build-directories will be placed"
+        )
+        init_parser.add_argument(
+            "-d", "--dl-dir", help="path where yocto-fetched-repositories will be saved"
+        )
+        init_parser.add_argument(
+            "-s", "--sstate-dir", help="path where shared state cached will be saved"
+        )
+        init_parser.add_argument(
+            "-m",
+            "--menu",
+            dest="additional_menus",
+            help="filename of the JSON menu",
+            type=argparse.FileType("r"),
+            action="append",
+            nargs=1,
+        )
+        init_parser.add_argument(
+            "menu",
+            help="filename of the base JSON menu",
+            type=argparse.FileType("r"),
+            nargs=1,
+        )
         init_parser.set_defaults(func=self.init)
 
         # `update` command
@@ -1398,7 +1461,8 @@ class CookerCall:
         show.add_argument(
             "-b",
             "--build",
-            help="show poky-command-line to enter the build-dir and initialize the environment",
+            help="show poky-command-line to enter the build-dir and initialize the"
+            + " environment",
             action="store_true",
             default=False,
         )
@@ -1468,7 +1532,8 @@ class CookerCall:
             "cmd",
             help="execute a command in a poky-initialized shell."
             + ' Commands with arguments starting with "-" needs to be after "--".'
-            + " Example: cooker shell <cooker-build> -- bitbake -c cve_check <package-name>",
+            + " Example: cooker shell <cooker-build> -- bitbake -c cve_check"
+            + " <package-name>",
             nargs="*",
         )
         shell_parser.set_defaults(func=self.shell)
@@ -1508,17 +1573,22 @@ class CookerCall:
         # figure out which menu-file to use
         menu_file = None
         additional_menus = list()
-        if 'menu' in self.clargs and self.clargs.menu is not None:  # menu-file from the cmdline has priority
+        if (
+            "menu" in self.clargs and self.clargs.menu is not None
+        ):  # menu-file from the cmdline has priority
             menu_file = self.clargs.menu[0]
-            if 'additional_menus' in self.clargs and self.clargs.additional_menus is not None:
+            if (
+                "additional_menus" in self.clargs
+                and self.clargs.additional_menus is not None
+            ):
                 for additional_menu in self.clargs.additional_menus:
                     additional_menus.append(additional_menu[0])
         elif not self.config.empty():  # or the one from the config-file
             try:
-                menu_file = open(self.config.menu())
+                menu_file = open(self.config.menu(), encoding="utf-8")
                 for additional_menu in self.config.additional_menus():
                     print(additional_menu)
-                    additional_menus.append(open(additional_menu))
+                    additional_menus.append(open(additional_menu, encoding="utf-8"))
             except Exception as e:
                 fatal_error("menu load error", e)
 
@@ -1528,29 +1598,33 @@ class CookerCall:
             try:
                 self.menu = pyjson5.load(menu_file)
             except Exception as e:
-                fatal_error('menu load error:', e)
-            
+                fatal_error("menu load error:", e)
+
             try:
                 if additional_menus is not None:
                     for menu_file in additional_menus:
                         additional_menu = pyjson5.load(menu_file)
                         self.additional_menus.append(menu_file.name)
                         self.menu = merge_dicts(self.menu, additional_menu)
-                        pass           
+                        pass
             except Exception as e:
-                fatal_error('menu load error:', e)
-            schema_file = importlib.resources.files('cooker').joinpath('cooker-menu-schema.json').read_text()
+                fatal_error("menu load error:", e)
+            schema_file = (
+                importlib.resources.files("cooker")
+                .joinpath("cooker-menu-schema.json")
+                .read_text()
+            )
             schema = pyjson5.loads(schema_file)
-            
+
             try:
                 jsonschema.validate(self.menu, schema)
             except Exception as e:
                 fatal_error("menu file validation failed:", e)
 
-            debug('menu file validation passed')
-            debug('---start-menu-dump---')
+            debug("menu file validation passed")
+            debug("---start-menu-dump---")
             debug(json.dumps(self.menu, indent=2))
-            debug('---end-menu-dump---')
+            debug("---end-menu-dump---")
             # create build-configurations and resolve parents
 
             # the main config is root containing the menu's layers and
@@ -1594,12 +1668,14 @@ class CookerCall:
                 "Project in", self.config.project_root(), "has already been initalized"
             )
 
-        self.commands.init(self.clargs.menu[0].name,
-                           self.clargs.layer_dir,
-                           self.clargs.build_dir,
-                           self.clargs.dl_dir,
-                           self.clargs.sstate_dir,
-                           additional_menus=self.additional_menus)
+        self.commands.init(
+            self.clargs.menu[0].name,
+            self.clargs.layer_dir,
+            self.clargs.build_dir,
+            self.clargs.dl_dir,
+            self.clargs.sstate_dir,
+            additional_menus=self.additional_menus,
+        )
 
     def update(self):
         """entry point for 'update'"""
@@ -1624,7 +1700,9 @@ class CookerCall:
         )
 
     def cook(self):
-        self.commands.init(self.clargs.menu[0].name, additional_menus=self.additional_menus)
+        self.commands.init(
+            self.clargs.menu[0].name, additional_menus=self.additional_menus
+        )
         self.commands.update()
         self.commands.generate()
         self.commands.build(

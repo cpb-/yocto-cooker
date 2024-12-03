@@ -5,9 +5,9 @@ __email__ = "christophe.blaess@logilin.fr, p@yai.se"
 __license__ = "GPL"
 __url__ = "https://github.com/cpb-/yocto-cooker"
 
-from setuptools import setup
 import os
 
+from setuptools import setup
 
 # Get description from the README file
 with open(os.path.join(os.path.dirname(__file__), "README.md"), encoding="utf-8") as f:

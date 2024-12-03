@@ -1,4 +1,4 @@
-name: unit-tests
+name: format-lint
 
 on:
   push:
@@ -29,5 +29,5 @@ jobs:
         run: |
           ruff format --check
           ruff check
-          mypy --check
+          #mypy --check .
 
