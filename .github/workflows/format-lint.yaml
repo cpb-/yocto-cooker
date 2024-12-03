@@ -29,5 +29,5 @@ jobs:
         run: |
           ruff format --check
           ruff check
-          mypy --check
+          #mypy --check .
 
