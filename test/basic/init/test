@@ -37,13 +37,14 @@ cooker init $S/menu.json
 fileExists .cookerconfig
 
 # The `.cookerconfig` file is correct.
-linesInFile .cookerconfig 7
+linesInFile .cookerconfig 8
 textInFile .cookerconfig $S'/menu.json",' 1
 textInFile .cookerconfig '"layer-dir": "layers",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
 textInFile .cookerconfig '"sstate-dir": "sstate-cache"' 1
-textInFile .cookerconfig '"cooker-config-version": 1' 1
+textInFile .cookerconfig '"cooker-config-version": 2' 1
+textInFile .cookerconfig '"additional_menus":' 1
 rm .cookerconfig
 
 # Initializing with a relative path succeeds
@@ -71,11 +72,12 @@ textInFile .cookerconfig '/menu-copy.json",' 1
 
 # With `-l` option `cooker init` overwrite the `layer-dir` parameter in `.cookerconfig`
 cooker init -fl layers_dir -s sstate_dir $S/menu.json
-linesInFile .cookerconfig 7
+linesInFile .cookerconfig 8
 textInFile .cookerconfig '"layer-dir": "layers_dir",' 1
 textInFile .cookerconfig '"build-dir": "builds",' 1
 textInFile .cookerconfig '"dl-dir": "downloads"' 1
 textInFile .cookerconfig '"sstate-dir": "sstate_dir"' 1
+textInFile .cookerconfig '"additional_menus":' 1
 
 ########################
 # Test override distro #

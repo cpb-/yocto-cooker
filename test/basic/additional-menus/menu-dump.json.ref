@@ -1,0 +1,50 @@
+{
+  "notes": [
+    "This is a base note.",
+    "This is an additional note."
+  ],
+  "sources": [
+    {
+      "url": "https://git.yoctoproject.org/poky",
+      "branch": "kirkstone",
+      "rev": "kirkstone-4.0.14"
+    },
+    {
+      "url": "https://github.com/openembedded/meta-openembedded",
+      "branch": "kirkstone",
+      "rev": "8609de00952d65bb813a48c535c937324efeb18a",
+      "dir": "meta-openembedded"
+    },
+    {
+      "url": "https://SOMEURL1.test/meta-stuff1",
+      "rev": "SOMEREV1",
+      "dir": "meta-stuff1"
+    },
+    {
+      "url": "https://SOMEURL2.test/meta-stuff2",
+      "rev": "SOMEREV2",
+      "dir": "meta-stuff2"
+    }
+  ],
+  "layers": [
+    "poky/meta",
+    "poky/meta-poky",
+    "meta-openembedded/meta-oe",
+    "meta-stuff1",
+    "meta-stuff2"
+  ],
+  "builds": {
+    "some-build": {
+      "notes": [
+        "A build note."
+      ],
+      "target": [
+        "sometarget"
+      ],
+      "local.conf": [
+        "MACHINE = 'some-machine'",
+        "DISTRO = 'some-distro'"
+      ]
+    }
+  }
+}
