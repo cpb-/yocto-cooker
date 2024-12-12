@@ -1,0 +1,33 @@
+{
+  "notes": [
+    "This is an additional note.",
+  ],
+  "sources": [
+    {
+      "url": "https://SOMEURL1.test/meta-stuff1",
+      "rev": "SOMEREV1",
+      "dir": "meta-stuff1"
+    },
+    {
+      "url": "https://SOMEURL2.test/meta-stuff2",
+      "rev": "SOMEREV2",
+      "dir": "meta-stuff2"
+    },
+  ],
+  "layers": [
+    "meta-stuff1",
+    "meta-stuff2",
+  ],
+  "builds": {
+    "some-build": {
+      "notes": [
+        "A build note."
+      ],
+      "target": ["sometarget"],
+      "local.conf": [
+        "MACHINE = 'some-machine'",
+        "DISTRO = 'some-distro'"
+      ]
+    }
+  }
+}

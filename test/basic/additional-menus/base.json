@@ -1,0 +1,23 @@
+{
+  "notes": [
+    "This is a base note.",
+  ],
+  "sources": [
+    {
+      "url": "https://git.yoctoproject.org/poky",
+      "branch": "kirkstone",
+      "rev": "kirkstone-4.0.14"
+    },
+    {
+      "url": "https://github.com/openembedded/meta-openembedded",
+      "branch": "kirkstone",
+      "rev": "8609de00952d65bb813a48c535c937324efeb18a",
+      "dir": "meta-openembedded"
+    },
+  ],
+  "layers": [
+    "poky/meta",
+    "poky/meta-poky",
+    "meta-openembedded/meta-oe",
+  ],
+}

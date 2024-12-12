@@ -1,0 +1,30 @@
+{
+    "notes": [
+        "This is the specialization for the general platform menu.",
+        "Please refer to the README.md file for instruction on how to build the image"
+    ],
+    "sources": [
+        {
+            "url": "https://github.com/rauc/meta-rauc",
+            "branch": "kirkstone",
+            "rev": "ed6dc67ffb143a4c4fac01e0b7e8a60fc6260b85",
+            "dir": "meta-rauc"
+        }
+    ],
+    "layers": [
+        "meta-rauc"
+    ],
+    "builds": {
+        "YOURBUILD": {
+            "notes": [
+                "The default `core-image-minimal` image is used for bitbake."
+            ],
+            "target": [
+                "core-image-minimal"
+            ],
+            "local.conf": [
+                "MACHINE = 'qemux86'"
+            ]
+        }
+    }
+}

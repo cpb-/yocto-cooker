@@ -1,0 +1,30 @@
+{
+    "notes": [
+        "This is a minimal example for a linux platform.",
+        "It is meant to split common parts to a separate menu",
+        "Therefore you can have the same base for different",
+        "targets and machines.",
+        "Please refer to the README.md file for instruction on how to build the image"
+    ],
+    "sources": [
+        {
+            "url": "https://git.yoctoproject.org/poky",
+            "branch": "kirkstone",
+            "rev": "kirkstone-4.0.18"
+        },
+        {
+            "url": "https://github.com/openembedded/meta-openembedded",
+            "branch": "kirkstone",
+            "rev": "8609de00952d65bb813a48c535c937324efeb18a",
+            "dir": "meta-openembedded"
+        }
+    ],
+    "layers": [
+        "poky/meta",
+        "poky/meta-poky",
+        "poky/meta-yocto-bsp",
+        "meta-openembedded/meta-oe",
+        "meta-openembedded/meta-networking",
+        "meta-openembedded/meta-python"
+    ]
+}

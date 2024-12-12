@@ -349,6 +349,10 @@ the Arago Project), you may need to call a initialization script different from
 When this attribute is not specified, the default init script is the usual
 `poky/oe-init-build-env`.
 
+### Splitting menus
+
+When developing a platform for multiple machines you may want to separate these in different menu files. That keeps separation of concerns and the open-close principle in a good level: Adding a new machine only requires a new file to be added, not modified. The `-m` switch for the `init` and `cook` subcommands allow to add as many additional menus as you want.
+
 ## Internal tests
 
 Ideally each functionally is unit and functional tested via a script within the

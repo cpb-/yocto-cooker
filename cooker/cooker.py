@@ -9,12 +9,13 @@ import re
 import sys
 from urllib.parse import urlparse
 import jsonschema
-import pkg_resources
+import importlib.resources
 import subprocess
 import shlex
 from abc import ABC, abstractmethod
-
+from collections.abc import Mapping
 from typing import List
+import cooker
 
 __version__ = '1.4.0'
 
@@ -38,6 +39,15 @@ def fatal_error(*args):
     print('FATAL:', *args, file=sys.stderr)
     sys.exit(1)
 
+def merge_dicts(base, other):
+    for k, v in other.items():
+        if isinstance(v, Mapping):
+            base[k] = merge_dicts(base.get(k, {}), v)
+        elif isinstance(v, list) and isinstance(base.get(k), list):
+            base[k] = base[k] + v
+        else:
+            base[k] = v
+    return base
 
 class OsCalls:
 
@@ -107,13 +117,14 @@ class Config:
     DEFAULT_CONFIG_FILENAME = '.cookerconfig'
     DEFAULT_CONFIG = {
         'menu': '',
+        'additional_menus': list(),
         'layer-dir': 'layers',
         'build-dir': 'builds',
         'dl-dir': 'downloads',
         'sstate-dir': 'sstate-cache',
-        'cooker-config-version': 1
+        'cooker-config-version': 2
     }
-    CURRENT_CONFIG_VERSION = 1
+    CURRENT_CONFIG_VERSION = 2
 
     def __init__(self):
         debug('Looking for', Config.DEFAULT_CONFIG_FILENAME)
@@ -170,6 +181,11 @@ class Config:
                 self.cfg['sstate-dir'] = self.DEFAULT_CONFIG['sstate-dir']
             config_version = 1
 
+        if config_version == 1:
+            if 'additional_menus' not in self.cfg:  # intermediate version where sstate-dir was added
+                self.cfg['additional_menus'] = self.DEFAULT_CONFIG['additional_menus']
+            config_version = 2
+
         # cooker-config-version is updated
         self.cfg['cooker-config-version'] = config_version
 
@@ -183,6 +199,14 @@ class Config:
             self.cfg['menu'] = os.path.realpath(menu_file)
         else:
             self.cfg['menu'] = os.path.relpath(menu_file, self.path)
+
+    def set_additional_menus(self, additional_menus):
+        self.cfg['additional_menus'] = list()
+        for menu_file in additional_menus:
+            if menu_file.startswith('/'):
+                self.cfg['additional_menus'].append(os.path.realpath(menu_file))
+            else:
+                self.cfg['additional_menus'].append(os.path.relpath(menu_file, self.path))
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -215,6 +239,17 @@ class Config:
             return menu_path
         else:
             return self.path + "/" + menu_path
+
+    def additional_menus(self):
+        additional_menus_path = list()
+        if 'additional_menus' not in self.cfg:
+            return additional_menus_path
+        for menu_path in self.cfg['additional_menus']:
+            if menu_path.startswith('/'):
+                additional_menus_path.append(menu_path)
+            else:
+                additional_menus_path.append(self.path + "/" + menu_path)
+        return additional_menus_path
 
     def save(self):
         debug('Saving configuration file')
@@ -496,9 +531,10 @@ class CookerCommands:
             # Update distro if custom distro is defined in menu
             self.update_override_distro()
 
-    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None):
+    def init(self, menu_name, layer_dir=None, build_dir=None, dl_dir=None, sstate_dir=None, additional_menus=list()):
         """ cooker-command 'init': (re)set the configuration file """
         self.config.set_menu(menu_name)
+        self.config.set_additional_menus(additional_menus)
 
         if layer_dir:
             self.config.set_layer_dir(layer_dir)
@@ -728,7 +764,9 @@ class CookerCommands:
         """
         Generates a log of the build sources revision changes between two menu file version.
         """
-        schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+        
+        schema_file = importlib.resources.files('cooker').joinpath('cooker-menu-schema.json').read_text()
+        schema = pyjson5.loads(schema_file)
         menu_from = self.load_and_validate_menu(menu_from_file, schema)
         menu_to = self.menu
 
@@ -1084,7 +1122,8 @@ class CookerCall:
         cook_parser.add_argument('-d', '--download', action='store_true', help='download all sources needed for offline-build')
         cook_parser.add_argument('-k', '--keepgoing', action='store_true', help='Continue as much as possible after an error')
         cook_parser.add_argument('-s', '--sdk', action='store_true', help='build also the SDK')
-        cook_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        cook_parser.add_argument('-m', '--menu', dest='additional_menus', help='filename of the JSON menu', type=argparse.FileType('r'), action='append', nargs=1)
+        cook_parser.add_argument('menu', help='filename of the base JSON menu', type=argparse.FileType('r'), nargs=1)
         cook_parser.add_argument('builds', help='build-configuration to build', nargs='*')
         cook_parser.set_defaults(func=self.cook)
 
@@ -1096,7 +1135,8 @@ class CookerCall:
         init_parser.add_argument('-b', '--build-dir', help='path where the build-directories will be placed')
         init_parser.add_argument('-d', '--dl-dir', help='path where yocto-fetched-repositories will be saved')
         init_parser.add_argument('-s', '--sstate-dir', help='path where shared state cached will be saved')
-        init_parser.add_argument('menu', help='filename of the JSON menu', type=argparse.FileType('r'), nargs=1)
+        init_parser.add_argument('-m', '--menu', dest='additional_menus', help='filename of the JSON menu', type=argparse.FileType('r'), action='append', nargs=1)
+        init_parser.add_argument('menu', help='filename of the base JSON menu', type=argparse.FileType('r'), nargs=1)
         init_parser.set_defaults(func=self.init)
 
         # `update` command
@@ -1184,29 +1224,50 @@ class CookerCall:
 
         # figure out which menu-file to use
         menu_file = None
+        additional_menus = list()
         if 'menu' in self.clargs and self.clargs.menu is not None:  # menu-file from the cmdline has priority
             menu_file = self.clargs.menu[0]
+            if 'additional_menus' in self.clargs and self.clargs.additional_menus is not None:
+                for additional_menu in self.clargs.additional_menus:
+                    additional_menus.append(additional_menu[0])
         elif not self.config.empty():  # or the one from the config-file
             try:
                 menu_file = open(self.config.menu())
+                for additional_menu in self.config.additional_menus():
+                    print(additional_menu)
+                    additional_menus.append(open(additional_menu))
             except Exception as e:
                 fatal_error('menu load error', e)
 
         self.menu = None
+        self.additional_menus = list()
         if menu_file:
             try:
                 self.menu = pyjson5.load(menu_file)
             except Exception as e:
                 fatal_error('menu load error:', e)
-
-            schema = pyjson5.loads(pkg_resources.resource_string(__name__, "cooker-menu-schema.json").decode('utf-8'))
+            
+            try:
+                if additional_menus is not None:
+                    for menu_file in additional_menus:
+                        additional_menu = pyjson5.load(menu_file)
+                        self.additional_menus.append(menu_file.name)
+                        self.menu = merge_dicts(self.menu, additional_menu)
+                        pass           
+            except Exception as e:
+                fatal_error('menu load error:', e)
+            schema_file = importlib.resources.files('cooker').joinpath('cooker-menu-schema.json').read_text()
+            schema = pyjson5.loads(schema_file)
+            
             try:
                 jsonschema.validate(self.menu, schema)
             except Exception as e:
                 fatal_error('menu file validation failed:', e)
 
             debug('menu file validation passed')
-
+            debug('---start-menu-dump---')
+            debug(json.dumps(self.menu, indent=2))
+            debug('---end-menu-dump---')
             # create build-configurations and resolve parents
 
             # the main config is root containing the menu's layers and
@@ -1248,7 +1309,8 @@ class CookerCall:
                            self.clargs.layer_dir,
                            self.clargs.build_dir,
                            self.clargs.dl_dir,
-                           self.clargs.sstate_dir)
+                           self.clargs.sstate_dir,
+                           additional_menus=self.additional_menus)
 
     def update(self):
         """ entry point for 'update' """
@@ -1267,7 +1329,7 @@ class CookerCall:
         self.commands.log(self.clargs.build[0], self.clargs.menu_from[0], self.clargs.menu_to, self.clargs.history, self.clargs.format)
 
     def cook(self):
-        self.commands.init(self.clargs.menu[0].name)
+        self.commands.init(self.clargs.menu[0].name, additional_menus=self.additional_menus)
         self.commands.update()
         self.commands.generate()
         self.commands.build(self.clargs.builds, self.clargs.sdk, self.clargs.keepgoing, self.clargs.download)

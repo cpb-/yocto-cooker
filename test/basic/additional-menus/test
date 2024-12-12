@@ -1,0 +1,19 @@
+rm -f .cookerconfig
+
+cooker --dry-run --debug cook -m $S/additional.json $S/base.json 2> debug 1> output
+cat debug | awk '/---end-menu-dump---/{exit} f; /---start-menu-dump---/{f=1}' > menu-dump.json
+
+diff menu-dump.json $S/menu-dump.json.ref
+
+rm -f .cookerconfig
+cooker --dry-run --debug init -m $S/additional.json $S/base.json 2> debug 1> output
+cat debug | awk '/---end-menu-dump---/{exit} f; /---start-menu-dump---/{f=1}' > menu-dump.json
+
+diff menu-dump.json $S/menu-dump.json.ref
+
+cooker --dry-run --debug shell some-build 2> debug 1> output
+cat debug | awk '/---end-menu-dump---/{exit} f; /---start-menu-dump---/{f=1}' > menu-dump.json
+
+diff menu-dump.json $S/menu-dump.json.ref
+
+exit 0
