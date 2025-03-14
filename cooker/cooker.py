@@ -7,15 +7,17 @@ import json
 import os
 import re
 import shlex
-import subprocess
 import sys
-from abc import ABC, abstractmethod
 from collections.abc import Mapping
 from typing import List
 from urllib.parse import urlparse
 
 import jsonschema
 import pyjson5
+
+from .distro import AragoDistro, Distro, PokyDistro
+from .log_format import LogFormat, LogMarkdownFormat, LogTextFormat
+from .os_calls import DryRunOsCalls, OsCalls, OsCallsBase
 
 __version__ = "1.4.0"
 BITBAKE_VERSION_MINIMUM = 2
@@ -50,84 +52,6 @@ def merge_dicts(base, other):
         else:
             base[k] = v
     return base
-
-
-class OsCalls:
-    @staticmethod
-    def create_directory(directory):
-        os.makedirs(directory, exist_ok=True)
-
-    @staticmethod
-    def file_open(filename):
-        return open(filename, "w", encoding="utf-8")
-
-    @staticmethod
-    def file_write(file, string):
-        file.write("{}\n".format(string))
-
-    @staticmethod
-    def file_close(file):
-        file.close()
-
-    @staticmethod
-    def file_exists(filename):
-        return os.path.isfile(filename)
-
-    @staticmethod
-    def directory_exists(dirname):
-        return os.path.isdir(dirname)
-
-    @staticmethod
-    def replace_process(shell: str, args: List[str]):
-        return os.execv(shell, args)
-
-    @staticmethod
-    def subprocess_run(args, cwd, capture_output=True):
-        return subprocess.run(args, capture_output=capture_output, cwd=cwd, check=False)
-
-
-class DryRunOsCalls:
-    @staticmethod
-    def create_directory(directory):
-        print("mkdir {}".format(directory))
-        sys.stdout.flush()
-
-    @staticmethod
-    def file_open(filename):
-        print("cat > {} <<-EOF".format(filename))
-        sys.stdout.flush()
-        return 0
-
-    @staticmethod
-    def file_write(file, string):
-        print("\t{}".format(string.replace("$", "\$")))
-        sys.stdout.flush()
-
-    @staticmethod
-    def file_close(file):
-        print("EOF")
-        sys.stdout.flush()
-
-    @staticmethod
-    def file_exists(filename):
-        return True
-
-    @staticmethod
-    def directory_exists(dirname):
-        return True
-
-    @staticmethod
-    def replace_process(shell: str, args: List[str]):
-        print("exec {} {}".format(shell, " ".join(args)))
-        return True
-
-    @staticmethod
-    def subprocess_run(args, cwd, capture_output=True):
-        if cwd is not None:
-            print("cd " + cwd)
-        print(" ".join(args))
-        sys.stdout.flush()
-        return subprocess.CompletedProcess(args, 0, stderr="")
 
 
 class Config:
@@ -267,7 +191,7 @@ class Config:
             return self.path + "/" + menu_path
 
     def additional_menus(self):
-        additional_menus_path = list()
+        additional_menus_path: list[str] = list()
         if "additional_menus" not in self.cfg:
             return additional_menus_path
         for menu_path in self.cfg["additional_menus"]:
@@ -287,7 +211,7 @@ class Config:
 
 
 class BuildConfiguration:
-    ALL = {}
+    ALL: dict[str, "BuildConfiguration"] = {}
 
     # ruff: noqa: PLR0913 PLR0917
     def __init__(self, name, config, layers, local_conf, target, inherit):
@@ -427,133 +351,6 @@ def resolve_parents():
         )
 
 
-class PokyDistro:
-    DISTRO_NAME = "poky"
-    BASE_DIRECTORY = "poky"
-    BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = ("meta-poky/conf", "meta-poky/conf/templates/default")
-    DEFAULT_CONF_VERSION = "1"
-    LAYER_CONF_NAME = "POKY_BBLAYERS_CONF_VERSION"
-    LAYER_CONF_VERSION = "2"
-    PACKAGE_FORMAT = "package_rpm"
-    DEFAULT_BITBAKE_MAJOR_VERSION = 2
-    BITBAKE_INIT_FILE = "bitbake/lib/bb/__init__.py"
-
-
-class AragoDistro:
-    DISTRO_NAME = "arago"
-    BASE_DIRECTORY = "openembedded-core"
-    BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = ("meta/conf",)
-    DEFAULT_CONF_VERSION = "1"
-    LAYER_CONF_NAME = "LCONF_VERSION"
-    LAYER_CONF_VERSION = "7"
-    PACKAGE_FORMAT = "package_ipk"
-    DEFAULT_BITBAKE_MAJOR_VERSION = 2
-    BITBAKE_INIT_FILE = "sources/bitbake/lib/__init__.py"
-
-
-class LogFormat(ABC):
-    def __init__(self, changes):
-        self.changes = changes
-        self.output = ""
-
-    @abstractmethod
-    def print_history(self, history):
-        pass
-
-    @abstractmethod
-    def print_added_item(self, source, rev):
-        pass
-
-    def print_modified_item(self, source, data):
-        if "history" in data:
-            self.print_history(data["history"])
-
-    @abstractmethod
-    def print_deleted_item(self, source, rev):
-        pass
-
-    def print_added(self, changes):
-        for source, data in changes.items():
-            self.print_added_item(source, data)
-
-    def print_modified(self, changes):
-        for source, data in changes.items():
-            self.print_modified_item(source, data)
-
-    def print_deleted(self, changes):
-        for source, data in changes.items():
-            self.print_deleted_item(source, data)
-
-    def generate(self):
-        if self.changes["added"]:
-            self.print_added(self.changes["added"])
-
-        if self.changes["modified"]:
-            self.print_modified(self.changes["modified"])
-
-        if self.changes["deleted"]:
-            self.print_deleted(self.changes["deleted"])
-
-    def add_line(self, line=""):
-        if self.output:
-            self.output += "\n"
-        self.output += line
-
-    def display(self):
-        print(self.output)
-
-
-class LogTextFormat(LogFormat):
-    def print_history(self, history):
-        for line in history:
-            self.add_line("  {}".format(line))
-
-    def print_added_item(self, source, rev):
-        self.add_line("A {}: {}".format(source, rev))
-
-    def print_modified_item(self, source, data):
-        self.add_line("M {}: {} .. {}".format(source, data["from"], data["to"]))
-        super().print_modified_item(source, data)
-
-    def print_deleted_item(self, source, rev):
-        self.add_line("D {}: {}".format(source, rev))
-
-
-class LogMarkdownFormat(LogFormat):
-    def print_history(self, history):
-        for line in history:
-            self.add_line("  - {}".format(line))
-
-    def print_added_item(self, source, rev):
-        self.add_line("- {} at revision {}".format(source, rev))
-
-    def print_modified_item(self, source, data):
-        self.add_line(
-            "- {} changed from {} to {}".format(source, data["from"], data["to"])
-        )
-        super().print_modified_item(source, data)
-
-    def print_deleted_item(self, source, rev):
-        self.add_line("- {} at revision {}".format(source, rev))
-
-    def print_added(self, changes):
-        self.add_line("## Added projects")
-        super().print_added(changes)
-        self.add_line()
-
-    def print_modified(self, changes):
-        self.add_line("## Modified projects")
-        super().print_modified(changes)
-        self.add_line()
-
-    def print_deleted(self, changes):
-        self.add_line("## Deleted projects")
-        super().print_deleted(changes)
-        self.add_line()
-
-
 # ruff: noqa: PLR0904
 class CookerCommands:
     """The class aggregates all functions representing a low-level cooker-command"""
@@ -561,10 +358,12 @@ class CookerCommands:
     def __init__(self, config, menu):
         self.config = config
         self.menu = menu
-        if menu is not None:
+        self.distro: Distro = PokyDistro()
+
+        if menu:
             distros = {
-                "poky": PokyDistro,
-                "arago": AragoDistro,
+                "poky": PokyDistro(),
+                "arago": AragoDistro(),
             }
             name = menu.setdefault("base-distribution", "poky")
             try:
@@ -920,7 +719,7 @@ class CookerCommands:
                     data["history"] = complete.stdout.decode("ascii").splitlines()
 
         # Prints the formatted log output from the changes dict.
-
+        log: LogFormat
         if log_format in {"md", "markdown"}:
             log = LogMarkdownFormat(changes)
         else:
@@ -981,12 +780,19 @@ class CookerCommands:
 
     def read_local_conf_version(self):
         self.local_conf_version = str(self.distro.DEFAULT_CONF_VERSION)
+
         try:
-            file = open(self.get_template_conf_full_path(), encoding="utf-8")
-            for line in file:
-                if line.lstrip().startswith("CONF_VERSION"):
-                    self.local_conf_version = re.search(r"\d+", line).group(0)
-                    return
+            with open(self.get_template_conf_full_path(), encoding="utf-8") as file:
+                for line in file:
+                    if not line.lstrip().startswith("CONF_VERSION"):
+                        continue
+
+                    match = re.search(r"\d+", line)
+
+                    if match is not None:
+                        self.local_conf_version = match.group(0)
+
+                    break
         except (
             FileNotFoundError,
             PermissionError,
@@ -994,7 +800,7 @@ class CookerCommands:
             AttributeError,
             re.error,
         ):
-            return
+            pass
 
     def read_bitbake_version(self):
         self.bitbake_major_version = int(self.distro.DEFAULT_BITBAKE_MAJOR_VERSION)
@@ -1300,7 +1106,7 @@ class CookerCall:
     WARNING = True
     VERBOSE = False
 
-    os = OsCalls()
+    os: OsCallsBase = OsCalls()
 
     # ruff: noqa: C901 PLR0915 PLR0914
     def __init__(self):
@@ -1592,7 +1398,7 @@ class CookerCall:
             except Exception as e:
                 fatal_error("menu load error", e)
 
-        self.menu = None
+        self.menu = dict()
         self.additional_menus = list()
         if menu_file:
             try:
@@ -1679,13 +1485,13 @@ class CookerCall:
 
     def update(self):
         """entry point for 'update'"""
-        if self.menu is None:
+        if not self.menu:
             fatal_error("update needs a menu")
 
         self.commands.update()
 
     def diff(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("diff needs a menu")
 
         self.commands.diff()
@@ -1713,13 +1519,13 @@ class CookerCall:
         )
 
     def generate(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("generate needs a menu")
 
         self.commands.generate()
 
     def show(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("show command needs a menu")
 
         self.commands.show(
@@ -1732,9 +1538,9 @@ class CookerCall:
         )
 
     def build(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("build needs a menu")
-
+        debug(self.menu)
         self.commands.build(
             self.clargs.builds,
             self.clargs.sdk,
@@ -1743,13 +1549,13 @@ class CookerCall:
         )
 
     def shell(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("shell needs a menu")
 
         self.commands.shell(self.clargs.build, self.clargs.cmd)
 
     def clean(self):
-        if self.menu is None:
+        if not self.menu:
             fatal_error("clean needs a menu")
 
         self.commands.clean(self.clargs.recipe[0], self.clargs.builds)
