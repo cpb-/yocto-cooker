@@ -1,0 +1,33 @@
+name: format-lint
+
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - '*'
+
+  workflow_dispatch:
+
+jobs:
+
+  format-lint:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install requirements
+        run: |
+          sudo pip3 install ruff mypy
+
+      - name: run format and lint
+        run: |
+          ruff format --check
+          ruff check
+          mypy --check .
+
