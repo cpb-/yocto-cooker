@@ -894,7 +894,7 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
         for layer in sorted(build.layers()):
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
-            CookerCall.os.file_write(file, "\t${{TOPDIR}}/{} \\".format(layer_path))
+            CookerCall.os.file_write(file, "    ${{TOPDIR}}/{} \\".format(layer_path))
         CookerCall.os.file_write(file, '"\n')
         CookerCall.os.file_close(file)
 
