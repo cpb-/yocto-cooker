@@ -65,11 +65,11 @@ cat > /builds/build-pi2-base/conf/bblayers.conf <<-EOF
 	BBPATH = "\${TOPDIR}"
 	BBFILES ?= ""
 	BBLAYERS ?= " \
-		\${TOPDIR}/../../layers/meta-openembedded/meta-oe \
-		\${TOPDIR}/../../layers/meta-raspberrypi \
-		\${TOPDIR}/../../layers/poky/meta \
-		\${TOPDIR}/../../layers/poky/meta-poky \
-		\${TOPDIR}/../../layers/poky/meta-yocto-bsp \
+	    \${TOPDIR}/../../layers/meta-openembedded/meta-oe \
+	    \${TOPDIR}/../../layers/meta-raspberrypi \
+	    \${TOPDIR}/../../layers/poky/meta \
+	    \${TOPDIR}/../../layers/poky/meta-poky \
+	    \${TOPDIR}/../../layers/poky/meta-yocto-bsp \
 	"
 
 EOF
