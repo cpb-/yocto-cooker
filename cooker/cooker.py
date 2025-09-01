@@ -1031,7 +1031,7 @@ class CookerCommands:
         if not CookerCall.os.file_exists(init_script):
             fatal_error("init-script", init_script, "not found")
 
-        command_line = "source {} {} && bitbake {} {}".format(
+        command_line = ". {} {} && bitbake {} {}".format(
             init_script, directory, bb_task, bb_target
         )
 
@@ -1055,7 +1055,7 @@ class CookerCommands:
                     str_cmd, build_dir, init_script, shell
                 )
             )
-            full_command_line = "source {} {} > /dev/null || exit 1; {}".format(
+            full_command_line = ". {} {} > /dev/null || exit 1; {}".format(
                 init_script, build_dir, str_cmd
             )
             if not CookerCall.os.subprocess_run(
