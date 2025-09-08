@@ -1031,7 +1031,7 @@ class CookerCommands:
         if not CookerCall.os.file_exists(init_script):
             fatal_error("init-script", init_script, "not found")
 
-        command_line = "source {} {} && bitbake {} {}".format(
+        command_line = ". {} {} && bitbake {} {}".format(
             init_script, directory, bb_task, bb_target
         )
 
@@ -1046,6 +1046,7 @@ class CookerCommands:
         init_script = self.config.layer_dir(
             self.distro.BASE_DIRECTORY + "/" + self.distro.BUILD_SCRIPT
         )
+        base_dir = self.config.layer_dir(self.distro.BASE_DIRECTORY)
         shell = os.environ.get("SHELL", "/bin/bash")
 
         if len(cmd) >= 1:
@@ -1055,11 +1056,11 @@ class CookerCommands:
                     str_cmd, build_dir, init_script, shell
                 )
             )
-            full_command_line = "source {} {} > /dev/null || exit 1; {}".format(
-                init_script, build_dir, str_cmd
+            full_command_line = "set {}; . {} {} > /dev/null || exit 1; {}".format(
+                build_dir, init_script, build_dir, str_cmd
             )
             if not CookerCall.os.subprocess_run(
-                [shell, "-c", full_command_line], None, capture_output=False
+                [shell, "-c", full_command_line], base_dir, capture_output=False
             ):
                 fatal_error("Execution of {} failed.".format(full_command_line))
         else:
@@ -1071,7 +1072,13 @@ class CookerCommands:
 
             if not CookerCall.os.replace_process(
                 shell,
-                [shell, "-c", ". {} {}; {}".format(init_script, build_dir, shell)],
+                [
+                    shell,
+                    "-c",
+                    "cd {}; set {}; . {} {}; {}".format(
+                        base_dir, build_dir, init_script, build_dir, shell
+                    ),
+                ],
             ):
                 fatal_error(
                     "could not run interactive shell for {} with {}".format(
