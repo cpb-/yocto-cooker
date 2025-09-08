@@ -474,7 +474,7 @@ class CookerCommands:
             if complete.returncode != 0:
                 fatal_error(
                     "Unable to clone {}: {}".format(
-                        remote_dir, complete.stderr.decode("ascii")
+                        remote_dir, complete.stderr.decode("utf-8", errors="replace")
                     )
                 )
 
@@ -484,7 +484,9 @@ class CookerCommands:
         if complete.returncode != 0:
             fatal_error(
                 "Unable to run command: {} in {}: {}".format(
-                    " ".join(cmd_list), directory, complete.stderr.decode("ascii")
+                    " ".join(cmd_list),
+                    directory,
+                    complete.stderr.decode("utf-8", errors="replace"),
                 )
             )
 
@@ -556,10 +558,10 @@ class CookerCommands:
                         local_dir
                     )
                 )
-                debug(complete.stderr.decode("ascii"))
+                debug(complete.stderr.decode("utf-8", errors="replace"))
                 continue
 
-            local_rev = complete.stdout.strip().decode("ascii")
+            local_rev = complete.stdout.strip().decode("utf-8", errors="replace")
             debug("menu revision: {}, local revision: {}".format(menu_rev, local_rev))
             if menu_rev != local_rev:
                 print("{}: {} .. {}".format(source_name, menu_rev, local_rev))
@@ -714,9 +716,11 @@ class CookerCommands:
                                 source
                             )
                         )
-                        debug(complete.stderr.decode("ascii"))
+                        debug(complete.stderr.decode("utf-8", errors="replace"))
                         continue
-                    data["history"] = complete.stdout.decode("ascii").splitlines()
+                    data["history"] = complete.stdout.decode(
+                        "utf-8", errors="replace"
+                    ).splitlines()
 
         # Prints the formatted log output from the changes dict.
         log: LogFormat
