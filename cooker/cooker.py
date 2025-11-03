@@ -892,7 +892,7 @@ class CookerCommands:
         CookerCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
         CookerCall.os.file_write(file, 'BBFILES ?= ""')
         CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
-        for layer in sorted(build.layers()):
+        for layer in build.layers():
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
             CookerCall.os.file_write(file, "    ${{TOPDIR}}/{} \\".format(layer_path))
         CookerCall.os.file_write(file, '"\n')
