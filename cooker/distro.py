@@ -31,7 +31,7 @@ class NoPokyDistro(Distro):
     DISTRO_NAME = "defaultsetup"
     BASE_DIRECTORY = "openembedded-core"
     BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = "meta/conf/templates/default"
+    TEMPLATE_CONF = ("meta/conf/templates/default",)
     DEFAULT_CONF_VERSION = "2"
     LAYER_CONF_NAME = "LCONF_VERSION"
     LAYER_CONF_VERSION = "7"
