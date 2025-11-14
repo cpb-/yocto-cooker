@@ -14,6 +14,32 @@ class Distro:
     BITBAKE_INIT_FILE: str
 
 
+class AragoDistro(Distro):
+    DISTRO_NAME = "arago"
+    BASE_DIRECTORY = "openembedded-core"
+    BUILD_SCRIPT = "oe-init-build-env"
+    TEMPLATE_CONF = ("meta/conf",)
+    DEFAULT_CONF_VERSION = "1"
+    LAYER_CONF_NAME = "LCONF_VERSION"
+    LAYER_CONF_VERSION = "7"
+    PACKAGE_FORMAT = "package_ipk"
+    DEFAULT_BITBAKE_MAJOR_VERSION = 2
+    BITBAKE_INIT_FILE = "sources/bitbake/lib/__init__.py"
+
+
+class NoPokyDistro(Distro):
+    DISTRO_NAME = "defaultsetup"
+    BASE_DIRECTORY = "openembedded-core"
+    BUILD_SCRIPT = "oe-init-build-env"
+    TEMPLATE_CONF = ("meta/conf/templates/default")
+    DEFAULT_CONF_VERSION = "2"
+    LAYER_CONF_NAME = "LCONF_VERSION"
+    LAYER_CONF_VERSION = "7"
+    PACKAGE_FORMAT = "package_rpm"
+    DEFAULT_BITBAKE_MAJOR_VERSION = 2
+    BITBAKE_INIT_FILE = "bitbake/lib/bb/__init__.py"
+
+
 class PokyDistro(Distro):
     DISTRO_NAME = "poky"
     BASE_DIRECTORY = "poky"
@@ -27,14 +53,3 @@ class PokyDistro(Distro):
     BITBAKE_INIT_FILE = "bitbake/lib/bb/__init__.py"
 
 
-class AragoDistro(Distro):
-    DISTRO_NAME = "arago"
-    BASE_DIRECTORY = "openembedded-core"
-    BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = ("meta/conf",)
-    DEFAULT_CONF_VERSION = "1"
-    LAYER_CONF_NAME = "LCONF_VERSION"
-    LAYER_CONF_VERSION = "7"
-    PACKAGE_FORMAT = "package_ipk"
-    DEFAULT_BITBAKE_MAJOR_VERSION = 2
-    BITBAKE_INIT_FILE = "sources/bitbake/lib/__init__.py"
