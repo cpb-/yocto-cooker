@@ -1,6 +1,6 @@
-project(CookerTest NONE)
-
 cmake_minimum_required(VERSION 3.8)
+
+project(CookerTest NONE)
 
 find_package(Git REQUIRED)
 
