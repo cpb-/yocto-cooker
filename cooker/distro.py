@@ -31,7 +31,7 @@ class NoPokyDistro(Distro):
     DISTRO_NAME = "defaultsetup"
     BASE_DIRECTORY = "openembedded-core"
     BUILD_SCRIPT = "oe-init-build-env"
-    TEMPLATE_CONF = ("meta/conf/templates/default")
+    TEMPLATE_CONF = "meta/conf/templates/default"
     DEFAULT_CONF_VERSION = "2"
     LAYER_CONF_NAME = "LCONF_VERSION"
     LAYER_CONF_VERSION = "7"
@@ -51,5 +51,3 @@ class PokyDistro(Distro):
     PACKAGE_FORMAT = "package_rpm"
     DEFAULT_BITBAKE_MAJOR_VERSION = 2
     BITBAKE_INIT_FILE = "bitbake/lib/bb/__init__.py"
-
-
