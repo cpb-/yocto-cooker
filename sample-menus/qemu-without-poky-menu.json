@@ -1,0 +1,35 @@
+{
+	"notes" : [
+		"This is a menu for Qemu ARM emulation that does not use    ",
+		"the Poky repository.                                       ",
+		"Please refer to the README file for instruction on how to  ",
+		"build the image."
+	],
+	"sources" : [
+		{
+			"url": "git://git.openembedded.org/bitbake",
+			"rev": "yocto-5.0.13"
+		},
+		{
+			"url": "git://git.openembedded.org/openembedded-core",
+			"branch": "scarthgap",
+			"rev": "06d49813"
+		}
+	],
+
+	"layers" : [
+		"openembedded-core/meta"
+	],
+
+	"base-distribution": "NoPoky",
+
+	"builds" : {
+		"qemuarm": {
+			"target" : "core-image-base",
+
+			"local.conf": [
+				"MACHINE = 'qemuarm' "
+			]
+		}
+	}
+}
