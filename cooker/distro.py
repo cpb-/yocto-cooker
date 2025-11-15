@@ -28,7 +28,7 @@ class AragoDistro(Distro):
 
 
 class NoPokyDistro(Distro):
-    DISTRO_NAME = "defaultsetup"
+    DISTRO_NAME = ""
     BASE_DIRECTORY = "openembedded-core"
     BUILD_SCRIPT = "oe-init-build-env"
     TEMPLATE_CONF = ("meta/conf/templates/default",)
