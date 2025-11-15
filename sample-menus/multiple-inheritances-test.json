@@ -1,9 +1,31 @@
 {
+	"notes" : [
+		"This menu is an example of multiple inheritances.          ",
+		"It is not intended to be used for a real build.            ",
+	],
 	"sources" : [
-		{ "url": "git://git.yoctoproject.org/poky", "branch": "warrior", "rev": "warrior-21.0.3"  },
-		{ "url": "git://git.openembedded.org/meta-openembedded", "branch": "warrior", "rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8" },
-		{ "url": "git://git.yoctoproject.org/meta-raspberrypi", "branch": "warrior", "rev": "615a1a83399623bcb7afb500bd9d3fc633e32004" },
-		{ "method": "git", "url": "https://github.com/mendersoftware/meta-mender", "dir": "meta-mender", "branch": "warrior", "rev": "warrior-v2020.03" }
+		{
+			"url": "git://git.yoctoproject.org/poky",
+			"branch": "warrior",
+			"rev": "warrior-21.0.3"
+		},
+		{
+			"url": "git://git.openembedded.org/meta-openembedded",
+			"branch": "warrior",
+			"rev": "a24acf94d48d635eca668ea34598c6e5c857e3f8"
+		},
+		{
+			"url": "git://git.yoctoproject.org/meta-raspberrypi",
+			"branch": "warrior",
+			"rev": "615a1a83399623bcb7afb500bd9d3fc633e32004"
+		},
+		{
+			"url": "https://github.com/mendersoftware/meta-mender",
+			"method": "git",
+			"dir": "meta-mender",
+			"branch": "warrior",
+			"rev": "warrior-v2020.03"
+		}
 	],
 
 	"layers" : [
