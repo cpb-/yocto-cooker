@@ -191,6 +191,44 @@ EOF
 cooker init -f menu.json
 cooker build
 
+# `cooker build` succeeds with NoPoky base-distro
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "nopoky",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
+# `cooker build` accepts 'NoPoky' (capitalized)
+cat > menu.json <<-EOF
+	{
+	    "sources": [],
+	    "base-distribution": "NoPoky",
+	    "layers": [],
+	    "builds": {
+	        "build-1" : {
+	            "target": "core-image-base",
+	            "local.conf": [
+	                "MACHINE = qemu-x86"
+	            ]
+	        }
+	    }
+	}
+EOF
+cooker init -f menu.json
+cooker build
+
 rm -rf layers/openembedded-core
 
 # `cooker build --keepgoing` calls `bitbake -k`

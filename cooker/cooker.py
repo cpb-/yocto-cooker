@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import jsonschema
 import pyjson5
 
-from .distro import AragoDistro, Distro, PokyDistro
+from .distro import AragoDistro, Distro, NoPokyDistro, PokyDistro
 from .log_format import LogFormat, LogMarkdownFormat, LogTextFormat
 from .os_calls import DryRunOsCalls, OsCalls, OsCallsBase
 
@@ -362,6 +362,7 @@ class CookerCommands:
 
         if menu:
             distros = {
+                "nopoky": NoPokyDistro(),
                 "poky": PokyDistro(),
                 "arago": AragoDistro(),
             }
