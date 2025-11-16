@@ -1,7 +1,8 @@
 {
     "notes": [
-        "This is the specialization for the general platform menu.",
-        "Please refer to the README.md file for instruction on how to build the image"
+        "This is the specialization for the general platform menu.          ",
+        "Please refer to the README.md file for instruction on how to build ",
+	"the image."
     ],
     "sources": [
         {

@@ -1,0 +1,52 @@
+{
+	"notes" : [
+		"This is a standard menu for Raspberry Pi 5.",
+		"Please refer to the README file for instruction on how to ",
+		"build to build the image."
+	],
+	"sources" : [
+		{
+			"url": "git://git.yoctoproject.org/poky",
+			"branch": "scarthgap",
+			"rev": "yocto-5.0.12"
+		},
+		{
+			"url": "git://git.openembedded.org/meta-openembedded",
+			"branch": "scarthgap",
+			"rev": "f1f24826"
+		},
+		{
+			"url": "git://git.yoctoproject.org/meta-raspberrypi",
+			"branch": "scarthgap",
+			"rev": "8767e2ff"
+		}
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"builds" : {
+
+		"pi3": {
+			"target" : "core-image-base",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE = 'raspberrypi5'                                ",
+				"ENABLE_UART = '1'                                       ",
+
+				"# The following lines allow the use of the Raspberry Pi ",
+				"# classical serial port on P1 header                    ",
+				"RPI_EXTRA_CONFIG += 'dtparam=uart0_console'             ",
+				"SERIAL_CONSOLES = '115200;serial0'                      "
+			]
+		}
+	}
+}

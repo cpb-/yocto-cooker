@@ -1,0 +1,30 @@
+{
+	"notes" : [
+		"This is a simple menu for Qemu ARM emulation.              ",
+		"Please refer to the README file for instruction on how to  ",
+		"build the image."
+	],
+	"sources" : [
+		{
+			"url": "git://git.yoctoproject.org/poky",
+			"branch": "scarthgap",
+			"rev": "yocto-5.0.12"
+		}
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp"
+	],
+
+	"builds" : {
+		"qemuarm": {
+			"target" : "core-image-base",
+
+			"local.conf": [
+				"MACHINE = 'qemuarm' "
+			]
+		}
+	}
+}
