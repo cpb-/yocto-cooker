@@ -1,0 +1,49 @@
+{
+	"notes" : [
+		"Some sample builds for BeagleBone family boards.           ",
+		"Tested on: BeagleBone Black.                               ",
+		"Please refer to the README file for instruction            ",
+		"on how to build the image. "
+	],
+	"sources" : [
+		{
+			"url": "git://git.yoctoproject.org/poky",
+			"branch": "scarthgap",
+			"rev": "yocto-5.0.12"
+		},
+		{
+			"url": "git://git.openembedded.org/meta-openembedded",
+			"branch": "scarthgap",
+			"rev": "f1f24826"
+		}
+	],
+
+	"layers" : [
+		"poky/meta",
+		"poky/meta-poky",
+		"poky/meta-yocto-bsp",
+		"meta-openembedded/meta-oe"
+	],
+
+	"builds" : {
+
+		"beaglebone-console": {
+
+			"notes": [
+				" The default `core-image-base` image.                  ",
+				"                                                       ",
+				" The image to write to your SD-card is:                ",
+				" builds/build-beaglebone-console/tmp/deploy/images/beaglebone-yocto/core-image-base-beaglebone-yocto.rootfs.wic"
+			],
+
+			"target" : "core-image-base",
+
+			"layers" : [
+			],
+
+			"local.conf": [
+				"MACHINE = 'beaglebone-yocto'                           "
+			]
+		}
+	}
+}

@@ -4,9 +4,21 @@
 		"For the moment we only run on Qemu emulation."
 	],
 	"sources" : [
-		{ "url": "git://git.yoctoproject.org/poky", "branch": "hardknott", "rev": "hardknott-3.3.1" },
-		{ "url": "git://git.openembedded.org/meta-openembedded", "rev": "189cdf43" },
-		{ "url": "https://github.com/riscv/meta-riscv.git", "dir": "meta-riscv", "rev": "276941d9" }
+		{
+			"url": "git://git.yoctoproject.org/poky",
+			"branch": "scarthgap",
+			"rev": "yocto-5.0.12"
+		},
+		{
+			"url": "git://git.openembedded.org/meta-openembedded",
+			"branch": "scarthgap",
+			"rev": "f1f24826"
+		},
+		{
+			"url": "https://github.com/riscv/meta-riscv.git",
+			"dir": "meta-riscv",
+			"branch": "scarthgap",
+			"rev": "76727db9" }
 	],
 
 	"layers" : [
@@ -19,10 +31,12 @@
 
 	"local.conf" : [
 		"INHERIT += 'extrausers'     ",
+
+		"# You'd better put the user/password configuration in your own image than in local.conf",
 		"# `risc` password: `v` ",
-		"EXTRA_USERS_PARAMS_append  = \"useradd -p \\$5\\$FZf5SWAWvASrbUWA\\$s.RUVnPXk5WE.ousaVAWSGI/wCnlsyHyrWmgxoEHUu4  risc;\"     ",
+		"EXTRA_USERS_PARAMS += \"useradd -p '\\$5\\$FZf5SWAWvASrbUWA\\$s.RUVnPXk5WE.ousaVAWSGI/wCnlsyHyrWmgxoEHUu4'  risc;\" ",
 		"# `root` password: `linux` ",
-		"EXTRA_USERS_PARAMS_append  = \"usermod -p \\$5\\$oWODdN2qVYVBB5Nl\\$NrH9rY/8gxTkbdEbNzBK9Iu5KLlSppkOhooF8sP2mo/  root;\"     "
+		"EXTRA_USERS_PARAMS += \"usermod -p '\\$5\\$oWODdN2qVYVBB5Nl\\$NrH9rY/8gxTkbdEbNzBK9Iu5KLlSppkOhooF8sP2mo/'  root;\" "
 	],
 
 	"builds" : {
