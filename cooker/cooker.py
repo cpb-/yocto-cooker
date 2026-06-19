@@ -142,21 +142,25 @@ class Config:
     def project_root(self):
         return os.path.dirname(self.filename)
 
+    def _interpret_path_str(self, path_string: str) -> str:
+        """Interpret the provided string as absolute or relative path
+
+        depending on it starting with a slash.
+
+        Return the canonical path if it's absolute,
+        return the relative path to the represented config file otherwise.
+        """
+        if path_string.startswith("/"):
+            return os.path.realpath(path_string)
+        return os.path.relpath(path_string, self.path)
+
     def set_menu(self, menu_file):
-        if menu_file.startswith("/"):
-            self.cfg["menu"] = os.path.realpath(menu_file)
-        else:
-            self.cfg["menu"] = os.path.relpath(menu_file, self.path)
+        self.cfg["menu"] = self._interpret_path_str(menu_file)
 
     def set_additional_menus(self, additional_menus):
         self.cfg["additional_menus"] = list()
         for menu_file in additional_menus:
-            if menu_file.startswith("/"):
-                self.cfg["additional_menus"].append(os.path.realpath(menu_file))
-            else:
-                self.cfg["additional_menus"].append(
-                    os.path.relpath(menu_file, self.path)
-                )
+            self.cfg["additional_menus"].append(self._interpret_path_str(menu_file))
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -183,22 +187,22 @@ class Config:
     def sstate_dir(self, name=""):
         return os.path.join(self.project_root(), self.cfg["sstate-dir"], name)
 
+    def _get_absolute_menu_path_str(self, menu_path_str: str) -> str:
+        """Provide the absolute path of a menu based on it starting with a slash."""
+        if menu_path_str.startswith("/"):
+            return menu_path_str
+        return self.path + "/" + menu_path_str
+
     def menu(self):
         menu_path = self.cfg["menu"]
-        if menu_path.startswith("/"):
-            return menu_path
-        else:
-            return self.path + "/" + menu_path
+        return self._get_absolute_menu_path_str(menu_path)
 
     def additional_menus(self):
         additional_menus_path: list[str] = list()
         if "additional_menus" not in self.cfg:
             return additional_menus_path
         for menu_path in self.cfg["additional_menus"]:
-            if menu_path.startswith("/"):
-                additional_menus_path.append(menu_path)
-            else:
-                additional_menus_path.append(self.path + "/" + menu_path)
+            additional_menus_path.append(self._get_absolute_menu_path_str(menu_path))
         return additional_menus_path
 
     def save(self):
