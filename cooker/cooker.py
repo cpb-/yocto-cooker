@@ -187,22 +187,22 @@ class Config:
     def sstate_dir(self, name=""):
         return os.path.join(self.project_root(), self.cfg["sstate-dir"], name)
 
+    def _get_absolute_menu_path_str(self, menu_path_str: str) -> str:
+        """Provide the absolute path of a menu based on it starting with a slash."""
+        if menu_path_str.startswith("/"):
+            return menu_path_str
+        return self.path + "/" + menu_path_str
+
     def menu(self):
         menu_path = self.cfg["menu"]
-        if menu_path.startswith("/"):
-            return menu_path
-        else:
-            return self.path + "/" + menu_path
+        return self._get_absolute_menu_path_str(menu_path)
 
     def additional_menus(self):
         additional_menus_path: list[str] = list()
         if "additional_menus" not in self.cfg:
             return additional_menus_path
         for menu_path in self.cfg["additional_menus"]:
-            if menu_path.startswith("/"):
-                additional_menus_path.append(menu_path)
-            else:
-                additional_menus_path.append(self.path + "/" + menu_path)
+            additional_menus_path.append(self._get_absolute_menu_path_str(menu_path))
         return additional_menus_path
 
     def save(self):
