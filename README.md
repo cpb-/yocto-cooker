@@ -63,14 +63,22 @@ followed by options, menu filename or build-config-names.
 
 The top-level sub-command proposed by `cooker` is:
 
-- `cooker cook <menu-file> [<build-configs>...]`: does the whole production job from the
+- `cooker cook <menu-file> [<build-configs>...] [--immutable]`: does the whole production job from the
   initial configuration and downloading up to the final image(s).
+
+  For `--immutable` see `cooker init --immutable`.
 
 In fact, `cooker cook` is equivalent to a collection of low-level commands:
 
-- `cooker init <menu-file>`: store the current menu filename into the
+- `cooker init <menu-file> [--immutable]`: store the current menu filename into the
   `.cookerconfig` configuration file. The content of the configuration will be
   explained later.
+  In immutable initialisation a copy of the provided menu files is stored and the copies filename referenced in the
+  configuration instead of the original files.
+  This allows a sense of immutability across consecutive cooker calls.
+
+  In order to wipe this immutable configuration simply `cooker init` again.
+
 
 - `cooker update`: fetch and checkout the version of each layer indicated in the
   current menu file.
