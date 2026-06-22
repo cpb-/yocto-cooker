@@ -285,7 +285,7 @@ class BuildConfiguration:
         return lines
 
     def set_parents(self):
-        debug('setting first-level-parents of build "{}"'.format(self.name_))
+        debug(f'setting first-level-parents of build "{self.name_}"')
 
         if self.inherit_:
             for parent_name in self.inherit_:
@@ -302,11 +302,7 @@ class BuildConfiguration:
                         f'"{self.name_}" inherits from itself, that is impossible'
                     )
 
-                debug(
-                    "adding {} as parent to {}".format(
-                        parent_instance.name(), self.name()
-                    )
-                )
+                debug(f"adding {parent_instance.name()} as parent to {self.name()}")
                 self.parents_.append(parent_instance)
 
     def get_ancestors(self, start, path=None):
@@ -348,9 +344,8 @@ def resolve_parents():
         build.ancestors_ = build.get_ancestors(build)
 
         debug(
-            'ancestors of build "{}": "{}"'.format(
-                build.name(), [n.name() for n in build.ancestors_]
-            )
+            f'ancestors of build "{build.name()}": '
+            f'"{[n.name() for n in build.ancestors_]}"'
         )
 
 
@@ -498,7 +493,7 @@ class CookerCommands:
             return
 
         if rev:
-            info("Updating source {}... ".format(local_dir))
+            info(f"Updating source {local_dir}... ")
             CookerCommands._run_git_command(["git", "fetch"], local_dir)
             CookerCommands._run_git_command(["git", "checkout", rev], local_dir)
         elif branch:
@@ -506,19 +501,17 @@ class CookerCommands:
                 f'source "{local_dir}" has no "rev" field, the build will not'
                 + " be reproducible!"
             )
-            info("Updating source {}... ".format(local_dir))
+            info(f"Updating source {local_dir}... ")
             CookerCommands._run_git_command(["git", "checkout", branch], local_dir)
             if has_remote:
                 CookerCommands._run_git_command(["git", "pull"], local_dir)
         else:
             warn(
-                'WARNING! source "{}" has no "rev" nor "branch" field, '.format(
-                    local_dir
-                )
+                f'WARNING! source "{local_dir}" has no "rev" nor "branch" field, '
                 + "the build will not be reproducible at all!"
             )
 
-            info("Trying to update source {}... ".format(local_dir))
+            info(f"Trying to update source {local_dir}... ")
             if has_remote:
                 CookerCommands._run_git_command(["git", "pull"], local_dir)
 
@@ -530,24 +523,16 @@ class CookerCommands:
         for source in self.menu["sources"]:
             local_dir = self.local_dir_from_source(source)[0]
             source_name = os.path.basename(local_dir)
-            debug("check the diff of the source {}".format(source_name))
+            debug(f"check the diff of the source {source_name}")
 
             if "rev" not in source:
-                debug(
-                    "no revision field in the menu file for source {}".format(
-                        source_name
-                    )
-                )
+                debug(f"no revision field in the menu file for source {source_name}")
                 continue
 
             menu_rev = source["rev"]
 
             if not CookerCall.os.directory_exists(local_dir):
-                warn(
-                    "{} directory of source {} does not exist".format(
-                        local_dir, source_name
-                    )
-                )
+                warn(f"{local_dir} directory of source {source_name} does not exist")
                 continue
 
             complete = CookerCall.os.subprocess_run(
@@ -556,17 +541,16 @@ class CookerCommands:
             )
             if complete.returncode != 0:
                 warn(
-                    "unable to get the current revision of the local source {}".format(
-                        local_dir
-                    )
+                    f"unable to get the current revision "
+                    f"of the local source {local_dir}"
                 )
                 debug(complete.stderr.decode("ascii"))
                 continue
 
             local_rev = complete.stdout.strip().decode("ascii")
-            debug("menu revision: {}, local revision: {}".format(menu_rev, local_rev))
+            debug(f"menu revision: {menu_rev}, local revision: {local_rev}")
             if menu_rev != local_rev:
-                print("{}: {} .. {}".format(source_name, menu_rev, local_rev))
+                print(f"{source_name}: {menu_rev} .. {local_rev}")
 
     def generate_build_config_from_menu(self, menu, build_name):
         """
@@ -633,9 +617,9 @@ class CookerCommands:
             try:
                 jsonschema.validate(menu, schema)
             except Exception as e:
-                fatal_error("menu file {} validation failed:".format(menu_file), e)
+                fatal_error(f"menu file {menu_file} validation failed:", e)
 
-        debug("menu file {} validation passed".format(menu_file))
+        debug(f"menu file {menu_file} validation passed")
         return menu
 
     def log(self, build_name, menu_from_file, menu_to_file, history, log_format):
@@ -654,7 +638,7 @@ class CookerCommands:
         menu_to = self.menu
 
         if build_name not in menu_from["builds"] or build_name not in menu_to["builds"]:
-            fatal_error("build `{}` does not exist in the menu file".format(build_name))
+            fatal_error(f"build `{build_name}` does not exist in the menu file")
 
         # Generates a BuildConfiguration class for the menu since the build layers
         # can change between menu version. If 'menu to' is ommitted, use the
@@ -676,8 +660,8 @@ class CookerCommands:
             menu_to, build_config_to.layers()
         )
 
-        debug("sources `from` menu: {}".format(sources_from))
-        debug("sources `to` menu: {}".format(sources_to))
+        debug(f"sources `from` menu: {sources_from}")
+        debug(f"sources `to` menu: {sources_to}")
 
         # Filters the changes from sources. Local directory basename of the source
         # as key, source revision as value.
@@ -713,11 +697,7 @@ class CookerCommands:
                         self.config.layer_dir(source),
                     )
                     if complete.returncode != 0:
-                        warn(
-                            "unable to get the git history of the source {}".format(
-                                source
-                            )
-                        )
+                        warn(f"unable to get the git history of the source {source}")
                         debug(complete.stderr.decode("ascii"))
                         continue
                     data["history"] = complete.stdout.decode("ascii").splitlines()
@@ -857,30 +837,26 @@ class CookerCommands:
         CookerCall.os.file_write(
             file, "# DO NOT EDIT! - This file is automatically created by cooker.\n\n"
         )
-        CookerCall.os.file_write(file, 'COOKER_LAYER_DIR = "{}"'.format(layer_dir))
-        CookerCall.os.file_write(file, 'DL_DIR = "{}"'.format(dl_dir))
-        CookerCall.os.file_write(file, 'SSTATE_DIR = "{}"'.format(sstate_dir))
-        CookerCall.os.file_write(file, 'COOKER_BUILD_NAME = "{}"'.format(build.name()))
+        CookerCall.os.file_write(file, f'COOKER_LAYER_DIR = "{layer_dir}"')
+        CookerCall.os.file_write(file, f'DL_DIR = "{dl_dir}"')
+        CookerCall.os.file_write(file, f'SSTATE_DIR = "{sstate_dir}"')
+        CookerCall.os.file_write(file, f'COOKER_BUILD_NAME = "{build.name()}"')
         for line in build.local_conf():
             CookerCall.os.file_write(file, line)
-        CookerCall.os.file_write(file, 'DISTRO ?= "{}"'.format(self.distro.DISTRO_NAME))
+        CookerCall.os.file_write(file, f'DISTRO ?= "{self.distro.DISTRO_NAME}"')
         CookerCall.os.file_write(
-            file, 'PACKAGE_CLASSES ?= "{}"'.format(self.distro.PACKAGE_FORMAT)
+            file, f'PACKAGE_CLASSES ?= "{self.distro.PACKAGE_FORMAT}"'
         )
         CookerCall.os.file_write(file, 'BB_DISKMON_DIRS ??= "\\')
         CookerCall.os.file_write(file, "\tSTOPTASKS,${TMPDIR},1G,100K \\")
         CookerCall.os.file_write(file, "\tSTOPTASKS,${DL_DIR},1G,100K \\")
         CookerCall.os.file_write(file, "\tSTOPTASKS,${SSTATE_DIR},1G,100K \\")
         CookerCall.os.file_write(file, "\tSTOPTASKS,/tmp,100M,100K \\")
-        CookerCall.os.file_write(file, "\t{},${{TMPDIR}},100M,1K \\".format(halt_verb))
-        CookerCall.os.file_write(file, "\t{},${{DL_DIR}},100M,1K \\".format(halt_verb))
-        CookerCall.os.file_write(
-            file, "\t{},${{SSTATE_DIR}},100M,1K \\".format(halt_verb)
-        )
-        CookerCall.os.file_write(file, '\t{},/tmp,10M,1K"'.format(halt_verb))
-        CookerCall.os.file_write(
-            file, 'CONF_VERSION ?= "{}"'.format(self.local_conf_version)
-        )
+        CookerCall.os.file_write(file, f"\t{halt_verb},${{TMPDIR}},100M,1K \\")
+        CookerCall.os.file_write(file, f"\t{halt_verb},${{DL_DIR}},100M,1K \\")
+        CookerCall.os.file_write(file, f"\t{halt_verb},${{SSTATE_DIR}},100M,1K \\")
+        CookerCall.os.file_write(file, f'\t{halt_verb},/tmp,10M,1K"')
+        CookerCall.os.file_write(file, f'CONF_VERSION ?= "{self.local_conf_version}"')
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, "bblayers.conf"))
@@ -889,21 +865,19 @@ class CookerCommands:
         )
         CookerCall.os.file_write(
             file,
-            '{} = "{}"'.format(
-                self.distro.LAYER_CONF_NAME, self.distro.LAYER_CONF_VERSION
-            ),
+            f'{self.distro.LAYER_CONF_NAME} = "{self.distro.LAYER_CONF_VERSION}"',
         )
         CookerCall.os.file_write(file, 'BBPATH = "${TOPDIR}"')
         CookerCall.os.file_write(file, 'BBFILES ?= ""')
         CookerCall.os.file_write(file, 'BBLAYERS ?= " \\')
         for layer in build.layers():
             layer_path = os.path.relpath(self.config.layer_dir(layer), build.dir())
-            CookerCall.os.file_write(file, "    ${{TOPDIR}}/{} \\".format(layer_path))
+            CookerCall.os.file_write(file, f"    ${{TOPDIR}}/{layer_path} \\")
         CookerCall.os.file_write(file, '"\n')
         CookerCall.os.file_close(file)
 
         file = CookerCall.os.file_open(os.path.join(conf_path, "templateconf.cfg"))
-        CookerCall.os.file_write(file, "{}\n".format(self.get_template_conf_path()))
+        CookerCall.os.file_write(file, f"{self.get_template_conf_path()}\n")
         CookerCall.os.file_close(file)
 
     # ruff: noqa: C901 PLR0912
@@ -919,9 +893,7 @@ class CookerCommands:
         for build in builds:
             if build not in BuildConfiguration.ALL:
                 fatal_error(
-                    'cannot show infos about build "{}" as it does not exists.'.format(
-                        build
-                    )
+                    f'cannot show infos about build "{build}" as it does not exists.'
                 )
 
         # empty given builds - use all existing ones
@@ -937,17 +909,17 @@ class CookerCommands:
             else:
                 build_info = ""
 
-            info("build: {}{}".format(build.name(), build_info))
+            info(f"build: {build.name()}{build_info}")
 
             if layers:
                 info(" used layers")
                 for layer in build.layers():
-                    info("  - {} ({})".format(layer, self.config.layer_dir(layer)))
+                    info(f"  - {layer} ({self.config.layer_dir(layer)})")
 
             if conf:
                 info(" local.conf entries")
                 for entry in build.local_conf():
-                    info("  - {}".format(entry))
+                    info(f"  - {entry}")
 
             if build_arg:
                 if build.targets():
@@ -978,7 +950,7 @@ class CookerCommands:
     def build_targets(self, build, sdk, keepgoing, download):
         for target in build.targets():
             try:
-                info("Building {} ({})".format(build.name(), target))
+                info(f"Building {build.name()} ({target})")
                 bb_task = ""
 
                 if keepgoing:
@@ -995,14 +967,14 @@ class CookerCommands:
                 fatal_error("build for", build.name(), "failed", e)
 
     def clean(self, recipe, builds):
-        debug("cleaning {}".format(recipe))
+        debug(f"cleaning {recipe}")
 
         for build in self.get_buildable_builds(builds):
             self.clean_build_config(recipe, build)
 
     def clean_build_config(self, recipe, build):
         try:
-            info("Clean {} for {}".format(recipe, build.name()))
+            info(f"Clean {recipe} for {build.name()}")
             self.run_bitbake(build, "-c cleansstate", recipe)
         except Exception as e:
             fatal_error("clean for", build.name(), "failed", e)
@@ -1035,15 +1007,13 @@ class CookerCommands:
         if not CookerCall.os.file_exists(init_script):
             fatal_error("init-script", init_script, "not found")
 
-        command_line = ". {} {} && bitbake {} {}".format(
-            init_script, directory, bb_task, bb_target
-        )
+        command_line = f". {init_script} {directory} && bitbake {bb_task} {bb_target}"
 
         complete = CookerCall.os.subprocess_run(
             ["env", "bash", "-c", command_line], None, capture_output=False
         )
         if complete.returncode != 0:
-            fatal_error("Execution of {} failed.".format(command_line))
+            fatal_error(f"Execution of {command_line} failed.")
 
     def shell(self, build_names: list[str], cmd: list[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
@@ -1056,22 +1026,21 @@ class CookerCommands:
         if len(cmd) >= 1:
             str_cmd = shlex.join(cmd)
             debug(
-                'running "{}" in poky-initialized shell {} {} {}'.format(
-                    str_cmd, build_dir, init_script, shell
-                )
+                f'running "{str_cmd}" in poky-initialized '
+                f"shell {build_dir} {init_script} {shell}"
             )
-            full_command_line = "set {}; . {} {} > /dev/null || exit 1; {}".format(
-                build_dir, init_script, build_dir, str_cmd
+            full_command_line = (
+                f"set {build_dir}; . {init_script} {build_dir} > "
+                f"/dev/null || exit 1; {str_cmd}"
             )
             if not CookerCall.os.subprocess_run(
                 [shell, "-c", full_command_line], base_dir, capture_output=False
             ):
-                fatal_error("Execution of {} failed.".format(full_command_line))
+                fatal_error(f"Execution of {full_command_line} failed.")
         else:
             debug(
-                "running interactive, poky-initialized shell {} {} {}".format(
-                    build_dir, init_script, shell
-                )
+                f"running interactive, poky-initialized shell {build_dir} "
+                f"{init_script} {shell}"
             )
 
             if not CookerCall.os.replace_process(
@@ -1079,15 +1048,12 @@ class CookerCommands:
                 [
                     shell,
                     "-c",
-                    "cd {}; set {}; . {} {}; {}".format(
-                        base_dir, build_dir, init_script, build_dir, shell
-                    ),
+                    f"cd {base_dir}; set {build_dir}; . {init_script} {build_dir}; "
+                    f"{shell}",
                 ],
             ):
                 fatal_error(
-                    "could not run interactive shell for {} with {}".format(
-                        build_names[0], shell
-                    )
+                    f"could not run interactive shell for {build_names[0]} with {shell}"
                 )
 
     def update_override_distro(self):

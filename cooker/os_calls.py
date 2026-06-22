@@ -57,7 +57,7 @@ class OsCalls(OsCallsBase):
 
     @staticmethod
     def file_write(file, string):
-        file.write("{}\n".format(string))
+        file.write(f"{string}\n")
 
     @staticmethod
     def file_close(file):
@@ -83,18 +83,19 @@ class OsCalls(OsCallsBase):
 class DryRunOsCalls(OsCallsBase):
     @staticmethod
     def create_directory(directory):
-        print("mkdir {}".format(directory))
+        print(f"mkdir {directory}")
         sys.stdout.flush()
 
     @staticmethod
     def file_open(filename):
-        print("cat > {} <<-EOF".format(filename))
+        print(f"cat > {filename} <<-EOF")
         sys.stdout.flush()
         return 0
 
     @staticmethod
     def file_write(file, string):
-        print("\t{}".format(string.replace("$", "\$")))
+        escaped = string.replace("$", "\$")
+        print(f"\t{escaped}")
         sys.stdout.flush()
 
     @staticmethod
