@@ -1,11 +1,8 @@
-from typing import Tuple
-
-
 class Distro:
     DISTRO_NAME: str
     BASE_DIRECTORY: str
     BUILD_SCRIPT: str
-    TEMPLATE_CONF: Tuple[str, ...]
+    TEMPLATE_CONF: tuple[str, ...]
     DEFAULT_CONF_VERSION: str
     LAYER_CONF_NAME: str
     LAYER_CONF_VERSION: str

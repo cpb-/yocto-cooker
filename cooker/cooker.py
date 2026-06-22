@@ -9,7 +9,6 @@ import re
 import shlex
 import sys
 from collections.abc import Mapping
-from typing import List
 from urllib.parse import urlparse
 
 import jsonschema
@@ -1009,7 +1008,7 @@ class CookerCommands:
             fatal_error("clean for", build.name(), "failed", e)
 
     @staticmethod
-    def get_buildable_builds(builds: List[str]):
+    def get_buildable_builds(builds: list[str]):
         """gets buildable build-objects from a build-name-list or all of them if list
         is empty."""
 
@@ -1046,7 +1045,7 @@ class CookerCommands:
         if complete.returncode != 0:
             fatal_error("Execution of {} failed.".format(command_line))
 
-    def shell(self, build_names: List[str], cmd: List[str]):
+    def shell(self, build_names: list[str], cmd: list[str]):
         build_dir = self.get_buildable_builds(build_names)[0].dir()
         init_script = self.config.layer_dir(
             self.distro.BASE_DIRECTORY + "/" + self.distro.BUILD_SCRIPT

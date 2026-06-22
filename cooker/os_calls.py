@@ -2,7 +2,6 @@ import os
 import subprocess
 import sys
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class OsCallsBase(ABC):
@@ -38,7 +37,7 @@ class OsCallsBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         pass
 
     @staticmethod
@@ -73,7 +72,7 @@ class OsCalls(OsCallsBase):
         return os.path.isdir(dirname)
 
     @staticmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         return os.execv(shell, args)
 
     @staticmethod
@@ -112,7 +111,7 @@ class DryRunOsCalls(OsCallsBase):
         return True
 
     @staticmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         print("exec {} {}".format(shell, " ".join(args)))
         return True
 
