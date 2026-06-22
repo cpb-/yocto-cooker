@@ -624,7 +624,7 @@ class CookerCommands:
 
     @staticmethod
     def load_and_validate_menu(menu_file, schema):
-        with open(menu_file, "r", encoding="utf-8") as file:
+        with open(menu_file, encoding="utf-8") as file:
             try:
                 menu = pyjson5.load(file)
             except Exception as e:
