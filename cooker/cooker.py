@@ -473,7 +473,7 @@ class CookerCommands:
             if complete.returncode != 0:
                 fatal_error(
                     "Unable to clone {}: {}".format(
-                        remote_dir, complete.stderr.decode("ascii")
+                        remote_dir, complete.stderr.decode("utf-8", errors="replace")
                     )
                 )
 
@@ -483,7 +483,9 @@ class CookerCommands:
         if complete.returncode != 0:
             fatal_error(
                 "Unable to run command: {} in {}: {}".format(
-                    " ".join(cmd_list), directory, complete.stderr.decode("ascii")
+                    " ".join(cmd_list),
+                    directory,
+                    complete.stderr.decode("utf-8", errors="replace"),
                 )
             )
 
@@ -544,10 +546,10 @@ class CookerCommands:
                     f"unable to get the current revision "
                     f"of the local source {local_dir}"
                 )
-                debug(complete.stderr.decode("ascii"))
+                debug(complete.stderr.decode("utf-8", errors="replace"))
                 continue
 
-            local_rev = complete.stdout.strip().decode("ascii")
+            local_rev = complete.stdout.strip().decode("utf-8", errors="replace")
             debug(f"menu revision: {menu_rev}, local revision: {local_rev}")
             if menu_rev != local_rev:
                 print(f"{source_name}: {menu_rev} .. {local_rev}")
@@ -698,9 +700,11 @@ class CookerCommands:
                     )
                     if complete.returncode != 0:
                         warn(f"unable to get the git history of the source {source}")
-                        debug(complete.stderr.decode("ascii"))
+                        debug(complete.stderr.decode("utf-8", errors="replace"))
                         continue
-                    data["history"] = complete.stdout.decode("ascii").splitlines()
+                    data["history"] = complete.stdout.decode(
+                        "utf-8", errors="replace"
+                    ).splitlines()
 
         # Prints the formatted log output from the changes dict.
         log: LogFormat
