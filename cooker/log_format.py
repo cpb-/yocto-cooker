@@ -56,26 +56,26 @@ class LogFormat(ABC):
 class LogTextFormat(LogFormat):
     def print_history(self, history):
         for line in history:
-            self.add_line("  {}".format(line))
+            self.add_line(f"  {line}")
 
     def print_added_item(self, source, rev):
-        self.add_line("A {}: {}".format(source, rev))
+        self.add_line(f"A {source}: {rev}")
 
     def print_modified_item(self, source, data):
         self.add_line("M {}: {} .. {}".format(source, data["from"], data["to"]))
         super().print_modified_item(source, data)
 
     def print_deleted_item(self, source, rev):
-        self.add_line("D {}: {}".format(source, rev))
+        self.add_line(f"D {source}: {rev}")
 
 
 class LogMarkdownFormat(LogFormat):
     def print_history(self, history):
         for line in history:
-            self.add_line("  - {}".format(line))
+            self.add_line(f"  - {line}")
 
     def print_added_item(self, source, rev):
-        self.add_line("- {} at revision {}".format(source, rev))
+        self.add_line(f"- {source} at revision {rev}")
 
     def print_modified_item(self, source, data):
         self.add_line(
@@ -84,7 +84,7 @@ class LogMarkdownFormat(LogFormat):
         super().print_modified_item(source, data)
 
     def print_deleted_item(self, source, rev):
-        self.add_line("- {} at revision {}".format(source, rev))
+        self.add_line(f"- {source} at revision {rev}")
 
     def print_added(self, changes):
         self.add_line("## Added projects")

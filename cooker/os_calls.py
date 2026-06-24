@@ -2,7 +2,6 @@ import os
 import subprocess
 import sys
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class OsCallsBase(ABC):
@@ -38,7 +37,7 @@ class OsCallsBase(ABC):
 
     @staticmethod
     @abstractmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         pass
 
     @staticmethod
@@ -58,7 +57,7 @@ class OsCalls(OsCallsBase):
 
     @staticmethod
     def file_write(file, string):
-        file.write("{}\n".format(string))
+        file.write(f"{string}\n")
 
     @staticmethod
     def file_close(file):
@@ -73,7 +72,7 @@ class OsCalls(OsCallsBase):
         return os.path.isdir(dirname)
 
     @staticmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         return os.execv(shell, args)
 
     @staticmethod
@@ -84,18 +83,19 @@ class OsCalls(OsCallsBase):
 class DryRunOsCalls(OsCallsBase):
     @staticmethod
     def create_directory(directory):
-        print("mkdir {}".format(directory))
+        print(f"mkdir {directory}")
         sys.stdout.flush()
 
     @staticmethod
     def file_open(filename):
-        print("cat > {} <<-EOF".format(filename))
+        print(f"cat > {filename} <<-EOF")
         sys.stdout.flush()
         return 0
 
     @staticmethod
     def file_write(file, string):
-        print("\t{}".format(string.replace("$", "\$")))
+        escaped = string.replace("$", "\$")
+        print(f"\t{escaped}")
         sys.stdout.flush()
 
     @staticmethod
@@ -112,7 +112,7 @@ class DryRunOsCalls(OsCallsBase):
         return True
 
     @staticmethod
-    def replace_process(shell: str, args: List[str]):
+    def replace_process(shell: str, args: list[str]):
         print("exec {} {}".format(shell, " ".join(args)))
         return True
 
