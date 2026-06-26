@@ -67,7 +67,7 @@ textInFile .cookerconfig '/menu-copy.json",' 1
 # `cooker init` fails, even with `force` option if menu file is absent.
 expect_fail cooker init -f $S/unknown-menu.json
 
-# On failure `cooker init` doesn't overwite the `.cookerconfig` file.
+# On failure `cooker init` doesn't overwrite the `.cookerconfig` file.
 textInFile .cookerconfig '/menu-copy.json",' 1
 
 # With `-l` option `cooker init` overwrite the `layer-dir` parameter in `.cookerconfig`
@@ -86,5 +86,5 @@ textInFile .cookerconfig '"additional_menus":' 1
 # Test should fail when an invalid property is used in override_distro
 expect_fail cooker init -f $S/override-menu-invalid-property.json
 
-# Test should fail when an unkown property is used in override_distro
+# Test should fail when an unknown property is used in override_distro
 expect_fail cooker init -f $S/override-menu-unknown-property.json
