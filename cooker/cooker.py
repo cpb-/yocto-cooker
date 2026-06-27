@@ -8,7 +8,8 @@ import os
 import re
 import shlex
 import sys
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
+from pathlib import Path
 from urllib.parse import urlparse
 
 import jsonschema
@@ -156,10 +157,12 @@ class Config:
     def set_menu(self, menu_file):
         self.cfg["menu"] = self._interpret_path_str(menu_file)
 
-    def set_additional_menus(self, additional_menus):
+    def set_additional_menus(self, additional_menus: Iterable[Path]):
         self.cfg["additional_menus"] = list()
         for menu_file in additional_menus:
-            self.cfg["additional_menus"].append(self._interpret_path_str(menu_file))
+            self.cfg["additional_menus"].append(
+                self._interpret_path_str(str(menu_file))
+            )
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -190,7 +193,7 @@ class Config:
         """Provide the absolute path of a menu based on it starting with a slash."""
         if menu_path_str.startswith("/"):
             return menu_path_str
-        return self.path + "/" + menu_path_str
+        return str(self.path + "/" + menu_path_str)
 
     def menu(self):
         menu_path = self.cfg["menu"]
@@ -378,12 +381,12 @@ class CookerCommands:
 
     def init(
         self,
-        menu_name,
+        menu_name: str,
         layer_dir=None,
         build_dir=None,
         dl_dir=None,
         sstate_dir=None,
-        additional_menus=None,
+        additional_menus: list[Path] | None = None,
     ):
         """cooker-command 'init': (re)set the configuration file"""
         self.config.set_menu(menu_name)
@@ -1139,14 +1142,14 @@ class CookerCall:
             "--menu",
             dest="additional_menus",
             help="filename of the JSON menu",
-            type=argparse.FileType("r"),
+            type=Path,
             action="append",
             nargs=1,
         )
         cook_parser.add_argument(
             "menu",
             help="filename of the base JSON menu",
-            type=argparse.FileType("r"),
+            type=Path,
             nargs=1,
         )
         cook_parser.add_argument(
@@ -1180,14 +1183,14 @@ class CookerCall:
             "--menu",
             dest="additional_menus",
             help="filename of the JSON menu",
-            type=argparse.FileType("r"),
+            type=Path,
             action="append",
             nargs=1,
         )
         init_parser.add_argument(
             "menu",
             help="filename of the base JSON menu",
-            type=argparse.FileType("r"),
+            type=Path,
             nargs=1,
         )
         init_parser.set_defaults(func=self.init)
@@ -1358,8 +1361,8 @@ class CookerCall:
             debug("config present")
 
         # figure out which menu-file to use
-        menu_file = None
-        additional_menus = list()
+        menu_file: Path | None = None
+        additional_menus: list[Path] = list()
         if (
             "menu" in self.clargs and self.clargs.menu is not None
         ):  # menu-file from the cmdline has priority
@@ -1372,10 +1375,10 @@ class CookerCall:
                     additional_menus.append(additional_menu[0])
         elif not self.config.empty():  # or the one from the config-file
             try:
-                menu_file = open(self.config.menu(), encoding="utf-8")
+                menu_file = Path(self.config.menu())
                 for additional_menu in self.config.additional_menus():
                     print(additional_menu)
-                    additional_menus.append(open(additional_menu, encoding="utf-8"))
+                    additional_menus.append(Path(additional_menu))
             except Exception as e:
                 fatal_error("menu load error", e)
 
@@ -1383,15 +1386,17 @@ class CookerCall:
         self.additional_menus = list()
         if menu_file:
             try:
-                self.menu = pyjson5.load(menu_file)
+                with menu_file.open(encoding="utf-8") as handle:
+                    self.menu = pyjson5.load(handle)
             except Exception as e:
                 fatal_error("menu load error:", e)
 
             try:
                 if additional_menus is not None:
                     for menu_file in additional_menus:
-                        additional_menu = pyjson5.load(menu_file)
-                        self.additional_menus.append(menu_file.name)
+                        with menu_file.open(encoding="utf-8") as handle:
+                            additional_menu = pyjson5.load(handle)
+                        self.additional_menus.append(menu_file)
                         self.menu = merge_dicts(self.menu, additional_menu)
                         pass
             except Exception as e:
@@ -1456,7 +1461,7 @@ class CookerCall:
             )
 
         self.commands.init(
-            self.clargs.menu[0].name,
+            str(self.clargs.menu[0]),
             self.clargs.layer_dir,
             self.clargs.build_dir,
             self.clargs.dl_dir,
@@ -1488,7 +1493,7 @@ class CookerCall:
 
     def cook(self):
         self.commands.init(
-            self.clargs.menu[0].name, additional_menus=self.additional_menus
+            str(self.clargs.menu[0]), additional_menus=self.additional_menus
         )
         self.commands.update()
         self.commands.generate()
