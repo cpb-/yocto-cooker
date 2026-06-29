@@ -643,7 +643,7 @@ class CookerCommands:
             fatal_error(f"build `{build_name}` does not exist in the menu file")
 
         # Generates a BuildConfiguration class for the menu since the build layers
-        # can change between menu version. If 'menu to' is ommitted, use the
+        # can change between menu version. If 'menu to' is omitted, use the
         # current up-to-date BuildConfiguration class.
 
         build_config_from = self.generate_build_config_from_menu(menu_from, build_name)
@@ -1452,7 +1452,7 @@ class CookerCall:
         """function use by command-line-arg-parser as entry point for the 'init'"""
         if not self.clargs.force and not self.config.empty():
             fatal_error(
-                "Project in", self.config.project_root(), "has already been initalized"
+                "Project in", self.config.project_root(), "has already been initialized"
             )
 
         self.commands.init(
