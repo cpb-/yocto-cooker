@@ -1453,13 +1453,15 @@ class CookerCall:
         if (
             "menu" in self.clargs and self.clargs.menu is not None
         ):  # menu-file from the cmdline has priority
-            menu_file = self.clargs.menu[0]
+            menu_file = self._copy_to_cache_if_pseudofile(self.clargs.menu[0])
             if (
                 "additional_menus" in self.clargs
                 and self.clargs.additional_menus is not None
             ):
                 for additional_menu in self.clargs.additional_menus:
-                    additional_menus.append(additional_menu[0])
+                    additional_menus.append(
+                        self._copy_to_cache_if_pseudofile(additional_menu[0])
+                    )
         elif not self.config.empty():  # or the one from the config-file
             try:
                 menu_file = Path(self.config.menu())
@@ -1540,6 +1542,15 @@ class CookerCall:
 
         sys.exit(0)
 
+    def _copy_to_cache_if_pseudofile(self, potential_pseudo_file: Path):
+        """Transparently return a regular file.
+
+        In case the provided file is a pseudo file, cache a copy and return its path.
+        """
+        if potential_pseudo_file.is_fifo():
+            return self.config.create_immutable_copy(potential_pseudo_file)
+        return potential_pseudo_file
+
     def init(self):
         """function use by command-line-arg-parser as entry point for the 'init'"""
         if not self.clargs.force and not self.config.empty():
@@ -1548,7 +1559,7 @@ class CookerCall:
             )
 
         self.commands.init(
-            str(self.clargs.menu[0]),
+            str(self._copy_to_cache_if_pseudofile(self.clargs.menu[0])),
             self.clargs.layer_dir,
             self.clargs.build_dir,
             self.clargs.dl_dir,
