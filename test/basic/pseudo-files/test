@@ -1,0 +1,18 @@
+# cooker cook can handle pseudo files as menu files
+rm -f .cookerconfig
+
+cooker --dry-run --debug cook -m <( echo '{"sources":[{"url":"https://github.com/openembedded/meta-openembedded", "branch": "kirkstone-next", "rev": "06fc0278f10d630838d703dde707bbf0e2999873", "dir": "meta-openembedded"}]}'; ) $S/base.json 2> debug 1> output
+cat debug | awk '/---end-menu-dump---/{exit} f; /---start-menu-dump---/{f=1}' > menu-dump.json
+
+# the pseudo file menus contents are read, so kirkstone-next is checked out instead of the kirkstone branch
+diff menu-dump.json $S/menu-dump.json.ref
+
+# cooker cook then produces a .cookerconfig containing a reference in .cookercache/ to avoid a no longer existing file
+# because of that there are no invalid references to /proc/*/fd/pipe/* in cookerconfig
+expect_fail grep --regexp="/proc/.*/fd/pipe\:\[.*\]" .cookerconfig
+
+# but only one to a .cookercache/ file
+# FIXME stat $(grep --regexp="/proc/.*/fd/pipe\:\[.*\]" cookerconfig-dump.json.ref )
+
+# as subsequent cooker calls try to read .cookerconfig and the referenced files, they do not fail due to the cache
+cooker --dry-run update
