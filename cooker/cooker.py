@@ -508,7 +508,7 @@ class CookerCommands:
             )
             info(f"Updating source {local_dir}... ")
             if has_remote:
-                CookerCommands._run_git_command(["git", "fetch", "--all"], local_dir)            
+                CookerCommands._run_git_command(["git", "fetch", "--all"], local_dir)
             CookerCommands._run_git_command(["git", "checkout", branch], local_dir)
             if has_remote:
                 CookerCommands._run_git_command(["git", "pull"], local_dir)
