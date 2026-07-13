@@ -7,9 +7,12 @@ import json
 import os
 import re
 import shlex
+import shutil
 import sys
 from collections.abc import Iterable, Mapping
+from hashlib import file_digest
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
 import jsonschema
@@ -55,6 +58,7 @@ def merge_dicts(base, other):
 
 
 class Config:
+    DEFAULT_MENU_CACHE_DIR = ".cookercache/"
     DEFAULT_CONFIG_FILENAME = ".cookerconfig"
     DEFAULT_CONFIG = {
         "menu": "",
@@ -142,6 +146,61 @@ class Config:
     def project_root(self):
         return os.path.dirname(self.filename)
 
+    def wipe_unreferenced_cooker_cache(self):
+        """Drop immutable menu copies if they exist.
+
+        Drop .cookercache/ if it's empty afterwards.
+        """
+        if self.menu_cache_dir.exists() and self.menu_cache_dir.is_dir():
+            cached_files = [f for f in self.menu_cache_dir.iterdir() if f.is_file()]
+            serialized = str(self.cfg)
+            for cf in cached_files:
+                if cf.name not in serialized:
+                    cf.unlink(missing_ok=True)
+            # get rid of the cache directory if it is empty
+            if not any(self.menu_cache_dir.iterdir()):
+                shutil.rmtree(self.menu_cache_dir)
+
+    def create_immutable_copy(self, menu_file: Path) -> Path:
+        """Create an immutable copy of a menu file
+
+        to prevent changes or removal of the original file affecting following build
+        steps.
+
+        Raise a FileNotFoundError in case the menu_file does not exist.
+
+        Return the path of the copied file.
+        """
+        if not menu_file.exists():
+            msg = f"menu file '{menu_file}' does not exist"
+            raise FileNotFoundError(msg)
+
+        # create cache directory if it does not exist
+        self.menu_cache_dir.mkdir(exist_ok=True)
+
+        intermediate: Path
+
+        with NamedTemporaryFile(mode="wb") as temp_file_handle:
+            if menu_file.is_fifo():
+                # file is a pseudo file and can only be read once
+                with menu_file.open("rb") as menu_handle:
+                    shutil.copyfileobj(menu_handle, temp_file_handle)
+                # to avoid the necessity of reopening the temporary file
+                # jump to position 0 in it again
+                temp_file_handle.seek(0)
+                intermediate = Path(temp_file_handle.name).absolute()
+            else:
+                intermediate = menu_file
+
+            # filename = hash file
+            with intermediate.open("rb") as handle:
+                target_filename = file_digest(handle, "sha256").hexdigest()
+            target_path = self.menu_cache_dir / target_filename
+
+            # copy file to cachedir/filename
+            shutil.copy(intermediate, target_path)
+        return target_path
+
     def _interpret_path_str(self, path_string: str) -> str:
         """Interpret the provided string as absolute or relative path
 
@@ -154,15 +213,27 @@ class Config:
             return os.path.realpath(path_string)
         return os.path.relpath(path_string, self.path)
 
-    def set_menu(self, menu_file):
-        self.cfg["menu"] = self._interpret_path_str(menu_file)
+    def set_menu(self, menu_file, *, mutable=True):
+        interpreted_path_str = self._interpret_path_str(menu_file)
+        self.cfg["menu"] = (
+            interpreted_path_str
+            if mutable
+            else str(self.create_immutable_copy(Path(interpreted_path_str)))
+        )
 
-    def set_additional_menus(self, additional_menus: Iterable[Path]):
+    def set_additional_menus(self, additional_menus: Iterable[Path], *, mutable=True):
         self.cfg["additional_menus"] = list()
         for menu_file in additional_menus:
+            interpreted_path_str = self._interpret_path_str(str(menu_file))
             self.cfg["additional_menus"].append(
-                self._interpret_path_str(str(menu_file))
+                interpreted_path_str
+                if mutable
+                else str(self.create_immutable_copy(Path(interpreted_path_str)))
             )
+
+    @property
+    def menu_cache_dir(self) -> Path:
+        return Path(self.project_root()) / self.DEFAULT_MENU_CACHE_DIR
 
     def set_layer_dir(self, path):
         # paths in the config-file are relative to the project-dir
@@ -387,10 +458,14 @@ class CookerCommands:
         dl_dir=None,
         sstate_dir=None,
         additional_menus: list[Path] | None = None,
+        *,
+        immutable=None,
     ):
         """cooker-command 'init': (re)set the configuration file"""
-        self.config.set_menu(menu_name)
-        self.config.set_additional_menus(additional_menus)
+        mutable = not immutable
+        self.config.set_menu(menu_name, mutable=mutable)
+        self.config.set_additional_menus(additional_menus, mutable=mutable)
+        self.config.wipe_unreferenced_cooker_cache()
 
         if layer_dir:
             self.config.set_layer_dir(layer_dir)
@@ -1131,6 +1206,12 @@ class CookerCall:
             help="download all sources needed for offline-build",
         )
         cook_parser.add_argument(
+            "-i",
+            "--immutable",
+            action="store_true",
+            help="work on immutable copies of the provided menu files",
+        )
+        cook_parser.add_argument(
             "-k",
             "--keepgoing",
             action="store_true",
@@ -1167,6 +1248,12 @@ class CookerCall:
             help="re-init an existing project",
             default=False,
             action="store_true",
+        )
+        init_parser.add_argument(
+            "-i",
+            "--immutable",
+            action="store_true",
+            help="work on immutable copies of the provided menu files",
         )
         init_parser.add_argument(
             "-l", "--layer-dir", help="path where layers will saved/cloned"
@@ -1368,13 +1455,15 @@ class CookerCall:
         if (
             "menu" in self.clargs and self.clargs.menu is not None
         ):  # menu-file from the cmdline has priority
-            menu_file = self.clargs.menu[0]
+            menu_file = self._copy_to_cache_if_pseudofile(self.clargs.menu[0])
             if (
                 "additional_menus" in self.clargs
                 and self.clargs.additional_menus is not None
             ):
                 for additional_menu in self.clargs.additional_menus:
-                    additional_menus.append(additional_menu[0])
+                    additional_menus.append(
+                        self._copy_to_cache_if_pseudofile(additional_menu[0])
+                    )
         elif not self.config.empty():  # or the one from the config-file
             try:
                 menu_file = Path(self.config.menu())
@@ -1455,6 +1544,15 @@ class CookerCall:
 
         sys.exit(0)
 
+    def _copy_to_cache_if_pseudofile(self, potential_pseudo_file: Path):
+        """Transparently return a regular file.
+
+        In case the provided file is a pseudo file, cache a copy and return its path.
+        """
+        if potential_pseudo_file.is_fifo():
+            return self.config.create_immutable_copy(potential_pseudo_file)
+        return potential_pseudo_file
+
     def init(self):
         """function use by command-line-arg-parser as entry point for the 'init'"""
         if not self.clargs.force and not self.config.empty():
@@ -1463,12 +1561,13 @@ class CookerCall:
             )
 
         self.commands.init(
-            str(self.clargs.menu[0]),
+            str(self._copy_to_cache_if_pseudofile(self.clargs.menu[0])),
             self.clargs.layer_dir,
             self.clargs.build_dir,
             self.clargs.dl_dir,
             self.clargs.sstate_dir,
             additional_menus=self.additional_menus,
+            immutable=self.clargs.immutable,
         )
 
     def update(self):
@@ -1495,7 +1594,9 @@ class CookerCall:
 
     def cook(self):
         self.commands.init(
-            str(self.clargs.menu[0]), additional_menus=self.additional_menus
+            str(self.clargs.menu[0]),
+            additional_menus=self.additional_menus,
+            immutable=self.clargs.immutable,
         )
         self.commands.update()
         self.commands.generate()
