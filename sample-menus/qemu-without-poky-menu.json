@@ -21,8 +21,6 @@
 		"openembedded-core/meta"
 	],
 
-	"base-distribution": "NoPoky",
-
 	"builds" : {
 		"qemuarm": {
 			"target" : "core-image-base",

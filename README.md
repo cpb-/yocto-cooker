@@ -33,7 +33,12 @@ files written in JSON and can thus be stored anywhere.
 
 ## Installing Yocto Cooker
 
-Install Yocto Cooker using PyPi:
+Install the released version of Yocto Cooker from PyPI:
+``` bash
+$ python3 -m pip install --upgrade yocto-cooker
+```
+
+Install the current development version from GitHub:
 ``` bash
 $ python3 -m pip install --upgrade git+https://github.com/cpb-/yocto-cooker.git
 ```
@@ -253,7 +258,33 @@ The menu file follows the JSON syntax and contains three main parts:
  or on a per-target-base
 - `builds`: a collection of build-configurations to build.
 - `local.conf`: a list of lines to be used in the configuration files of all
- build-configs (more on this below).
+  build-configs (more on this below).
+
+### Base repositories
+
+Cooker selects the base repository layout from the `sources` entries when
+`base-distribution` is omitted:
+
+- A source checked out as `poky` uses the Poky repository layout. This keeps
+  existing menus for older Yocto releases working.
+- Sources checked out as both `bitbake` and `openembedded-core` use the separate
+  repository layout. See
+  [`qemu-without-poky-menu.json`](sample-menus/qemu-without-poky-menu.json).
+- An empty `sources` list, or a menu listing only other layers, retains the
+  historical Poky setting. If a base repository is present but the layout is
+  incomplete or contradictory, Cooker asks for an explicit
+  `base-distribution` value.
+
+The `dir` property controls the checkout directory when it is present; otherwise
+Cooker uses the path from the source URL. To select a layout manually, set
+`"base-distribution": "Poky"` or `"base-distribution": "NoPoky"` in the menu.
+An explicit choice also supports custom checkout directories through
+`override_distro`.
+
+The repository layout and the Yocto `DISTRO` setting are separate choices.
+`NoPoky` uses OE-Core without the Poky distribution by default. To build the
+`poky` distribution with separate repositories, also include the `meta-poky`
+layer from `meta-yocto` and set `DISTRO = "poky"` in `local.conf`.
 
 ### Sources
 
@@ -286,12 +317,13 @@ fixed `rev` number or tag.
 
 This section contains an array of layers common to all build-configurations.
 
-Most of the build-configurations uses
+For separate BitBake and OE-Core checkouts, the base layer is
+`openembedded-core/meta`. Add `meta-yocto/meta-poky` when using the Poky
+distribution and any other layers the build needs, such as
+`meta-openembedded/meta-oe`.
 
-- `poky/meta`
-- `poky/meta-poky`
-- `poky/meta-yocto-bsp`
-- `meta-openembedded/meta-oe`
+For older menus using the combined Poky checkout, typical entries are
+`poky/meta`, `poky/meta-poky`, and `poky/meta-yocto-bsp`.
 
 
 ### Build configurations
