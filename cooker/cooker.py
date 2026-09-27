@@ -22,7 +22,7 @@ from .distro import AragoDistro, Distro, NoPokyDistro, PokyDistro
 from .log_format import LogFormat, LogMarkdownFormat, LogTextFormat
 from .os_calls import DryRunOsCalls, OsCalls, OsCallsBase
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 BITBAKE_VERSION_MINIMUM = 2
 
 
@@ -438,17 +438,48 @@ class CookerCommands:
                 "poky": PokyDistro(),
                 "arago": AragoDistro(),
             }
-            name = menu.setdefault("base-distribution", "poky")
+            name = menu.get("base-distribution")
+            if name is None:
+                name = self.detect_base_distribution()
             try:
                 self.distro = distros[name.lower()]
             except KeyError:
                 fatal_error(
-                    f"base-distribution {name} is unknown, please add a"
-                    + " `base-distribution.py` file next your menu."
+                    f"base-distribution {name} is unknown; choose Poky, NoPoky, "
+                    "or Arago in the menu."
                 )
 
             # Update distro if custom distro is defined in menu
             self.update_override_distro()
+
+    def detect_base_distribution(self):
+        """Select the checkout layout when the menu does not specify one.
+
+        Compare the actual checkout paths, including source ``dir`` overrides,
+        because the repository URL can point to a mirror.
+        """
+        sources = self.menu["sources"]
+        source_dirs = {self.local_dir_from_source(source)[0] for source in sources}
+        poky = os.path.realpath(self.config.layer_dir("poky")) in source_dirs
+        bitbake = os.path.realpath(self.config.layer_dir("bitbake")) in source_dirs
+        oe_core = (
+            os.path.realpath(self.config.layer_dir("openembedded-core")) in source_dirs
+        )
+
+        if poky and not (bitbake or oe_core):
+            return "poky"
+        if bitbake and oe_core and not poky:
+            return "nopoky"
+        if not (poky or bitbake or oe_core):
+            # Older menus may list only extra layers, or have no sources at all.
+            return "poky"
+
+        fatal_error(
+            "Cannot determine the base-distribution from the source directories. "
+            "Use a Poky source in 'poky', or both BitBake in 'bitbake' and "
+            "OE-Core in 'openembedded-core'. Otherwise set 'base-distribution' "
+            "explicitly in the menu."
+        )
 
     def init(
         self,
