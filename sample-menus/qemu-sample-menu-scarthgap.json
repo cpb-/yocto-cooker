@@ -6,9 +6,9 @@
 	],
 	"sources" : [
 		{
-			"url": "git://git.yoctoproject.org/poky",
+			"url": "https://git.yoctoproject.org/poky",
 			"branch": "scarthgap",
-			"rev": "yocto-5.0.12"
+			"rev": "yocto-5.0.20"
 		}
 	],
 

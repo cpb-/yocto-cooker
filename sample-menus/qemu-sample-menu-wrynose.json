@@ -1,0 +1,41 @@
+{
+	"notes" : [
+		"This is a simple menu for Qemu ARM emulation.              ",
+		"Please refer to the README file for instruction on how to  ",
+		"build the image."
+	],
+	"sources" : [
+		{
+			"url": "https://git.openembedded.org/bitbake",
+			"rev": "yocto-6.0.3"
+		},
+		{
+			"url": "https://git.openembedded.org/openembedded-core",
+			"branch": "wrynose",
+			"rev": "yocto-6.0.3"
+		},
+		{
+			"url": "https://git.yoctoproject.org/meta-yocto",
+			"branch": "wrynose",
+			"rev": "yocto-6.0.3"
+		}
+
+	],
+
+	"layers" : [
+		"openembedded-core/meta",
+		"meta-yocto/meta-poky"
+	],
+
+	"builds" : {
+		"qemuarm": {
+			"target" : "core-image-base",
+
+			"local.conf": [
+				"MACHINE = 'qemuarm' ",
+				"DISTRO  = 'poky'    ",
+				"IMAGE_FEATURES += 'empty-root-password' "
+			]
+		}
+	}
+}
