@@ -94,7 +94,7 @@ class DryRunOsCalls(OsCallsBase):
 
     @staticmethod
     def file_write(file, string):
-        escaped = string.replace("$", "\$")
+        escaped = string.replace("$", r"\$")
         print(f"\t{escaped}")
         sys.stdout.flush()
 
