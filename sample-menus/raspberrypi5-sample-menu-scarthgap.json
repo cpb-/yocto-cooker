@@ -6,19 +6,19 @@
 	],
 	"sources" : [
 		{
-			"url": "git://git.yoctoproject.org/poky",
+			"url": "https://git.yoctoproject.org/poky",
 			"branch": "scarthgap",
-			"rev": "yocto-5.0.12"
+			"rev": "yocto-5.0.20"
 		},
 		{
-			"url": "git://git.openembedded.org/meta-openembedded",
+			"url": "https://git.openembedded.org/meta-openembedded",
 			"branch": "scarthgap",
-			"rev": "f1f24826"
+			"rev": "0f00f8b9"
 		},
 		{
-			"url": "git://git.yoctoproject.org/meta-raspberrypi",
+			"url": "https://git.yoctoproject.org/meta-raspberrypi",
 			"branch": "scarthgap",
-			"rev": "8767e2ff"
+			"rev": "6ca1f750"
 		}
 	],
 
@@ -41,6 +41,8 @@
 			"local.conf": [
 				"MACHINE = 'raspberrypi5'                                ",
 				"ENABLE_UART = '1'                                       ",
+
+				"LICENSE_FLAGS_ACCEPTED = 'synaptics-killswitch'         ",
 
 				"# The following lines allow the use of the Raspberry Pi ",
 				"# classical serial port on P1 header                    ",

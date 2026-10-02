@@ -1,0 +1,68 @@
+{
+	"notes" : [
+		"This is a standard menu for Raspberry Pi 5.",
+		"Please refer to the README file for instruction on how to ",
+		"build to build the image."
+	],
+
+	"sources" : [
+		{
+			"url": "https://git.openembedded.org/bitbake",
+			"rev": "yocto-6.0.3"
+		},
+		{
+			"url": "https://git.openembedded.org/openembedded-core",
+			"branch": "wrynose",
+			"rev": "yocto-6.0.3"
+		},
+		{
+			"url": "https://git.openembedded.org/meta-openembedded",
+			"branch": "wrynose",
+			"rev": "47d7dbdd"
+		},
+		{
+			"url": "https://git.yoctoproject.org/meta-yocto",
+			"branch": "wrynose",
+			"rev": "yocto-6.0.3"
+		},
+		{
+			"url": "https://git.yoctoproject.org/meta-raspberrypi",
+			"branch": "wrynose",
+			"rev": "f62c6792"
+		}
+	],
+
+	"layers" : [
+		"openembedded-core/meta",
+		"meta-yocto/meta-poky",
+		"meta-openembedded/meta-oe"
+	],
+
+	"local.conf" : [
+		"DISTRO  = 'poky'    ",
+		"IMAGE_FEATURES += 'empty-root-password' "
+	],
+
+	"builds" : {
+
+		"pi5": {
+			"target" : "core-image-base",
+
+			"layers" : [
+					"meta-raspberrypi"
+			],
+
+			"local.conf": [
+				"MACHINE = 'raspberrypi5'                                ",
+
+				"LICENSE_FLAGS_ACCEPTED = 'synaptics-killswitch'         ",
+
+				"# The following lines allow the use of the Raspberry Pi ",
+				"# classical serial port on P1 header                    ",
+				"ENABLE_UART = '1'                                       ",
+				"RPI_EXTRA_CONFIG += 'dtparam=uart0_console'             ",
+				"SERIAL_CONSOLES = '115200;serial0'                      "
+			]
+		}
+	}
+}

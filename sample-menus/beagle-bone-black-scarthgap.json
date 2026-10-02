@@ -7,14 +7,14 @@
 	],
 	"sources" : [
 		{
-			"url": "git://git.yoctoproject.org/poky",
+			"url": "https://git.yoctoproject.org/poky",
 			"branch": "scarthgap",
-			"rev": "yocto-5.0.12"
+			"rev": "yocto-5.0.20"
 		},
 		{
-			"url": "git://git.openembedded.org/meta-openembedded",
+			"url": "https://git.openembedded.org/meta-openembedded",
 			"branch": "scarthgap",
-			"rev": "f1f24826"
+			"rev": "0f00f8b9"
 		}
 	],
 
