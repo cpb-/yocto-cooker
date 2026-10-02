@@ -1,5 +1,5 @@
 __title__ = "yocto-cooker"
-__version__ = "1.4.0"
+__version__ = "1.6.0"
 __author__ = "Christophe BLAESS, Patrick BOETTCHER"
 __email__ = "christophe.blaess@logilin.fr, p@yai.se"
 __license__ = "GPL"
@@ -17,6 +17,7 @@ with open(os.path.join(os.path.dirname(__file__), "README.md"), encoding="utf-8"
 setup(
     name=__title__,
     version=__version__,
+    python_requires=">=3.11",
     description="meta build tool for Yocto Project based Linux embedded systems",
     author=__author__,
     author_email=__email__,

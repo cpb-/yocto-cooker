@@ -22,7 +22,7 @@ from .distro import AragoDistro, Distro, NoPokyDistro, PokyDistro
 from .log_format import LogFormat, LogMarkdownFormat, LogTextFormat
 from .os_calls import DryRunOsCalls, OsCalls, OsCallsBase
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 BITBAKE_VERSION_MINIMUM = 2
 
 

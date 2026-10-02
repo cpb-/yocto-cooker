@@ -1,0 +1,103 @@
+# An old menu without base-distribution still selects the Poky checkout.
+cat > poky.json <<'EOF'
+{
+    "sources": [{"url": "https://git.yoctoproject.org/poky", "branch": "scarthgap"}],
+    "layers": ["poky/meta"],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cooker init -f poky.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= "poky"' 1
+textInFile builds/build-qemu/conf/bblayers.conf 'layers/poky/meta' 1
+
+# The new separate-repository menu needs no base-distribution setting.
+cat > separate.json <<'EOF'
+{
+    "sources": [
+        {"url": "https://git.openembedded.org/bitbake", "branch": "scarthgap"},
+        {"url": "https://git.openembedded.org/openembedded-core", "branch": "scarthgap"}
+    ],
+    "layers": ["openembedded-core/meta"],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cooker init -f separate.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= ""' 1
+textInFile builds/build-qemu/conf/bblayers.conf 'layers/openembedded-core/meta' 1
+
+# A mirror URL is fine when dir selects the expected checkout name.
+cat > mirror.json <<'EOF'
+{
+    "sources": [
+        {"url": "https://example.com/mirror/bb.git", "dir": "bitbake"},
+        {"url": "https://example.com/mirror/core.git", "dir": "openembedded-core"}
+    ],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cooker init -f mirror.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= ""' 1
+
+# Menus that only list extra layers retain their historical Poky default.
+cat > extra-layers.json <<'EOF'
+{
+    "sources": [{"url": "https://example.com/meta-custom", "dir": "meta-custom"}],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cooker init -f extra-layers.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= "poky"' 1
+
+# Detection uses the merged menu, so sources can come from additional menus.
+cat > bitbake-only.json <<'EOF'
+{
+    "sources": [{"url": "https://git.openembedded.org/bitbake"}],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cat > core-addition.json <<'EOF'
+{"sources": [{"url": "https://git.openembedded.org/openembedded-core"}]}
+EOF
+cooker init -f -m core-addition.json bitbake-only.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= ""' 1
+
+# An explicit choice takes precedence over detection, including custom layouts.
+cat > explicit.json <<'EOF'
+{
+    "sources": [{"url": "https://example.com/custom.git", "dir": "custom"}],
+    "base-distribution": "Poky",
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+cooker init -f explicit.json
+cooker generate
+textInFile builds/build-qemu/conf/local.conf 'DISTRO \?= "poky"' 1
+
+cat > ambiguous.json <<'EOF'
+{
+    "sources": [
+        {"url": "https://git.yoctoproject.org/poky"},
+        {"url": "https://git.openembedded.org/bitbake"},
+        {"url": "https://git.openembedded.org/openembedded-core"}
+    ],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+expect_fail cooker init -f ambiguous.json
+
+# One of the two separate repositories is insufficient for auto detection.
+cat > incomplete.json <<'EOF'
+{
+    "sources": [{"url": "https://git.openembedded.org/openembedded-core"}],
+    "builds": {"qemu": {"target": "core-image-minimal"}}
+}
+EOF
+expect_fail cooker init -f incomplete.json
+
+# Empty menus remain valid for compatibility with existing workflows.
+cooker init -f $S/empty-menu.json
