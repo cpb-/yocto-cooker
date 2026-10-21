@@ -7,17 +7,17 @@
 	"sources" : [
 		{
 			"url": "https://git.openembedded.org/bitbake",
-			"rev": "yocto-6.0.3"
+			"rev": "yocto-6.0.4"
 		},
 		{
 			"url": "https://git.openembedded.org/openembedded-core",
 			"branch": "wrynose",
-			"rev": "yocto-6.0.3"
+			"rev": "yocto-6.0.4"
 		},
 		{
 			"url": "https://git.yoctoproject.org/meta-yocto",
 			"branch": "wrynose",
-			"rev": "yocto-6.0.3"
+			"rev": "yocto-6.0.4"
 		}
 
 	],
